@@ -19,7 +19,7 @@ import os
 from ez_setup import use_setuptools
 use_setuptools()
 
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
@@ -43,10 +43,6 @@ setup(name='zope.transaction',
       license="ZPL 2.1",
       platforms=["any"],
       packages=find_packages(),
-      ext_modules = [
-            Extension('zope.transaction.TimeStamp',
-                      ['zope/transaction/TimeStamp.c']),
-            ],
       include_package_data=True,
       zip_safe=False,
       test_suite="zope.transaction.tests",

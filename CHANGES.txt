@@ -1,12 +1,9 @@
 1.0 
 
-  Initial release.
+  Initial release, branched from HEAD of ZODB on Nov. 8 2007 (aka
+  "3.9.0dev").
 
   Remove (deprecated) support for beforeCommitHook alias to
   addBeforeCommitHook.
 
   Add weakset tests.
-
-  Add TimeStamp tests.
-
-
