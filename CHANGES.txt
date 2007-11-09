@@ -1,0 +1,12 @@
+1.0 
+
+  Initial release.
+
+  Remove (deprecated) support for beforeCommitHook alias to
+  addBeforeCommitHook.
+
+  Add weakset tests.
+
+  Add TimeStamp tests.
+
+

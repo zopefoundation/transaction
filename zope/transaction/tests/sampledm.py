@@ -13,7 +13,7 @@
 ##############################################################################
 """Sample objects for use in tests
 
-$Id$
+$Id: sampledm.py 29896 2005-04-07 04:48:06Z tim_one $
 """
 
 class DataManager(object):
@@ -407,9 +407,6 @@ class Rollback(object):
 def test_suite():
     from zope.testing.doctest import DocTestSuite
     return DocTestSuite()
-
-# additional_tests is for setuptools "setup.py test" support
-additional_tests = test_suite
 
 if __name__ == '__main__':
     unittest.main()

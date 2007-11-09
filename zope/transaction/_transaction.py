@@ -106,13 +106,10 @@ import traceback
 from cStringIO import StringIO
 
 from zope import interface
-from ZODB.utils import WeakSet
-from ZODB.utils import deprecated37, deprecated38
-from ZODB.POSException import TransactionFailedError
-from ZODB.utils import oid_repr
 
-
-from transaction import interfaces
+from zope.transaction.weakset import WeakSet
+from zope.transaction.interfaces import TransactionFailedError
+from zope.transaction import interfaces
 
 _marker = object()
 
@@ -360,11 +357,6 @@ class Transaction(object):
             kws = {}
         self._before_commit.append((hook, tuple(args), kws))
 
-    def beforeCommitHook(self, hook, *args, **kws):
-
-        deprecated38("Use addBeforeCommitHook instead of beforeCommitHook.")
-        self.addBeforeCommitHook(hook, args, kws)
-
     def _callBeforeCommitHooks(self):
         # Call all hooks registered, allowing further registrations
         # during processing.  Note that calls to addBeforeCommitHook() may
@@ -573,6 +565,19 @@ def object_hint(o):
     if oid is not _marker:
         oid = oid_repr(oid)
     return "%s oid=%s" % (klass, oid)
+
+def oid_repr(oid):
+    if isinstance(oid, str) and len(oid) == 8:
+        # Convert to hex and strip leading zeroes.
+        as_hex = hexlify(oid).lstrip('0')
+        # Ensure two characters per input byte.
+        if len(as_hex) & 1:
+            as_hex = '0' + as_hex
+        elif as_hex == '':
+            as_hex = '00'
+        return '0x' + as_hex
+    else:
+        return repr(oid)
 
 # TODO: deprecate for 3.6.
 class DataManagerAdapter(object):

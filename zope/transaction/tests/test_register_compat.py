@@ -91,7 +91,7 @@ Clean up:
 >>> transaction.abort()
 """
 
-import transaction
+from zope import transaction
 
 class Object(object):
 
@@ -152,3 +152,6 @@ from zope.testing import doctest
 
 def test_suite():
     return doctest.DocTestSuite()
+
+# additional_tests is for setuptools "setup.py test" support
+additional_tests = test_suite

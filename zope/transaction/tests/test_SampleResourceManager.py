@@ -431,5 +431,8 @@ def test_suite():
     from doctest import DocTestSuite
     return DocTestSuite()
 
+# additional_tests is for setuptools "setup.py test" support
+additional_tests = test_suite
+
 if __name__ == '__main__':
     unittest.main()

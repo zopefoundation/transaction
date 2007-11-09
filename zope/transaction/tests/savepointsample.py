@@ -23,7 +23,7 @@ $Id$
 
 import UserDict
 from zope import interface
-import transaction.interfaces
+import zope.transaction.interfaces
 
 class SampleDataManager(UserDict.DictMixin):
     """Sample implementation of data manager that doesn't support savepoints
@@ -31,11 +31,12 @@ class SampleDataManager(UserDict.DictMixin):
     This data manager stores named simple values, like strings and numbers.
     """
 
-    interface.implements(transaction.interfaces.IDataManager)
+    interface.implements(zope.transaction.interfaces.IDataManager)
 
     def __init__(self, transaction_manager=None):
         if transaction_manager is None:
             # Use the thread-local transaction manager if none is provided:
+            from zope import transaction
             transaction_manager = transaction.manager
         self.transaction_manager = transaction_manager
 
@@ -157,7 +158,7 @@ class SampleSavepointDataManager(SampleDataManager):
     This extends the basic data manager with savepoint support.
     """
 
-    interface.implements(transaction.interfaces.ISavepointDataManager)
+    interface.implements(zope.transaction.interfaces.ISavepointDataManager)
 
     def savepoint(self):
         # When we create the savepoint, we save the existing database state.
@@ -174,7 +175,7 @@ class SampleSavepointDataManager(SampleDataManager):
 
 class SampleSavepoint:
 
-    interface.implements(transaction.interfaces.IDataManagerSavepoint)
+    interface.implements(zope.transaction.interfaces.IDataManagerSavepoint)
 
     def __init__(self, data_manager, data):
         self.data_manager = data_manager

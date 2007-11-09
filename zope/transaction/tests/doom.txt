@@ -25,7 +25,7 @@ use savepoints and doom() safely.
 
 To see how it works we first need to create a stub data manager:
 
-    >>> from transaction.interfaces import IDataManager
+    >>> from zope.transaction.interfaces import IDataManager
     >>> from zope.interface import implements
     >>> class DataManager:
     ...     implements(IDataManager)
@@ -45,7 +45,7 @@ To see how it works we first need to create a stub data manager:
 
 Start a new transaction:
 
-    >>> import transaction
+    >>> from zope import transaction
     >>> txn = transaction.begin()
     >>> dm = DataManager()
     >>> txn.join(dm)

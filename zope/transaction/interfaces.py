@@ -472,5 +472,17 @@ class ISynchronizer(zope.interface.Interface):
         begin() method is called explictly.
         """
 
-class DoomedTransaction(Exception):
+class TransactionError(Exception):
+    """An error occurred due to normal transaction processing."""
+
+class TransactionFailedError(TransactionError):
+    """Cannot perform an operation on a transaction that previously failed.
+
+    An attempt was made to commit a transaction, or to join a transaction,
+    but this transaction previously raised an exception during an attempt
+    to commit it.  The transaction must be explicitly aborted, either by
+    invoking abort() on the transaction, or begin() on its transaction
+    manager.
+    """
+class DoomedTransaction(TransactionError):
     """A commit was attempted on a transaction that was doomed."""

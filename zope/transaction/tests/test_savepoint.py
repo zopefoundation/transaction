@@ -26,14 +26,15 @@ A savepoint needs to not just rollback it's savepoints, but needs to
 rollback savepoints for data managers that joined savepoints after the
 savepoint:
 
-    >>> import transaction.tests.savepointsample
-    >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> from zope import transaction
+    >>> from zope.transaction.tests import savepointsample
+    >>> dm = savepointsample.SampleSavepointDataManager()
     >>> dm['name'] = 'bob'
     >>> sp1 = transaction.savepoint()
     >>> dm['job'] = 'geek'
     >>> sp2 = transaction.savepoint()
     >>> dm['salary'] = 'fun'    
-    >>> dm2 = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> dm2 = savepointsample.SampleSavepointDataManager()
     >>> dm2['name'] = 'sally'
 
     >>> 'name' in dm
@@ -60,9 +61,12 @@ savepoint:
 
 def test_suite():
     return unittest.TestSuite((
-        doctest.DocFileSuite('../savepoint.txt'),
+        doctest.DocFileSuite('savepoint.txt'),
         doctest.DocTestSuite(),
         ))
+
+# additional_tests is for setuptools "setup.py test" support
+additional_tests = test_suite
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')

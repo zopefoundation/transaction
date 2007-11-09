@@ -19,9 +19,9 @@ are associated with the right transaction.
 
 import thread
 
-from ZODB.utils import WeakSet, deprecated37
+from zope.transaction.weakset import WeakSet
 
-from transaction._transaction import Transaction
+from zope.transaction._transaction import Transaction
 
 # Used for deprecated arguments.  ZODB.utils.DEPRECATED_ARGUMENT was
 # too hard to use here, due to the convoluted import dance across

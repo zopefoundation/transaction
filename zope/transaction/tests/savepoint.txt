@@ -24,8 +24,9 @@ demonstrating the correct operation of savepoint support within the
 transaction system.  This data manager is very simple.  It provides flat
 storage of named immutable values, like strings and numbers.
 
-    >>> import transaction.tests.savepointsample
-    >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> from zope import transaction
+    >>> from zope.transaction.tests import savepointsample
+    >>> dm = savepointsample.SampleSavepointDataManager()
     >>> dm['name'] = 'bob'
 
 As with other data managers, we can commit changes:
@@ -202,7 +203,7 @@ Databases without savepoint support
 Normally it's an error to use savepoints with databases that don't support
 savepoints:
 
-    >>> dm_no_sp = transaction.tests.savepointsample.SampleDataManager()
+    >>> dm_no_sp = savepointsample.SampleDataManager()
     >>> dm_no_sp['name'] = 'bob'
     >>> transaction.commit()
     >>> dm_no_sp['name'] = 'sally'
