@@ -43,8 +43,8 @@ import struct
 import unittest
 import warnings
 
-from zope import transaction
-from zope.transaction.tests.warnhook import WarningsHook
+import transaction
+from transaction.tests.warnhook import WarningsHook
 
 _ADDRESS_MASK = 256 ** struct.calcsize('P')
 def positive_id(obj):
@@ -353,8 +353,8 @@ def test_join():
     The argument to join must be a zodb4 data manager,
     transaction.interfaces.IDataManager.
 
-    >>> from zope.transaction.tests.sampledm import DataManager
-    >>> from zope.transaction._transaction import DataManagerAdapter
+    >>> from transaction.tests.sampledm import DataManager
+    >>> from transaction._transaction import DataManagerAdapter
     >>> t = transaction.Transaction()
     >>> dm = DataManager()
     >>> t.join(dm)
@@ -386,7 +386,7 @@ def test_addBeforeCommitHook():
 
     Now register the hook with a transaction.
 
-      >>> from zope import transaction
+      >>> import transaction
       >>> t = transaction.begin()
       >>> t.addBeforeCommitHook(hook, '1')
 
@@ -507,43 +507,6 @@ def test_addBeforeCommitHook():
        'rec0']
       >>> reset_log()
 
-    When modifing persitent objects within before commit hooks
-    modifies the objects, of course :)
-    
-    Start a new transaction
-
-      >>> t = transaction.begin()
-
-    Create a DB instance and add a IOBTree within
-
-      >>> from ZODB.tests.util import DB
-      >>> from ZODB.tests.util import P
-      >>> db = DB()
-      >>> con = db.open()
-      >>> root = con.root()
-      >>> root['p'] = P('julien')
-      >>> p = root['p']
-
-      >>> p.name
-      'julien'
-      
-    This hook will get the object from the `DB` instance and change
-    the flag attribute.
-
-      >>> def hookmodify(status, arg=None, kw1='no_kw1', kw2='no_kw2'):
-      ...     p.name = 'jul'
-
-    Now register this hook and commit.
-
-      >>> t.addBeforeCommitHook(hookmodify, (p, 1))
-      >>> transaction.commit()
-
-    Nothing should have changed since it should have been aborted.
-
-      >>> p.name
-      'jul'
-
-      >>> db.close()
     """
 
 def test_addAfterCommitHook():
@@ -560,7 +523,7 @@ def test_addAfterCommitHook():
 
     Now register the hook with a transaction.
 
-      >>> from zope import transaction
+      >>> import transaction
       >>> t = transaction.begin()
       >>> t.addAfterCommitHook(hook, '1')
 
@@ -723,47 +686,6 @@ def test_addAfterCommitHook():
       0
 
       >>> reset_log()
-
-
-    The transaction is already committed when the after commit hooks
-    will be executed. Executing the hooks must not have further
-    effects on persistent objects.
-
-    Start a new transaction
-
-      >>> t = transaction.begin()
-
-    Create a DB instance and add a IOBTree within
-
-      >>> from ZODB.tests.util import DB
-      >>> from ZODB.tests.util import P
-      >>> db = DB()
-      >>> con = db.open()
-      >>> root = con.root()
-      >>> root['p'] = P('julien')
-      >>> p = root['p']
-
-      >>> p.name
-      'julien'
-      
-    This hook will get the object from the `DB` instance and change
-    the flag attribute.
-
-      >>> def badhook(status, arg=None, kw1='no_kw1', kw2='no_kw2'):
-      ...     p.name = 'jul'
-
-    Now register this hook and commit.
-
-      >>> t.addAfterCommitHook(badhook, (p, 1))
-      >>> transaction.commit()
-
-    Nothing should have changed since it should have been aborted.
-
-      >>> p.name
-      'julien'
-
-      >>> db.close()
-
     """
 
 def test_suite():

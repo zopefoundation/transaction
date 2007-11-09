@@ -13,7 +13,7 @@
 ##############################################################################
 
 import unittest
-from zope.transaction.weakset import WeakSet
+from transaction.weakset import WeakSet
 
 class Dummy:
     pass

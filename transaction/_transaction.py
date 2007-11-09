@@ -107,9 +107,9 @@ from cStringIO import StringIO
 
 from zope import interface
 
-from zope.transaction.weakset import WeakSet
-from zope.transaction.interfaces import TransactionFailedError
-from zope.transaction import interfaces
+from transaction.weakset import WeakSet
+from transaction.interfaces import TransactionFailedError
+from transaction import interfaces
 
 _marker = object()
 

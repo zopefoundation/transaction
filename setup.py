@@ -24,7 +24,7 @@ from setuptools import setup, find_packages
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 
-setup(name='zope.transaction',
+setup(name='transaction',
       version=__version__,
       description='Transaction management for Python',
       long_description=README,
@@ -45,10 +45,11 @@ setup(name='zope.transaction',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      test_suite="zope.transaction.tests",
-      tests_require = ['zope.interface',
-                       'zope.testing',
-                       'ZODB3'],
+      test_suite="transaction.tests",
+      tests_require = [
+        'zope.interface',
+        'zope.testing',
+        ],
       install_requires=[
         'zope.interface',
         ],

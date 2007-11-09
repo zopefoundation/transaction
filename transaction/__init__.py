@@ -16,9 +16,9 @@
 $Id$
 """
 
-from zope.transaction._transaction import Transaction
-from zope.transaction._manager import TransactionManager
-from zope.transaction._manager import ThreadTransactionManager
+from transaction._transaction import Transaction
+from transaction._manager import TransactionManager
+from transaction._manager import ThreadTransactionManager
 
 manager = ThreadTransactionManager()
 get = manager.get

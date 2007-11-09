@@ -24,8 +24,8 @@ demonstrating the correct operation of savepoint support within the
 transaction system.  This data manager is very simple.  It provides flat
 storage of named immutable values, like strings and numbers.
 
-    >>> from zope import transaction
-    >>> from zope.transaction.tests import savepointsample
+    >>> import transaction
+    >>> from transaction.tests import savepointsample
     >>> dm = savepointsample.SampleSavepointDataManager()
     >>> dm['name'] = 'bob'
 

@@ -7,3 +7,6 @@
   addBeforeCommitHook.
 
   Add weakset tests.
+
+  Remove unit tests that depend on ZODB.tests.utils from
+  test_transaction (these are actually integration tests).

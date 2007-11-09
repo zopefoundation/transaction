@@ -26,8 +26,8 @@ A savepoint needs to not just rollback it's savepoints, but needs to
 rollback savepoints for data managers that joined savepoints after the
 savepoint:
 
-    >>> from zope import transaction
-    >>> from zope.transaction.tests import savepointsample
+    >>> import transaction
+    >>> from transaction.tests import savepointsample
     >>> dm = savepointsample.SampleSavepointDataManager()
     >>> dm['name'] = 'bob'
     >>> sp1 = transaction.savepoint()

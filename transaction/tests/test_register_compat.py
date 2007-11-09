@@ -91,7 +91,7 @@ Clean up:
 >>> transaction.abort()
 """
 
-from zope import transaction
+import transaction
 
 class Object(object):
 
