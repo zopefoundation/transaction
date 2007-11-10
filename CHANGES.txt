@@ -4,7 +4,7 @@ Changes
 1.0 (unreleased)
 ----------------
 
-* Initial release, branched from HEAD of ZODB on Nov. 8 2007 (aka
+* Initial release, branched from ZODB trunk on 2007-11-08 (aka
   "3.9.0dev").
 
 * Remove (deprecated) support for beforeCommitHook alias to
