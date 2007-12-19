@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '1.0dev'
+__version__ = '1.0a1'
 
 import os
 
@@ -32,12 +32,12 @@ setup(name='transaction',
       long_description=README,
       classifiers=[
         "Development Status :: 6 - Mature",
-        "License :: OSI Approved :: Zope Public License"
-        "Programming Language :: Python"
-        "Topic :: Database"
-        "Topic :: Software Development :: Libraries :: Python Modules"
-        "Operating System :: Microsoft :: Windows"
-        "Operating System :: Unix"
+        "License :: OSI Approved :: Zope Public License",
+        "Programming Language :: Python",
+        "Topic :: Database",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: Unix",
         ],
       author="Zope Corporation",
       author_email="zodb-dev@zope.org",
