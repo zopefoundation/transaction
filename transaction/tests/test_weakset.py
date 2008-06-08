@@ -55,7 +55,9 @@ class WeakSetTests(unittest.TestCase):
         w.add(dummy3)
         del dummy3
         L = [x() for x in w.as_weakref_list()]
-        self.assertEqual(L, [dummy, dummy2])
+        # L is a list, but it does not have a guaranteed order.
+        self.assert_(list, type(L))
+        self.assertEqual(set(L), set([dummy, dummy2]))
 
     def test_map(self):
         w = WeakSet()
