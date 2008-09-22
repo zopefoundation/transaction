@@ -71,6 +71,7 @@ class TransactionManager(object):
     def get(self):
         if self._txn is None:
             self._txn = Transaction(self._synchs, self)
+            _new_transaction(self._txn, self._synchs)
         return self._txn
 
     def free(self, txn):
@@ -135,6 +136,7 @@ class ThreadTransactionManager(TransactionManager):
             if synchs is None:
                 synchs = self._synchs[tid] = WeakSet()
             txn = self._txns[tid] = Transaction(synchs, self)
+            _new_transaction(txn, synchs)
         return txn
 
     def free(self, txn):

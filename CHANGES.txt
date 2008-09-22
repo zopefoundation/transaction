@@ -4,6 +4,7 @@ Changes
 1.0a2 (unreleased)
 ------------------
 
+ * call synchronizers when creating new transaction in transaction.get
  * Remove crufty DEPENDENCIES.cfg left over from zpkg.
 
 1.0a1 (12-18-2007)
