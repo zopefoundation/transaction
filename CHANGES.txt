@@ -1,12 +1,15 @@
 Changes
 =======
 
-1.0a2 (unreleased)
+1.0.0 (2009-07-24)
 ------------------
+
+* Fix test that incorrectly relied on the order of a list that was generated
+  from a dict.
 
  * Remove crufty DEPENDENCIES.cfg left over from zpkg.
 
-1.0a1 (12-18-2007)
+1.0a1 (2007-12-18)
 ------------------
 
 * Initial release, branched from ZODB trunk on 2007-11-08 (aka
