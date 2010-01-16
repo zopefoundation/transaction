@@ -274,6 +274,7 @@ class Transaction(object):
     # Remove and invalidate a savepoint. This is what's needed on release
     # of `savepoint`.
     def _remove_and_invalidate(self, savepoint):
+        self._remove_and_invalidate_after(savepoint)
         savepoint.transaction = None # invalidate
         del self._savepoint2index[savepoint]
 

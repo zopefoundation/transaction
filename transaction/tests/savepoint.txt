@@ -228,16 +228,14 @@ The savepoint then becomes invalid and may no longer be used:
     ...
     InvalidSavepointError
 
-Subsequent savepoints remain valid:
+Subsequent savepoints are invalidated:
 
-    >>> dm['bob-balance'] = 400.0
-    >>> dm['bob-balance']
-    400.0
     >>> savepoint3.rollback()
-    >>> dm['bob-balance']
-    300.0
+    Traceback (most recent call last):
+    ...
+    InvalidSavepointError
 
-As do previous savepoints:
+Previous savepoints continue to be valid:
 
     >>> savepoint1.rollback()
     >>> dm['bob-balance']
