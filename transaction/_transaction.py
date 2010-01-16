@@ -271,6 +271,12 @@ class Transaction(object):
                 savepoint.transaction = None # invalidate
                 del savepoint2index[savepoint]
 
+    # Remove and invalidate a savepoint. This is what's needed on release
+    # of `savepoint`.
+    def _remove_and_invalidate(self, savepoint):
+        savepoint.transaction = None # invalidate
+        del self._savepoint2index[savepoint]
+
     # Invalidate and forget about all savepoints.
     def _invalidate_all_savepoints(self):
         for savepoint in self._savepoint2index.keys():
@@ -651,12 +657,30 @@ class Savepoint:
     def rollback(self):
         transaction = self.transaction
         if transaction is None:
-            raise interfaces.InvalidSavepointRollbackError
+            raise interfaces.InvalidSavepointError
         transaction._remove_and_invalidate_after(self)
 
         try:
             for savepoint in self._savepoints:
                 savepoint.rollback()
+        except:
+            # Mark the transaction as failed.
+            transaction._saveAndRaiseCommitishError() # reraises!
+
+    def release(self):
+        transaction = self.transaction
+        if transaction is None:
+            raise interfaces.InvalidSavepointError
+        transaction._remove_and_invalidate(self)
+
+        try:
+            for savepoint in self._savepoints:
+                try:
+                    release = savepoint.release
+                except AttributeError:
+                    pass
+                else:
+                    release()
         except:
             # Mark the transaction as failed.
             transaction._saveAndRaiseCommitishError() # reraises!

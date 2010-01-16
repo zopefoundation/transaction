@@ -430,6 +430,10 @@ class IDataManagerSavepoint(zope.interface.Interface):
         """Rollback any work done since the savepoint.
         """
 
+    def release():
+        """Release the savepoint. (Optional method.)
+        """
+
 class ISavepoint(zope.interface.Interface):
     """A transaction savepoint.
     """
@@ -437,21 +441,31 @@ class ISavepoint(zope.interface.Interface):
     def rollback():
         """Rollback any work done since the savepoint.
 
-        InvalidSavepointRollbackError is raised if the savepoint isn't valid.
+        InvalidSavepointError is raised if the savepoint isn't valid.
+        """
+
+    def release():
+        """Release the savepoint.
+
+        InvalidSavepointError is raised if the savepoint isn't valid.
         """
 
     valid = zope.interface.Attribute(
         "Boolean indicating whether the savepoint is valid")
 
-class InvalidSavepointRollbackError(Exception):
-    """Attempt to rollback an invalid savepoint.
+class InvalidSavepointError(Exception):
+    """Attempt to rollback or relase an invalid savepoint.
 
     A savepoint may be invalid because:
 
     - The surrounding transaction has committed or aborted.
 
     - An earlier savepoint in the same transaction has been rolled back.
+
+    - The savepoint has been released.
     """
+
+InvalidSavepointRollbackError = InvalidSavepointError #BBB
 
 class ISynchronizer(zope.interface.Interface):
     """Objects that participate in the transaction-boundary notification API.

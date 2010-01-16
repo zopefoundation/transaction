@@ -4,7 +4,11 @@ Changes
 1.1.0 (unreleased)
 ------------------
 
-- ...
+* Add support for savepoint.release(). Some databases only support a limited
+  number of savepoints or subtransactions, this provides an opportunity for a
+  data manager to free those resources.
+
+* Rename InvalidSavepointRollbackError to InvalidSavepointError (BBB provided.)
 
 1.0.0 (2009-07-24)
 ------------------
@@ -12,7 +16,7 @@ Changes
 * Fix test that incorrectly relied on the order of a list that was generated
   from a dict.
 
- * Remove crufty DEPENDENCIES.cfg left over from zpkg.
+* Remove crufty DEPENDENCIES.cfg left over from zpkg.
 
 1.0a1 (2007-12-18)
 ------------------
