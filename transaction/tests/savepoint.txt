@@ -198,7 +198,7 @@ However, using a savepoint invalidates any savepoints that come after it:
 
 
 Savepoint release
-----------------------
+-----------------
 
 Some data managers may only support a limited number of savepoints.
 
