@@ -405,7 +405,7 @@ class Rollback(object):
 
 
 def test_suite():
-    from zope.testing.doctest import DocTestSuite
+    from doctest import DocTestSuite
     return DocTestSuite()
 
 # additional_tests is for setuptools "setup.py test" support

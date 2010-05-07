@@ -689,7 +689,7 @@ def test_addAfterCommitHook():
     """
 
 def test_suite():
-    from zope.testing.doctest import DocTestSuite, DocFileSuite
+    from doctest import DocTestSuite, DocFileSuite
     return unittest.TestSuite((
         DocFileSuite('doom.txt'),
         DocTestSuite(),

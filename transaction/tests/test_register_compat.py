@@ -148,7 +148,7 @@ class TestConnection:
         obj.abort()
         self.aborted.append(obj)
 
-from zope.testing import doctest
+import doctest
 
 def test_suite():
     return doctest.DocTestSuite()

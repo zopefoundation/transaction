@@ -50,7 +50,6 @@ setup(name='transaction',
       test_suite="transaction.tests",
       tests_require = [
         'zope.interface',
-        'zope.testing',
         ],
       install_requires=[
         'zope.interface',
