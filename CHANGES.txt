@@ -1,13 +1,14 @@
 Changes
 =======
 
-1.0.1 (unreleased)
+1.0.1 (2010-05-07)
 ------------------
-
-- Updated tests to remove use of deprecated ``zope.testing.doctest``.
 
 - LP #142464:  remove double newline between log entries:  it makes doing
   smarter formatting harder.
+
+- Updated tests to remove use of deprecated ``zope.testing.doctest``.
+
 
 1.0.0 (2009-07-24)
 ------------------
