@@ -485,7 +485,7 @@ class Transaction(object):
     def note(self, text):
         text = text.strip()
         if self.description:
-            self.description += "\n\n" + text
+            self.description += "\n" + text
         else:
             self.description = text
 

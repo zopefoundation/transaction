@@ -94,7 +94,7 @@ class TransactionTests(unittest.TestCase):
         t.note('This is a note.')
         self.assertEqual(t.description, 'This is a note.')
         t.note('Another.')
-        self.assertEqual(t.description, 'This is a note.\n\nAnother.')
+        self.assertEqual(t.description, 'This is a note.\nAnother.')
 
         t.abort()
 
