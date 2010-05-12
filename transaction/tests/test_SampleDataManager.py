@@ -12,9 +12,8 @@
 #
 ##############################################################################
 """Sample objects for use in tests
-
-$Id$
 """
+from doctest import DocTestSuite
 
 class DataManager(object):
     """Sample data manager
@@ -405,7 +404,6 @@ class Rollback(object):
 
 
 def test_suite():
-    from doctest import DocTestSuite
     return DocTestSuite()
 
 # additional_tests is for setuptools "setup.py test" support

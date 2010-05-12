@@ -35,9 +35,8 @@ TODO
 
     add in tests for objects which are modified multiple times,
     for example an object that gets modified in multiple sub txns.
-
-$Id$
 """
+from doctest import DocTestSuite, DocFileSuite
 
 import struct
 import unittest
@@ -689,7 +688,6 @@ def test_addAfterCommitHook():
     """
 
 def test_suite():
-    from doctest import DocTestSuite, DocFileSuite
     return unittest.TestSuite((
         DocFileSuite('doom.txt'),
         DocTestSuite(),
