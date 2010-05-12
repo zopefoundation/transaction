@@ -28,11 +28,15 @@ New Features:
 
 Bugs fixed:
 
-
 - Fixed a bug that caused extra commit calls to be made on data
   managers under certain special circumstances.
 
   https://mail.zope.org/pipermail/zodb-dev/2010-May/013329.html
+
+- When threads were reused, transaction data could leak accross them,
+  causing subtle application bugs.
+
+  https://bugs.launchpad.net/zodb/+bug/239086
 
 1.0.1 (2010-05-07)
 ------------------

@@ -21,15 +21,7 @@ from transaction.weakset import WeakSet
 from transaction._transaction import Transaction
 from transaction.interfaces import TransientError
 
-import thread
-
-
-
-
-# Used for deprecated arguments.  ZODB.utils.DEPRECATED_ARGUMENT was
-# too hard to use here, due to the convoluted import dance across
-# __init__.py files.
-_marker = object()
+import threading
 
 # We have to remember sets of synch objects, especially Connections.
 # But we don't want mere registration with a transaction manager to
@@ -38,7 +30,6 @@ _marker = object()
 # a Connection alive keeps a potentially huge number of other objects
 # alive (e.g., the cache, and everything reachable from it too).
 # Therefore we use "weak sets" internally.
-#
 
 # Call the ISynchronizer newTransaction() method on every element of
 # WeakSet synchs.
@@ -57,7 +48,6 @@ def _new_transaction(txn, synchs):
 # consulting the TM, so we need to pass a mutable collection of synchronizers
 # so that Transactions "see" synchronizers that get registered after the
 # Transaction object is constructed.
-
 
 class TransactionManager(object):
 
@@ -129,61 +119,11 @@ class TransactionManager(object):
                 return True
 
 
-class ThreadTransactionManager(TransactionManager):
+class ThreadTransactionManager(TransactionManager, threading.local):
     """Thread-aware transaction manager.
 
     Each thread is associated with a unique transaction.
     """
-
-    def __init__(self):
-        # _threads maps thread ids to transactions
-        self._txns = {}
-
-        # _synchs maps a thread id to a WeakSet of registered synchronizers.
-        # The WeakSet is passed to the Transaction constructor, because the
-        # latter needs to call the synchronizers when it commits.
-        self._synchs = {}
-
-    def begin(self):
-        tid = thread.get_ident()
-        txn = self._txns.get(tid)
-        if txn is not None:
-            txn.abort()
-
-        synchs = self._synchs.get(tid)
-        if synchs is None:
-            synchs = self._synchs[tid] = WeakSet()
-
-        txn = self._txns[tid] = Transaction(synchs, self)
-        _new_transaction(txn, synchs)
-        return txn
-
-    def get(self):
-        tid = thread.get_ident()
-        txn = self._txns.get(tid)
-        if txn is None:
-            synchs = self._synchs.get(tid)
-            if synchs is None:
-                synchs = self._synchs[tid] = WeakSet()
-            txn = self._txns[tid] = Transaction(synchs, self)
-        return txn
-
-    def free(self, txn):
-        tid = thread.get_ident()
-        assert txn is self._txns.get(tid)
-        del self._txns[tid]
-
-    def registerSynch(self, synch):
-        tid = thread.get_ident()
-        ws = self._synchs.get(tid)
-        if ws is None:
-            ws = self._synchs[tid] = WeakSet()
-        ws.add(synch)
-
-    def unregisterSynch(self, synch):
-        tid = thread.get_ident()
-        ws = self._synchs[tid]
-        ws.remove(synch)
 
 class Attempt(object):
 

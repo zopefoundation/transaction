@@ -673,8 +673,8 @@ def test_addAfterCommitHook():
       >>> do = DataObject(mgr)
 
       >>> t = transaction.begin()
-      >>> len(t._manager._txns)
-      1
+      >>> t._manager._txn is not None
+      True
 
       >>> t.addAfterCommitHook(hook, ('-', 1))
       >>> transaction.commit()
@@ -682,10 +682,65 @@ def test_addAfterCommitHook():
       >>> log
       ["True arg '-' kw1 1 kw2 'no_kw2'"]
 
-      >>> len(t._manager._txns)
-      0
+      >>> t._manager._txn is not None
+      False
 
       >>> reset_log()
+    """
+
+def bug239086():
+    """
+    The original implementation of thread transaction manager made
+    invalid assumptions about thread ids.
+
+    >>> import transaction.tests.savepointsample
+    >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> dm.keys()
+    []
+
+    >>> class Sync:
+    ...      def __init__(self, label):
+    ...          self.label = label
+    ...      def beforeCompletion(self, t):
+    ...          print self.label, 'before'
+    ...      def afterCompletion(self, t):
+    ...          print self.label, 'after'
+    ...      def newTransaction(self, t):
+    ...          print self.label, 'new'
+    >>> sync = Sync(1)
+
+    >>> import threading
+    >>> def run_in_thread(f):
+    ...     t = threading.Thread(target=f)
+    ...     t.start()
+    ...     t.join()
+
+    >>> @run_in_thread
+    ... def first():
+    ...     transaction.manager.registerSynch(sync)
+    ...     transaction.manager.begin()
+    ...     dm['a'] = 1
+    1 new
+
+    >>> @run_in_thread
+    ... def second():
+    ...     transaction.abort() # should do nothing.
+
+    >>> dm.keys()
+    ['a']
+
+    >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> dm.keys()
+    []
+
+    >>> @run_in_thread
+    ... def first():
+    ...     dm['a'] = 1
+
+    >>> transaction.abort() # should do nothing
+    >>> dm.keys()
+    ['a']
+
     """
 
 def test_suite():
