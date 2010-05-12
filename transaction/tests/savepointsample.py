@@ -17,8 +17,6 @@ Sample data manager implementation that illustrates how to implement
 savepoints.
 
 See savepoint.txt in the transaction package.
-
-$Id$
 """
 
 import UserDict
