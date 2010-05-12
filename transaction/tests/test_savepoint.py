@@ -12,8 +12,6 @@
 #
 ##############################################################################
 """Tests of savepoint feature
-
-$Id$
 """
 import unittest
 import doctest
@@ -33,7 +31,7 @@ savepoint:
     >>> sp1 = transaction.savepoint()
     >>> dm['job'] = 'geek'
     >>> sp2 = transaction.savepoint()
-    >>> dm['salary'] = 'fun'    
+    >>> dm['salary'] = 'fun'
     >>> dm2 = savepointsample.SampleSavepointDataManager()
     >>> dm2['name'] = 'sally'
 
@@ -58,6 +56,27 @@ savepoint:
     False
 
 """
+
+def test_commit_after_rollback_for_dm_that_joins_after_savepoint():
+    """
+
+There was a problem handling data managers that joined after a
+savepoint.  If the savepoint was rolled back and then changes made,
+the dm would end up being joined twice, leading to extra tpc calls and pain.
+
+    >>> import transaction
+    >>> sp = transaction.savepoint()
+    >>> from transaction.tests import savepointsample
+    >>> dm = savepointsample.SampleSavepointDataManager()
+    >>> dm['name'] = 'bob'
+    >>> sp.rollback()
+    >>> dm['name'] = 'Bob'
+    >>> transaction.commit()
+    >>> dm['name']
+    'Bob'
+    """
+
+
 
 def test_suite():
     return unittest.TestSuite((

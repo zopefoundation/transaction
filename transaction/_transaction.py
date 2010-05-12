@@ -242,6 +242,13 @@ class Transaction(object):
                 transaction_savepoint._savepoints.append(
                     datamanager_savepoint)
 
+    def _unjoin(self, resource):
+        # Leave a transaction because a savepoint was rolled back on a resource
+        # that joined later.
+
+        # Don't use remove.  We don't want to assume anything about __eq__.
+        self._resources = [r for r in self._resources if r is not resource]
+
     def savepoint(self, optimistic=False):
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return, it raises
@@ -669,6 +676,7 @@ class AbortSavepoint:
 
     def rollback(self):
         self.datamanager.abort(self.transaction)
+        self.transaction._unjoin(self.datamanager)
 
 class NoRollbackSavepoint:
 

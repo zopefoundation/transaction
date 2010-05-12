@@ -1,11 +1,15 @@
 Changes
 =======
 
-1.0.2 (unreleased)
-------------------
+1.1.0 (1010-05-??)
 
-- TBD
+Bugs fixed:
+=======
 
+- Fixed a bug that caused extra commit calls to be made on data
+  managers under certain special circumstances.
+
+  https://mail.zope.org/pipermail/zodb-dev/2010-May/013329.html
 
 1.0.1 (2010-05-07)
 ------------------
@@ -15,25 +19,24 @@ Changes
 
 - Updated tests to remove use of deprecated ``zope.testing.doctest``.
 
-
 1.0.0 (2009-07-24)
 ------------------
 
-* Fix test that incorrectly relied on the order of a list that was generated
+- Fix test that incorrectly relied on the order of a list that was generated
   from a dict.
 
- * Remove crufty DEPENDENCIES.cfg left over from zpkg.
+- Remove crufty DEPENDENCIES.cfg left over from zpkg.
 
 1.0a1 (2007-12-18)
 ------------------
 
-* Initial release, branched from ZODB trunk on 2007-11-08 (aka
+= Initial release, branched from ZODB trunk on 2007-11-08 (aka
   "3.9.0dev").
 
-* Remove (deprecated) support for beforeCommitHook alias to
+- Remove (deprecated) support for beforeCommitHook alias to
   addBeforeCommitHook.
 
-* Add weakset tests.
+- Add weakset tests.
 
-* Remove unit tests that depend on ZODB.tests.utils from
+- Remove unit tests that depend on ZODB.tests.utils from
   test_transaction (these are actually integration tests).
