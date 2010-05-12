@@ -323,8 +323,14 @@ class IDataManager(zope.interface.Interface):
 
         Abort must be called outside of a two-phase commit.
 
-        Abort is called by the transaction manager to abort transactions
-        that are not yet in a two-phase commit.
+        Abort is called by the transaction manager to abort
+        transactions that are not yet in a two-phase commit.  It may
+        also be called when rolling back a savepoint made before the
+        data manager joined the transaction.
+
+        In any case, after abort is called, the data manager is no
+        longer participating in the transaction.  If there are new
+        changes, the data manager must rejoin the transaction.
         """
 
     # Two-phase commit protocol.  These methods are called by the ITransaction
