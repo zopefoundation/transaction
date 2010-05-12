@@ -17,11 +17,14 @@ It coordinates application code and resource managers, so that they
 are associated with the right transaction.
 """
 
+from transaction.weakset import WeakSet
+from transaction._transaction import Transaction
+from transaction.interfaces import TransientError
+
 import thread
 
-from transaction.weakset import WeakSet
 
-from transaction._transaction import Transaction
+
 
 # Used for deprecated arguments.  ZODB.utils.DEPRECATED_ARGUMENT was
 # too hard to use here, due to the convoluted import dance across
@@ -55,6 +58,7 @@ def _new_transaction(txn, synchs):
 # so that Transactions "see" synchronizers that get registered after the
 # Transaction object is constructed.
 
+
 class TransactionManager(object):
 
     def __init__(self):
@@ -67,6 +71,8 @@ class TransactionManager(object):
         txn = self._txn = Transaction(self._synchs, self)
         _new_transaction(txn, self._synchs)
         return txn
+
+    __enter__ = lambda self: self.begin()
 
     def get(self):
         if self._txn is None:
@@ -95,8 +101,33 @@ class TransactionManager(object):
     def abort(self):
         return self.get().abort()
 
+    def __exit__(self, t, v, tb):
+        if v is None:
+            self.commit()
+        else:
+            self.abort()
+
     def savepoint(self, optimistic=False):
         return self.get().savepoint(optimistic)
+
+    def attempts(self, number=3):
+        assert number > 0
+        while number:
+            number -= 1
+            if number:
+                yield Attempt(self)
+            else:
+                yield self
+
+    def _retryable(self, error_type, error):
+        if issubclass(error_type, TransientError):
+            return True
+
+        for dm in self.get()._resources:
+            should_retry = getattr(dm, 'should_retry', None)
+            if (should_retry is not None) and should_retry(error):
+                return True
+
 
 class ThreadTransactionManager(TransactionManager):
     """Thread-aware transaction manager.
@@ -153,3 +184,19 @@ class ThreadTransactionManager(TransactionManager):
         tid = thread.get_ident()
         ws = self._synchs[tid]
         ws.remove(synch)
+
+class Attempt(object):
+
+    def __init__(self, manager):
+        self.manager = manager
+
+    def __enter__(self):
+        return self.manager.__enter__()
+
+    def __exit__(self, t, v, tb):
+        if v is None:
+            self.manager.commit()
+        else:
+            retry = self.manager._retryable(t, v)
+            self.manager.abort()
+            return retry

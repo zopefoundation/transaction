@@ -21,10 +21,12 @@ from transaction._manager import TransactionManager
 from transaction._manager import ThreadTransactionManager
 
 manager = ThreadTransactionManager()
-get = manager.get
+get = __enter__ = manager.get
 begin = manager.begin
 commit = manager.commit
 abort = manager.abort
+__exit__ = manager.__exit__
 doom = manager.doom
 isDoomed = manager.isDoomed
 savepoint = manager.savepoint
+attempts = manager.attempts

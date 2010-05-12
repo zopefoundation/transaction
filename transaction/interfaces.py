@@ -11,10 +11,6 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Transaction Interfaces
-
-$Id$
-"""
 
 import zope.interface
 
@@ -123,7 +119,7 @@ class ITransaction(zope.interface.Interface):
         This is called from the application.  This can only be called
         before the two-phase commit protocol has been started.
         """
-    
+
     def doom():
         """Doom the transaction.
 
@@ -231,7 +227,7 @@ class ITransaction(zope.interface.Interface):
         hooks.  Applications should take care to avoid creating infinite loops
         by recursively registering hooks.
 
-        Hooks are called only for a top-level commit.  A 
+        Hooks are called only for a top-level commit.  A
         savepoint creation does not call any hooks.  If the
         transaction is aborted, hooks are not called, and are discarded.
         Calling a hook "consumes" its registration too:  hook registrations
@@ -252,7 +248,7 @@ class ITransaction(zope.interface.Interface):
 
     def addAfterCommitHook(hook, args=(), kws=None):
          """Register a hook to call after a transaction commit attempt.
-         
+
          The specified hook function will be called after the transaction
          commit succeeds or aborts.  The first argument passed to the hook
          is a Boolean value, true if the commit succeeded, or false if the
@@ -262,14 +258,14 @@ class ITransaction(zope.interface.Interface):
          (only the true/false success argument is passed).  `kws` is a
          dictionary of keyword argument names and values to be passed, or
          the default None (no keyword arguments are passed).
-         
+
          Multiple hooks can be registered and will be called in the order they
          were registered (first registered, first called).  This method can
          also be called from a hook:  an executing hook can register more
          hooks.  Applications should take care to avoid creating infinite loops
          by recursively registering hooks.
-         
-         Hooks are called only for a top-level commit.  A 
+
+         Hooks are called only for a top-level commit.  A
          savepoint creation does not call any hooks.  Calling a
          hook "consumes" its registration:  hook registrations do not
          persist across transactions.  If it's desired to call the same
@@ -486,3 +482,9 @@ class TransactionFailedError(TransactionError):
     """
 class DoomedTransaction(TransactionError):
     """A commit was attempted on a transaction that was doomed."""
+
+class TransientError(TransactionError):
+    """An error has occured when performing a transaction.
+
+    It's possible that retrying the transaction will succeed.
+    """

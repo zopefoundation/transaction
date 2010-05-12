@@ -2,9 +2,32 @@ Changes
 =======
 
 1.1.0 (1010-05-??)
+------------------
+
+New Features:
+
+- Transaction managers and the transaction module can be used with the
+  with statement to define transaction boundaries, as in::
+
+     with transaction:
+         ... do some things ...
+
+  See transaction/tests/convenience.txt for more details.
+
+- There is a new iterator function that automates dealing with
+  transient errors (such as ZODB confict errors). For example, in::
+
+     for attempt in transaction.attempts(5):
+         with attempt:
+             ... do some things ..
+
+  If the work being done raises transient errors, the transaction will
+  be retried up to 5 times.
+
+  See transaction/tests/convenience.txt for more details.
 
 Bugs fixed:
-=======
+
 
 - Fixed a bug that caused extra commit calls to be made on data
   managers under certain special circumstances.

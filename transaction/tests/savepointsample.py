@@ -84,6 +84,7 @@ class SampleDataManager(UserDict.DictMixin):
             self.transaction.join(self)
 
     def _resetTransaction(self):
+        self.last_note = getattr(self.transaction, 'description', None)
         self.transaction = None
         self.tpc_phase = None
 

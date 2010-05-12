@@ -39,6 +39,7 @@ TODO
 from doctest import DocTestSuite, DocFileSuite
 
 import struct
+import sys
 import unittest
 import warnings
 
@@ -688,11 +689,15 @@ def test_addAfterCommitHook():
     """
 
 def test_suite():
-    return unittest.TestSuite((
+    suite = unittest.TestSuite((
         DocFileSuite('doom.txt'),
         DocTestSuite(),
         unittest.makeSuite(TransactionTests),
         ))
+    if sys.version_info >= (2, 6):
+        suite.addTest(DocFileSuite('convenience.txt'))
+
+    return suite
 
 # additional_tests is for setuptools "setup.py test" support
 additional_tests = test_suite
