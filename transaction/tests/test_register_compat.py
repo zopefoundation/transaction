@@ -91,6 +91,7 @@ Clean up:
 >>> transaction.abort()
 """
 
+import doctest
 import transaction
 
 class Object(object):
@@ -147,8 +148,6 @@ class TestConnection:
     def abort(self, obj, txn):
         obj.abort()
         self.aborted.append(obj)
-
-import doctest
 
 def test_suite():
     return doctest.DocTestSuite()
