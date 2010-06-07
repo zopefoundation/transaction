@@ -1,6 +1,10 @@
 Changes
 =======
 
+- Add support for savepoint.release(). Some databases only support a limited
+  number of savepoints or subtransactions, this provides an opportunity for a
+  data manager to free those resources.
+
 1.1.0 (1010-05-12)
 ------------------
 

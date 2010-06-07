@@ -404,9 +404,6 @@ class ResourceManager(object):
         self.sp += 1
         return SavePoint(self)
 
-    def discard(self, transaction):
-        pass
-
 class SavePoint(object):
 
     def __init__(self, rm):
@@ -423,9 +420,6 @@ class SavePoint(object):
                             self.sp, self.rm.sp)
         self.rm.sp = self.sp
         self.rm.delta = self.delta
-
-    def discard(self):
-        pass
 
 def test_suite():
     from doctest import DocTestSuite

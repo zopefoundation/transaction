@@ -187,12 +187,59 @@ However, using a savepoint invalidates any savepoints that come after it:
     >>> savepoint2.rollback()
     Traceback (most recent call last):
     ...
-    InvalidSavepointRollbackError
+    InvalidSavepointError
 
     >>> savepoint1.rollback()
     Traceback (most recent call last):
     ...
-    InvalidSavepointRollbackError
+    InvalidSavepointError
+
+    >>> transaction.abort()
+
+
+Savepoint release
+-----------------
+
+Some data managers may only support a limited number of savepoints.
+
+    >>> dm['bob-balance'] = 100.0
+    >>> dm['bob-balance']
+    100.0
+    >>> savepoint1 = transaction.savepoint()
+
+    >>> dm['bob-balance'] = 200.0
+    >>> dm['bob-balance']
+    200.0
+    >>> savepoint2 = transaction.savepoint()
+
+    >>> dm['bob-balance'] = 300.0
+    >>> dm['bob-balance']
+    300.0
+    >>> savepoint3 = transaction.savepoint()
+
+To release resources on the data manager, a savepoint may be released:
+
+    >>> savepoint2.release()
+
+The savepoint then becomes invalid and may no longer be used:
+
+    >>> savepoint2.rollback()
+    Traceback (most recent call last):
+    ...
+    InvalidSavepointError
+
+Subsequent savepoints are invalidated:
+
+    >>> savepoint3.rollback()
+    Traceback (most recent call last):
+    ...
+    InvalidSavepointError
+
+Previous savepoints continue to be valid:
+
+    >>> savepoint1.rollback()
+    >>> dm['bob-balance']
+    100.0
 
     >>> transaction.abort()
 
