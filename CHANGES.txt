@@ -1,6 +1,15 @@
 Changes
 =======
 
+Next release
+------------
+
+Bug Fixes:
+
+- Code in ``_transaction.py`` held on to local references to traceback
+  objects after calling ``sys.exc_info()`` to get one, causing
+  potential reference leakages.
+
 1.1.0 (1010-05-12)
 ------------------
 

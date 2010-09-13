@@ -329,9 +329,15 @@ class Transaction(object):
             self._commitResources()
             self.status = Status.COMMITTED
         except:
-            t, v, tb = self._saveAndGetCommitishError()
-            self._callAfterCommitHooks(status=False)
-            raise t, v, tb
+            t = None
+            v = None
+            tb = None
+            try:
+                t, v, tb = self._saveAndGetCommitishError()
+                self._callAfterCommitHooks(status=False)
+                raise t, v, tb
+            finally:
+                del t, v, tb
         else:
             if self._manager:
                 self._manager.free(self)
@@ -343,14 +349,21 @@ class Transaction(object):
         self.status = Status.COMMITFAILED
         # Save the traceback for TransactionFailedError.
         ft = self._failure_traceback = StringIO()
-        t, v, tb = sys.exc_info()
-        # Record how we got into commit().
-        traceback.print_stack(sys._getframe(1), None, ft)
-        # Append the stack entries from here down to the exception.
-        traceback.print_tb(tb, None, ft)
-        # Append the exception type and value.
-        ft.writelines(traceback.format_exception_only(t, v))
-        return t, v, tb
+        t = None
+        v = None
+        tb = None
+        try:
+            t, v, tb = sys.exc_info()
+            # Record how we got into commit().
+            traceback.print_stack(sys._getframe(1), None, ft)
+            # Append the stack entries from here down to the exception.
+            traceback.print_tb(tb, None, ft)
+            # Append the exception type and value.
+            ft.writelines(traceback.format_exception_only(t, v))
+            return t, v, tb
+        finally:
+            del t, v, tb
+        
 
     def _saveAndRaiseCommitishError(self):
         t, v, tb = self._saveAndGetCommitishError()
@@ -442,10 +455,13 @@ class Transaction(object):
             # to revert the changes in each of the resource managers.
             t, v, tb = sys.exc_info()
             try:
-                self._cleanup(L)
+                try:
+                    self._cleanup(L)
+                finally:
+                    self._synchronizers.map(lambda s: s.afterCompletion(self))
+                raise t, v, tb
             finally:
-                self._synchronizers.map(lambda s: s.afterCompletion(self))
-            raise t, v, tb
+                del t, v, tb
 
     def _cleanup(self, L):
         # Called when an exception occurs during tpc_vote or tpc_finish.
@@ -469,25 +485,32 @@ class Transaction(object):
 
         self._synchronizers.map(lambda s: s.beforeCompletion(self))
 
-        tb = None
-        for rm in self._resources:
-            try:
-                rm.abort(self)
-            except:
-                if tb is None:
-                    t, v, tb = sys.exc_info()
-                self.log.error("Failed to abort resource manager: %s",
-                               rm, exc_info=sys.exc_info())
+        try:
 
-        if self._manager:
-            self._manager.free(self)
+            t = None
+            v = None
+            tb = None
+            
+            for rm in self._resources:
+                try:
+                    rm.abort(self)
+                except:
+                    if tb is None:
+                        t, v, tb = sys.exc_info()
+                    self.log.error("Failed to abort resource manager: %s",
+                                   rm, exc_info=sys.exc_info())
 
-        self._synchronizers.map(lambda s: s.afterCompletion(self))
+            if self._manager:
+                self._manager.free(self)
 
-        self.log.debug("abort")
+            self._synchronizers.map(lambda s: s.afterCompletion(self))
 
-        if tb is not None:
-            raise t, v, tb
+            self.log.debug("abort")
+
+            if tb is not None:
+                raise t, v, tb
+        finally:
+            del t, v, tb
 
     def note(self, text):
         text = text.strip()
@@ -542,19 +565,25 @@ class MultiObjectResourceAdapter(object):
         self.manager.tpc_vote(txn)
 
     def abort(self, txn):
+        t = None
+        v = None
         tb = None
-        for o in self.objects:
-            try:
-                self.manager.abort(o, txn)
-            except:
-                # Capture the first exception and re-raise it after
-                # aborting all the other objects.
-                if tb is None:
-                    t, v, tb = sys.exc_info()
-                txn.log.error("Failed to abort object: %s",
-                              object_hint(o), exc_info=sys.exc_info())
-        if tb is not None:
-            raise t, v, tb
+        try:
+            for o in self.objects:
+                try:
+                    self.manager.abort(o, txn)
+                except:
+                    # Capture the first exception and re-raise it after
+                    # aborting all the other objects.
+                    if tb is None:
+                        t, v, tb = sys.exc_info()
+                    txn.log.error("Failed to abort object: %s",
+                                  object_hint(o), exc_info=sys.exc_info())
+
+            if tb is not None:
+                raise t, v, tb
+        finally:
+            del t, v, tb
 
 def rm_cmp(rm1, rm2):
     return cmp(rm1.sortKey(), rm2.sortKey())
