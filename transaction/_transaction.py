@@ -366,8 +366,15 @@ class Transaction(object):
         
 
     def _saveAndRaiseCommitishError(self):
-        t, v, tb = self._saveAndGetCommitishError()
-        raise t, v, tb
+        t = None
+        v = None
+        tb = None
+        try:
+            t, v, tb = self._saveAndGetCommitishError()
+            raise t, v, tb
+        finally:
+            del t, v, tb
+            
 
     def getBeforeCommitHooks(self):
         return iter(self._before_commit)
