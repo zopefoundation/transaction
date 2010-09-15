@@ -41,10 +41,7 @@ from doctest import DocTestSuite, DocFileSuite
 import struct
 import sys
 import unittest
-import warnings
-
 import transaction
-from transaction.tests.warnhook import WarningsHook
 
 _ADDRESS_MASK = 256 ** struct.calcsize('P')
 def positive_id(obj):
@@ -244,6 +241,25 @@ class TransactionTests(unittest.TestCase):
 ##        else:
 ##            self.fail("Hosed Application didn't stop commits")
 
+
+class Test_oid_repr(unittest.TestCase):
+    def _callFUT(self, oid):
+        from transaction._transaction import oid_repr
+        return oid_repr(oid)
+
+    def test_as_nonstring(self):
+        self.assertEqual(self._callFUT(123), '123')
+
+    def test_as_string_not_8_chars(self):
+        self.assertEqual(self._callFUT('a'), "'a'")
+
+    def test_as_string_z64(self):
+        s = '\0'*8
+        self.assertEqual(self._callFUT(s), '0x00')
+
+    def test_as_string_all_Fs(self):
+        s = '\1'*8
+        self.assertEqual(self._callFUT(s), '0x0101010101010101')
 
 class DataObject:
 
@@ -748,6 +764,7 @@ def test_suite():
         DocFileSuite('doom.txt'),
         DocTestSuite(),
         unittest.makeSuite(TransactionTests),
+        unittest.makeSuite(Test_oid_repr),
         ))
     if sys.version_info >= (2, 6):
         suite.addTest(DocFileSuite('convenience.txt'))

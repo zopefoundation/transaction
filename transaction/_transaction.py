@@ -97,10 +97,10 @@ committed or aborted.  The methods are passed the current Transaction
 as their only argument.
 """
 
+import binascii
 import logging
 import sys
 import thread
-import warnings
 import weakref
 import traceback
 from cStringIO import StringIO
@@ -612,7 +612,7 @@ def object_hint(o):
 def oid_repr(oid):
     if isinstance(oid, str) and len(oid) == 8:
         # Convert to hex and strip leading zeroes.
-        as_hex = hexlify(oid).lstrip('0')
+        as_hex = binascii.hexlify(oid).lstrip('0')
         # Ensure two characters per input byte.
         if len(as_hex) & 1:
             as_hex = '0' + as_hex

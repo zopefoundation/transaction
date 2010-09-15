@@ -10,6 +10,9 @@ Bug Fixes:
   objects after calling ``sys.exc_info()`` to get one, causing
   potential reference leakages.
 
+- Fixed ``hexlify`` NameError in ``transaction._transaction.oid_repr``
+  and add test.
+
 1.1.0 (1010-05-12)
 ------------------
 
