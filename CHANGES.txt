@@ -4,6 +4,11 @@ Changes
 Next release
 ------------
 
+- ...
+
+1.1.1 (2010-09-16)
+------------------
+
 Bug Fixes:
 
 - Code in ``_transaction.py`` held on to local references to traceback
