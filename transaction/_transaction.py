@@ -55,8 +55,8 @@ arguments at the start of the commit (but not for substransaction commits).
 After-commit hook
 ------------------
 
-Sometimes, applications want to execute code after a transaction is
-committed or aborted. For example, one might want to launch non
+Sometimes, applications want to execute code after a transaction commit
+attempt succeeds or aborts. For example, one might want to launch non
 transactional code after a successful commit. Or still someone might
 want to launch asynchronous code after.  A post-commit hook is
 available for such use cases: use addAfterCommitHook(), passing it a
@@ -64,7 +64,7 @@ callable and arguments.  The callable will be called with a Boolean
 value representing the status of the commit operation as first
 argument (true if successfull or false iff aborted) preceding its
 arguments at the start of the commit (but not for substransaction
-commits).
+commits). Commit hooks are not called for transaction.abort().
 
 Error handling
 --------------
