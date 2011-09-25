@@ -12,30 +12,8 @@ We can now use the with statement to define transaction boundaries.
 
     >>> import transaction.tests.savepointsample
     >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
-    >>> dm.keys()
+    >>> list(dm.keys())
     []
-
-We can use the transaction module directly:
-
-    >>> with transaction as t:
-    ...     dm['z'] = 1
-    ...     t.note('test 1')
-
-    >>> dm['z']
-    1
-
-    >>> dm.last_note
-    'test 1'
-
-    >>> with transaction:
-    ...     dm['z'] = 2
-    ...     xxx
-    Traceback (most recent call last):
-    ...
-    NameError: name 'xxx' is not defined
-
-    >>> dm['z']
-    1
 
 We can use it with a manager:
 
@@ -49,7 +27,7 @@ We can use it with a manager:
     >>> dm.last_note
     'test 3'
 
-    >>> with transaction:
+    >>> with transaction.manager:
     ...     dm['z'] = 4
     ...     xxx
     Traceback (most recent call last):
@@ -58,6 +36,10 @@ We can use it with a manager:
 
     >>> dm['z']
     3
+
+On Python 2, you can also abbreviate ``with transaction.manager:`` as ``with
+transaction:``.  This does not work on Python 3 (see see
+http://bugs.python.org/issue12022).
 
 Retries
 -------
@@ -68,7 +50,7 @@ overcome transient failures.  This typically looks something like::
 
     for i in range(3):
         try:
-           with transaction:
+           with transaction.manager:
                ... some something ...
         except SomeTransientException:
            contine
@@ -82,7 +64,7 @@ we'll use a contrived example:
 
 
     >>> ntry = 0
-    >>> with transaction:
+    >>> with transaction.manager:
     ...      dm['ntry'] = 0
 
     >>> import transaction.interfaces
@@ -92,7 +74,7 @@ we'll use a contrived example:
     >>> for attempt in transaction.manager.attempts():
     ...     with attempt as t:
     ...         t.note('test')
-    ...         print dm['ntry'], ntry
+    ...         print("%s %s" % (dm['ntry'], ntry))
     ...         ntry += 1
     ...         dm['ntry'] = ntry
     ...         if ntry % 3:
@@ -143,7 +125,7 @@ We can use the default transaction manager:
     >>> for attempt in transaction.attempts():
     ...     with attempt as t:
     ...         t.note('test')
-    ...         print dm['ntry'], ntry
+    ...         print("%s %s" % (dm['ntry'], ntry))
     ...         ntry += 1
     ...         dm['ntry'] = ntry
     ...         if ntry % 3:
@@ -165,11 +147,11 @@ attempted again.
 
     >>> ntry = 0
     >>> dm2 = DM()
-    >>> with transaction:
+    >>> with transaction.manager:
     ...     dm2['ntry'] = 0
     >>> for attempt in transaction.manager.attempts():
     ...     with attempt:
-    ...         print dm['ntry'], ntry
+    ...         print("%s %s" % (dm['ntry'], ntry))
     ...         ntry += 1
     ...         dm['ntry'] = ntry
     ...         dm2['ntry'] = ntry

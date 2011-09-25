@@ -19,11 +19,11 @@ savepoints.
 See savepoint.txt in the transaction package.
 """
 
-import UserDict
 from zope import interface
 import transaction.interfaces
 
-class SampleDataManager(UserDict.DictMixin):
+@interface.implementer(transaction.interfaces.IDataManager)
+class SampleDataManager(object):
     """Sample implementation of data manager that doesn't support savepoints
 
     This data manager stores named simple values, like strings and numbers.
@@ -70,6 +70,17 @@ class SampleDataManager(UserDict.DictMixin):
 
     def keys(self):
         return self.uncommitted.keys()
+
+    __iter__ = keys
+
+    def __contains__(self, k):
+        return k in self.uncommitted
+
+    def __len__(self):
+        return len(self.keys())
+
+    def __repr__(self):
+        return repr(self.uncommitted)
 
     #
     #######################################################################
@@ -151,6 +162,7 @@ class SampleDataManager(UserDict.DictMixin):
     #
     #######################################################################
 
+@interface.implementer(transaction.interfaces.ISavepointDataManager)
 class SampleSavepointDataManager(SampleDataManager):
     """Sample implementation of a savepoint-supporting data manager
 
@@ -172,6 +184,7 @@ class SampleSavepointDataManager(SampleDataManager):
         # savepoint was done again.  IOW, copy() is necessary.
         self.uncommitted = savepoint.data.copy()
 
+@interface.implementer(transaction.interfaces.IDataManagerSavepoint)
 class SampleSavepoint:
 
     interface.implements(transaction.interfaces.IDataManagerSavepoint)

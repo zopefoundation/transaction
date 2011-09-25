@@ -77,13 +77,11 @@ The data manager is unchanged at this point:
 Attempting to commit a doomed transaction any number of times raises a
 DoomedTransaction:
 
-    >>> txn.commit() # doctest: +ELLIPSIS
+    >>> txn.commit() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-        ...
     DoomedTransaction
-    >>> txn.commit() # doctest: +ELLIPSIS
+    >>> txn.commit() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-        ...
     DoomedTransaction
 
 But still leaves the data manager unchanged:

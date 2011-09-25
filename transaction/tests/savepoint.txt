@@ -75,14 +75,14 @@ way, it rolls back all of its changes and prints the error:
     ...             try:
     ...                 dm[name+'-balance'] += amount
     ...                 validate_account(name)
-    ...             except ValueError, error:
+    ...             except ValueError as error:
     ...                 entry_savepoint.rollback()
-    ...                 print 'Error', str(error)
+    ...                 print("%s %s" % ('Error', str(error)))
     ...             else:
-    ...                 print 'Updated', name
-    ...     except Exception, error:
+    ...                 print("%s %s" % ('Updated', name))
+    ...     except Exception as error:
     ...         savepoint.rollback()
-    ...         print 'Unexpected exception', error
+    ...         print("%s %s" % ('Unexpected exception', error))
 
 Now let's try applying some entries:
 
@@ -184,12 +184,12 @@ However, using a savepoint invalidates any savepoints that come after it:
     >>> dm['bob-balance']
     100.0
 
-    >>> savepoint2.rollback()
+    >>> savepoint2.rollback() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     InvalidSavepointRollbackError
 
-    >>> savepoint1.rollback()
+    >>> savepoint1.rollback() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     InvalidSavepointRollbackError
@@ -207,7 +207,7 @@ savepoints:
     >>> dm_no_sp['name'] = 'bob'
     >>> transaction.commit()
     >>> dm_no_sp['name'] = 'sally'
-    >>> savepoint = transaction.savepoint()
+    >>> savepoint = transaction.savepoint() #doctest +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     TypeError: ('Savepoints unsupported', {'name': 'bob'})
@@ -228,8 +228,8 @@ to roll back:
 
     >>> dm_no_sp['name'] = 'sam'
     >>> savepoint = transaction.savepoint(1)
-    >>> savepoint.rollback()
-    Traceback (most recent call last):
+    >>> savepoint.rollback() #doctest +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last): 
     ...
     TypeError: ('Savepoints unsupported', {'name': 'sam'})
 
@@ -245,7 +245,7 @@ the transaction is aborted.
 In the previous example, we got an error when we tried to rollback the
 savepoint.  If we try to commit the transaction, the commit will fail:
 
-    >>> transaction.commit() # doctest: +ELLIPSIS
+    >>> transaction.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     TransactionFailedError: An operation previously failed, with traceback:
@@ -262,12 +262,12 @@ data manager that didn't support savepoints:
 
     >>> dm_no_sp['name'] = 'sally'
     >>> dm['name'] = 'sally'
-    >>> savepoint = transaction.savepoint()
+    >>> savepoint = transaction.savepoint() # doctest +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     TypeError: ('Savepoints unsupported', {'name': 'sue'})
 
-    >>> transaction.commit() # doctest: +ELLIPSIS
+    >>> transaction.commit() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     TransactionFailedError: An operation previously failed, with traceback:

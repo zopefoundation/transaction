@@ -486,6 +486,7 @@ class TransactionFailedError(TransactionError):
     invoking abort() on the transaction, or begin() on its transaction
     manager.
     """
+
 class DoomedTransaction(TransactionError):
     """A commit was attempted on a transaction that was doomed."""
 
