@@ -207,7 +207,7 @@ savepoints:
     >>> dm_no_sp['name'] = 'bob'
     >>> transaction.commit()
     >>> dm_no_sp['name'] = 'sally'
-    >>> savepoint = transaction.savepoint() #doctest +IGNORE_EXCEPTION_DETAIL
+    >>> transaction.savepoint() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     TypeError: ('Savepoints unsupported', {'name': 'bob'})
@@ -228,7 +228,7 @@ to roll back:
 
     >>> dm_no_sp['name'] = 'sam'
     >>> savepoint = transaction.savepoint(1)
-    >>> savepoint.rollback() #doctest +IGNORE_EXCEPTION_DETAIL
+    >>> savepoint.rollback() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last): 
     ...
     TypeError: ('Savepoints unsupported', {'name': 'sam'})
@@ -262,7 +262,7 @@ data manager that didn't support savepoints:
 
     >>> dm_no_sp['name'] = 'sally'
     >>> dm['name'] = 'sally'
-    >>> savepoint = transaction.savepoint() # doctest +IGNORE_EXCEPTION_DETAIL
+    >>> savepoint = transaction.savepoint() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
     TypeError: ('Savepoints unsupported', {'name': 'sue'})
