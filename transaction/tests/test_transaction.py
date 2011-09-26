@@ -463,7 +463,7 @@ def test_addBeforeCommitHook():
       ...     pass
       >>> class FailingDataManager:
       ...     def tpc_begin(self, txn, sub=False):
-      ...         raise CommitFailure
+      ...         raise CommitFailure('failed')
       ...     def abort(self, txn):
       ...         pass
 
@@ -471,10 +471,10 @@ def test_addBeforeCommitHook():
       >>> t.join(FailingDataManager())
 
       >>> t.addBeforeCommitHook(hook, '2')
-      >>> t.commit() #doctest +IGNORE_EXCEPTION_DETAIL
+      >>> t.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
       Traceback (most recent call last):
       ...
-      CommitFailure
+      CommitFailure: failed
       >>> log
       ["arg '2' kw1 'no_kw1' kw2 'no_kw2'"]
       >>> reset_log()
@@ -601,7 +601,7 @@ def test_addAfterCommitHook():
       ...     pass
       >>> class FailingDataManager:
       ...     def tpc_begin(self, txn):
-      ...         raise CommitFailure
+      ...         raise CommitFailure('failed')
       ...     def abort(self, txn):
       ...         pass
 
@@ -609,10 +609,10 @@ def test_addAfterCommitHook():
       >>> t.join(FailingDataManager())
 
       >>> t.addAfterCommitHook(hook, '2')
-      >>> t.commit() #doctest +IGNORE_EXCEPTION_DETAIL
+      >>> t.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
       Traceback (most recent call last):
       ...
-      CommitFailure
+      CommitFailure: failed
       >>> log
       ["False arg '2' kw1 'no_kw1' kw2 'no_kw2'"]
       >>> reset_log()

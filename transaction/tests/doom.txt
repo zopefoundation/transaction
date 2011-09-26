@@ -79,10 +79,10 @@ DoomedTransaction:
 
     >>> txn.commit() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-    DoomedTransaction
+    DoomedTransaction: transaction doomed, cannot commit
     >>> txn.commit() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
-    DoomedTransaction
+    DoomedTransaction: transaction doomed, cannot commit
 
 But still leaves the data manager unchanged:
 

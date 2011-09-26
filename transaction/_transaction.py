@@ -315,7 +315,8 @@ class Transaction(object):
 
     def commit(self):
         if self.status is Status.DOOMED:
-            raise interfaces.DoomedTransaction()
+            raise interfaces.DoomedTransaction(
+                'transaction doomed, cannot commit')
 
         if self._savepoint2index:
             self._invalidate_all_savepoints()
@@ -700,7 +701,8 @@ class Savepoint:
     def rollback(self):
         transaction = self.transaction
         if transaction is None:
-            raise interfaces.InvalidSavepointRollbackError
+            raise interfaces.InvalidSavepointRollbackError(
+                'invalidated by a later savepoint')
         transaction._remove_and_invalidate_after(self)
 
         try:

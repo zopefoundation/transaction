@@ -187,12 +187,12 @@ However, using a savepoint invalidates any savepoints that come after it:
     >>> savepoint2.rollback() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
-    InvalidSavepointRollbackError
+    InvalidSavepointRollbackError: invalidated by a later savepoint
 
     >>> savepoint1.rollback() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
-    InvalidSavepointRollbackError
+    InvalidSavepointRollbackError: invalidated by a later savepoint
 
     >>> transaction.abort()
 
