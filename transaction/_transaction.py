@@ -100,13 +100,16 @@ as their only argument.
 import binascii
 import logging
 import sys
-import thread
 import weakref
 import traceback
-from cStringIO import StringIO
 
 from zope import interface
 
+from transaction.compat import reraise
+from transaction.compat import get_thread_ident
+from transaction.compat import native_
+from transaction.compat import bytes_
+from transaction.compat import StringIO
 from transaction.weakset import WeakSet
 from transaction.interfaces import TransactionFailedError
 from transaction import interfaces
@@ -174,7 +177,7 @@ class Transaction(object):
         # directly by storages, leading underscore notwithstanding.
         self._extension = {}
 
-        self.log = logging.getLogger("txn.%d" % thread.get_ident())
+        self.log = logging.getLogger("txn.%d" % get_thread_ident())
         self.log.debug("new transaction")
 
         # If a commit fails, the traceback is saved in _failure_traceback.
@@ -272,8 +275,8 @@ class Transaction(object):
     def _remove_and_invalidate_after(self, savepoint):
         savepoint2index = self._savepoint2index
         index = savepoint2index[savepoint]
-        # use items() to make copy to avoid mutating while iterating
-        for savepoint, i in savepoint2index.items():
+        # use list(items()) to make copy to avoid mutating while iterating
+        for savepoint, i in list(savepoint2index.items()):
             if i > index:
                 savepoint.transaction = None # invalidate
                 del savepoint2index[savepoint]
@@ -312,7 +315,8 @@ class Transaction(object):
 
     def commit(self):
         if self.status is Status.DOOMED:
-            raise interfaces.DoomedTransaction()
+            raise interfaces.DoomedTransaction(
+                'transaction doomed, cannot commit')
 
         if self._savepoint2index:
             self._invalidate_all_savepoints()
@@ -335,7 +339,7 @@ class Transaction(object):
             try:
                 t, v, tb = self._saveAndGetCommitishError()
                 self._callAfterCommitHooks(status=False)
-                raise t, v, tb
+                reraise(t, v, tb)
             finally:
                 del t, v, tb
         else:
@@ -371,7 +375,7 @@ class Transaction(object):
         tb = None
         try:
             t, v, tb = self._saveAndGetCommitishError()
-            raise t, v, tb
+            reraise(t, v, tb)
         finally:
             del t, v, tb
             
@@ -435,7 +439,7 @@ class Transaction(object):
         # Execute the two-phase commit protocol.
 
         L = list(self._resources)
-        L.sort(rm_cmp)
+        L.sort(key=rm_key)
         try:
             for rm in L:
                 rm.tpc_begin(self)
@@ -466,7 +470,7 @@ class Transaction(object):
                     self._cleanup(L)
                 finally:
                     self._synchronizers.map(lambda s: s.afterCompletion(self))
-                raise t, v, tb
+                reraise(t, v, tb)
             finally:
                 del t, v, tb
 
@@ -515,7 +519,7 @@ class Transaction(object):
             self.log.debug("abort")
 
             if tb is not None:
-                raise t, v, tb
+                reraise(t, v, tb)
         finally:
             del t, v, tb
 
@@ -588,12 +592,14 @@ class MultiObjectResourceAdapter(object):
                                   object_hint(o), exc_info=sys.exc_info())
 
             if tb is not None:
-                raise t, v, tb
+                reraise(t, v, tb)
         finally:
             del t, v, tb
 
-def rm_cmp(rm1, rm2):
-    return cmp(rm1.sortKey(), rm2.sortKey())
+def rm_key(rm):
+    func = getattr(rm, 'sortKey', None)
+    if func is not None:
+        return func()
 
 def object_hint(o):
     """Return a string describing the object.
@@ -612,7 +618,8 @@ def object_hint(o):
 def oid_repr(oid):
     if isinstance(oid, str) and len(oid) == 8:
         # Convert to hex and strip leading zeroes.
-        as_hex = binascii.hexlify(oid).lstrip('0')
+        as_hex = native_(
+            binascii.hexlify(bytes_(oid, 'ascii')), 'ascii').lstrip('0')
         # Ensure two characters per input byte.
         if len(as_hex) & 1:
             as_hex = '0' + as_hex
@@ -694,7 +701,8 @@ class Savepoint:
     def rollback(self):
         transaction = self.transaction
         if transaction is None:
-            raise interfaces.InvalidSavepointRollbackError
+            raise interfaces.InvalidSavepointRollbackError(
+                'invalidated by a later savepoint')
         transaction._remove_and_invalidate_after(self)
 
         try:

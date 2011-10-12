@@ -307,7 +307,7 @@ class BasicJar:
 
     def check(self, method):
         if self.tracing:
-            print '%s calling method %s'%(str(self.tracing),method)
+            print('%s calling method %s'%(str(self.tracing),method))
 
         if method in self.errors:
             raise TestTxnException("error %s" % method)
@@ -402,13 +402,14 @@ def test_addBeforeCommitHook():
 
     Now register the hook with a transaction.
 
+      >>> from transaction.compat import func_name
       >>> import transaction
       >>> t = transaction.begin()
       >>> t.addBeforeCommitHook(hook, '1')
 
     We can see that the hook is indeed registered.
 
-      >>> [(hook.func_name, args, kws)
+      >>> [(func_name(hook), args, kws)
       ...  for hook, args, kws in t.getBeforeCommitHooks()]
       [('hook', ('1',), {})]
 
@@ -462,7 +463,7 @@ def test_addBeforeCommitHook():
       ...     pass
       >>> class FailingDataManager:
       ...     def tpc_begin(self, txn, sub=False):
-      ...         raise CommitFailure
+      ...         raise CommitFailure('failed')
       ...     def abort(self, txn):
       ...         pass
 
@@ -470,10 +471,10 @@ def test_addBeforeCommitHook():
       >>> t.join(FailingDataManager())
 
       >>> t.addBeforeCommitHook(hook, '2')
-      >>> t.commit()
+      >>> t.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
       Traceback (most recent call last):
       ...
-      CommitFailure
+      CommitFailure: failed
       >>> log
       ["arg '2' kw1 'no_kw1' kw2 'no_kw2'"]
       >>> reset_log()
@@ -486,7 +487,7 @@ def test_addBeforeCommitHook():
 
     They are returned in the same order by getBeforeCommitHooks.
 
-      >>> [(hook.func_name, args, kws)     #doctest: +NORMALIZE_WHITESPACE
+      >>> [(func_name(hook), args, kws)  #doctest: +NORMALIZE_WHITESPACE
       ...  for hook, args, kws in t.getBeforeCommitHooks()]
       [('hook', ('4',), {'kw1': '4.1'}),
        ('hook', ('5',), {'kw2': '5.2'})]
@@ -539,13 +540,14 @@ def test_addAfterCommitHook():
 
     Now register the hook with a transaction.
 
+      >>> from transaction.compat import func_name
       >>> import transaction
       >>> t = transaction.begin()
       >>> t.addAfterCommitHook(hook, '1')
 
     We can see that the hook is indeed registered.
 
-      >>> [(hook.func_name, args, kws)
+      >>> [(func_name(hook), args, kws)
       ...  for hook, args, kws in t.getAfterCommitHooks()]
       [('hook', ('1',), {})]
 
@@ -599,7 +601,7 @@ def test_addAfterCommitHook():
       ...     pass
       >>> class FailingDataManager:
       ...     def tpc_begin(self, txn):
-      ...         raise CommitFailure
+      ...         raise CommitFailure('failed')
       ...     def abort(self, txn):
       ...         pass
 
@@ -607,10 +609,10 @@ def test_addAfterCommitHook():
       >>> t.join(FailingDataManager())
 
       >>> t.addAfterCommitHook(hook, '2')
-      >>> t.commit()
+      >>> t.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
       Traceback (most recent call last):
       ...
-      CommitFailure
+      CommitFailure: failed
       >>> log
       ["False arg '2' kw1 'no_kw1' kw2 'no_kw2'"]
       >>> reset_log()
@@ -623,7 +625,7 @@ def test_addAfterCommitHook():
 
     They are returned in the same order by getAfterCommitHooks.
 
-      >>> [(hook.func_name, args, kws)     #doctest: +NORMALIZE_WHITESPACE
+      >>> [(func_name(hook), args, kws)     #doctest: +NORMALIZE_WHITESPACE
       ...  for hook, args, kws in t.getAfterCommitHooks()]
       [('hook', ('4',), {'kw1': '4.1'}),
        ('hook', ('5',), {'kw2': '5.2'})]
@@ -711,18 +713,18 @@ def bug239086():
 
     >>> import transaction.tests.savepointsample
     >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
-    >>> dm.keys()
+    >>> list(dm.keys())
     []
 
     >>> class Sync:
     ...      def __init__(self, label):
     ...          self.label = label
     ...      def beforeCompletion(self, t):
-    ...          print self.label, 'before'
+    ...          print('%s %s' % (self.label, 'before'))
     ...      def afterCompletion(self, t):
-    ...          print self.label, 'after'
+    ...          print('%s %s' % (self.label, 'after'))
     ...      def newTransaction(self, t):
-    ...          print self.label, 'new'
+    ...          print('%s %s' % (self.label, 'new'))
     >>> sync = Sync(1)
 
     >>> import threading
@@ -742,11 +744,11 @@ def bug239086():
     ... def second():
     ...     transaction.abort() # should do nothing.
 
-    >>> dm.keys()
+    >>> list(dm.keys())
     ['a']
 
     >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
-    >>> dm.keys()
+    >>> list(dm.keys())
     []
 
     >>> @run_in_thread
@@ -754,7 +756,7 @@ def bug239086():
     ...     dm['a'] = 1
 
     >>> transaction.abort() # should do nothing
-    >>> dm.keys()
+    >>> list(dm.keys())
     ['a']
 
     """
