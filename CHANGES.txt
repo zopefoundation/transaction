@@ -1,10 +1,15 @@
 Changes
 =======
 
-Next release
-------------
+1.2.0 (unreleased)
+------------------
 
-- ...
+New Features:
+
+- Python 3.2 compatibility.
+
+- Dropped Python 2.4 and 2.5 compatibility (use 1.1.1 if you need to use
+  "transaction" under these Python versions).
 
 1.1.1 (2010-09-16)
 ------------------

@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0'
+__version__ = '1.2.0dev'
 
 import os
 
@@ -35,6 +35,12 @@ setup(name='transaction',
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: Unix",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: Implementation :: CPython",
         ],
       author="Zope Corporation",
       author_email="zodb-dev@zope.org",
