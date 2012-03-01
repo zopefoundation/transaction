@@ -78,7 +78,10 @@ else: # pragma: no cover
 
 
 if PY3:
-    from threading import _get_ident as get_thread_ident
+    try:
+        from threading import get_ident as get_thread_ident
+    except ImportError:
+        from threading import _get_ident as get_thread_ident
 else:
     from thread import get_ident as get_thread_ident
     
