@@ -6,6 +6,13 @@ Changes
 
 - Python 3.3 compatibility.
 
+- Fix "for attempt in transaction.attempts(x)" machinery, which would not
+  retry a transaction if its implicit call to ``.commit()`` itself raised a
+  transient error.  Symptom: seeing conflict errors even though you thought
+  you were retrying some number of times via the "attempts" machinery (the
+  first attempt to generate an exception during commit would cause that
+  exception to be raised).
+
 1.2.0 (2011-12-05)
 ------------------
 

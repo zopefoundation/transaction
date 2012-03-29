@@ -135,8 +135,15 @@ class Attempt(object):
 
     def __exit__(self, t, v, tb):
         if v is None:
-            self.manager.commit()
+            try:
+                self.manager.commit()
+            except TransientError:
+                self.manager.abort()
+                return True # swallow
+            except:
+                self.manager.abort()
+                return False # don't swallow
         else:
             retry = self.manager._retryable(t, v)
             self.manager.abort()
-            return retry
+            return retry # swallow exception if True, else don't swallow
