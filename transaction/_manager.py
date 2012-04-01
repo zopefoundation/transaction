@@ -21,6 +21,7 @@ from transaction.weakset import WeakSet
 from transaction._transaction import Transaction
 from transaction.interfaces import TransientError
 
+import functools
 import threading
 
 # We have to remember sets of synch objects, especially Connections.
@@ -118,6 +119,39 @@ class TransactionManager(object):
             if (should_retry is not None) and should_retry(error):
                 return True
 
+    def job(self, func=None, retries=0, manager=None):
+        if manager is None:
+            manager = self
+            
+        if func is None:
+            return lambda f: self.job(f, retries, manager)
+
+        @functools.wraps(func)
+        def wrapper():
+            note = func.__doc__
+            if note:
+                note = note.split('\n', 1)[0].strip()
+            else:
+                note = func.__name__
+
+            for i in range(retries + 1):
+                t = manager.begin()
+                if i:
+                    t.note("%s (retry: %s)" % (note, i))
+                else:
+                    t.note(note)
+
+                try:
+                    func(t)
+                    t.commit()
+                except TransientError:
+                    t.abort()
+                    if i >= retries:
+                        raise
+                else:
+                    break
+
+        return wrapper
 
 class ThreadTransactionManager(TransactionManager, threading.local):
     """Thread-aware transaction manager.

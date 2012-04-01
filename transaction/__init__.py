@@ -35,3 +35,4 @@ doom = manager.doom
 isDoomed = manager.isDoomed
 savepoint = manager.savepoint
 attempts = manager.attempts
+job = manager.job
