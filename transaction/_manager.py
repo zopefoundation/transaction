@@ -124,7 +124,7 @@ class TransactionManager(object):
             return lambda f: self.job(f, retries)
 
         @functools.wraps(func)
-        def wrapper():
+        def wrapper(*arg, **kw):
             note = func.__doc__
             if note:
                 note = note.split('\n', 1)[0].strip()
@@ -139,7 +139,7 @@ class TransactionManager(object):
                     t.note(note)
 
                 try:
-                    func(t)
+                    func(t, *arg, **kw)
                     t.commit()
                 except TransientError:
                     t.abort()

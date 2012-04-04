@@ -13,6 +13,37 @@ Changes
   first attempt to generate an exception during commit would cause that
   exception to be raised).
 
+- Add a ``job`` function to the ``TransactionManager`` class.  This is a
+  method that is generally meant to be used as a decorator for another
+  function::
+
+      from transaction import TransactionManager
+
+      tm = TransactionManager()
+      @tm.job(retries=3)
+      def ajob(t, persistentob, val=True):
+          ob.foo = val
+
+     ajob(apersistentob, val=1)
+
+  The decorated function may take any number of positional and keyword
+  arguments, but its signature *must* accept at least one positional
+  argument, which will be passed as a ``Transaction`` object by the
+  decorator.  Any remaining remaining arguments will be provided by the
+  caller.
+
+  A convenience decorator exists which uses the default
+  ThreadTransactionManager::
+
+      from transaction import job
+
+      @job(retries=3)
+      def ajob(t, persistentob, val=True):
+          ob.foo = val
+
+     ajob(apersistentob, val='aval')
+
+          
 1.2.0 (2011-12-05)
 ------------------
 

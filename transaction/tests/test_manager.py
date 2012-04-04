@@ -33,6 +33,19 @@ class TestTransactionManager(unittest.TestCase):
         self.assertEqual(self.txn.notes, ['func'])
         self.assertEqual(self.txn.committed, 1)
 
+    def test_job_with_args(self):
+        inst = self._makeOne()
+        inst.begin = self.begin
+        L = []
+        @inst.job
+        def func(tx, foo, bar=1):
+            L.append((foo, bar))
+        func('foo', bar=2)
+        self.assertEqual(L, [('foo', 2)])
+        self.assertEqual(self.begun, 1)
+        self.assertEqual(self.txn.notes, ['func'])
+        self.assertEqual(self.txn.committed, 1)
+        
     def test_job_no_retries_no_exception_func_has_doc(self):
         inst = self._makeOne()
         inst.begin = self.begin
