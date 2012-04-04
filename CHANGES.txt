@@ -18,7 +18,7 @@ Changes
   When the ``job`` method decorates another function, the logic of the
   function will be run within the bounds of a transaction.  If the logic
   raises no exception, the transaction will be committed.  If the logic
-  raises an exception, the transaction will be aborted
+  raises an exception, the transaction will be aborted.::
 
       from transaction import TransactionManager
 
