@@ -119,12 +119,9 @@ class TransactionManager(object):
             if (should_retry is not None) and should_retry(error):
                 return True
 
-    def job(self, func=None, retries=0, manager=None):
-        if manager is None:
-            manager = self
-            
+    def job(self, func=None, retries=0):
         if func is None:
-            return lambda f: self.job(f, retries, manager)
+            return lambda f: self.job(f, retries)
 
         @functools.wraps(func)
         def wrapper():
@@ -135,7 +132,7 @@ class TransactionManager(object):
                 note = func.__name__
 
             for i in range(retries + 1):
-                t = manager.begin()
+                t = self.begin()
                 if i:
                     t.note("%s (retry: %s)" % (note, i))
                 else:

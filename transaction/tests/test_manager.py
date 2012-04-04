@@ -113,12 +113,11 @@ class TestTransactionManager(unittest.TestCase):
                          ['func', 'func (retry: 1)', 'func (retry: 2)'])
         self.assertEqual(self.txn.committed, 1)
 
-    def test_job_other_transaction_manager(self):
-        inst = self._makeOne()
+    def test_as_decorator(self):
         L = []
         manager = self._makeOne()
         manager.begin = self.begin
-        @inst.job(manager=manager)
+        @manager.job()
         def func(tx):
             L.append(1)
         func()
