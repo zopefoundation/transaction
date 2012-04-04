@@ -13,14 +13,18 @@ Changes
   first attempt to generate an exception during commit would cause that
   exception to be raised).
 
-- Add a ``job`` function to the ``TransactionManager`` class.  This is a
-  method that is generally meant to be used as a decorator for another
-  function::
+- Add a ``job`` method to the ``TransactionManager`` class.  This is a method
+  that is generally meant to be used as a decorator for another function.
+  When the ``job`` method decorates another function, the logic of the
+  function will be run within the bounds of a transaction.  If the logic
+  raises no exception, the transaction will be committed.  If the logic
+  raises an exception, the transaction will be aborted
 
       from transaction import TransactionManager
 
       tm = TransactionManager()
-      @tm.job(retries=3)
+
+      @tm.job
       def ajob(t, persistentob, val=True):
           ob.foo = val
 
@@ -28,11 +32,28 @@ Changes
 
   The decorated function may take any number of positional and keyword
   arguments, but its signature *must* accept at least one positional
-  argument, which will be passed as a ``Transaction`` object by the
-  decorator.  Any remaining remaining arguments will be provided by the
-  caller.
+  argument, which will be passed as a ``Transaction`` object, representing
+  the transaction which is taking place, by the decorator.  Any remaining
+  remaining arguments will be provided by the caller.
 
-  A convenience decorator exists which uses the default
+  The ``job`` decorator constructor can accept a keyword argument named
+  ``retries``.  This must be an integer value (positive or zero).  If this is
+  greater than 0, and the logic of the decorated function or a commit raises
+  a "retryable" error (one which inherits from
+  ``transaction.interfaces.TransientError``), the logic will be retried that
+  number of times::
+
+      from transaction import TransactionManager
+
+      tm = TransactionManager()
+
+      @tm.job(retries=3)
+      def ajob(t, persistentob, val=True):
+          ob.foo = val
+
+     ajob(apersistentob, val=1)
+
+  A convenience alias exists which uses the default
   ThreadTransactionManager::
 
       from transaction import job
