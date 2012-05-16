@@ -28,6 +28,7 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(dummy2 in w, False)
 
     def test_len(self):
+        import gc
         w = WeakSet()
         d1 = Dummy()
         d2 = Dummy()
@@ -35,6 +36,7 @@ class WeakSetTests(unittest.TestCase):
         w.add(d2)
         self.assertEqual(len(w), 2)
         del d1
+        gc.collect()
         self.assertEqual(len(w), 1)
 
     def test_remove(self):
@@ -46,6 +48,7 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(dummy in w, False)
 
     def test_as_weakref_list(self):
+        import gc
         w = WeakSet()
         dummy = Dummy()
         dummy2 = Dummy()
@@ -54,6 +57,7 @@ class WeakSetTests(unittest.TestCase):
         w.add(dummy2)
         w.add(dummy3)
         del dummy3
+        gc.collect()
         L = [x() for x in w.as_weakref_list()]
         # L is a list, but it does not have a guaranteed order.
         self.assertTrue(list, type(L))

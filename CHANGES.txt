@@ -4,6 +4,8 @@ Changes
 1.2.1 (unreleased)
 ------------------
 
+- Added explicit support for PyPy.
+
 - Dropped use of Python3-impatible ``zope.interface.implements`` class
   advisor in favor of ``zope.interface.implementer`` class decorator.
 

@@ -27,12 +27,12 @@ We can use it with a manager:
     >>> dm.last_note
     'test 3'
 
-    >>> with transaction.manager:
+    >>> with transaction.manager: #doctest ELLIPSIS
     ...     dm['z'] = 4
     ...     xxx
     Traceback (most recent call last):
     ...
-    NameError: name 'xxx' is not defined
+    NameError: ... name 'xxx' is not defined
 
     >>> dm['z']
     3

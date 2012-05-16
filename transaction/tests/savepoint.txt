@@ -82,7 +82,7 @@ way, it rolls back all of its changes and prints the error:
     ...                 print("%s %s" % ('Updated', name))
     ...     except Exception as error:
     ...         savepoint.rollback()
-    ...         print("%s %s" % ('Unexpected exception', error))
+    ...         print("%s" % ('Unexpected exception'))
 
 Now let's try applying some entries:
 
@@ -117,7 +117,7 @@ If we provide entries that cause an unexpected error:
     ...     ])
     Updated bob
     Updated sally
-    Unexpected exception unsupported operand type(s) for +=: 'float' and 'str'
+    Unexpected exception
 
 Because the apply_entries used a savepoint for the entire function, it was
 able to rollback the partial changes without rolling back changes made in the
