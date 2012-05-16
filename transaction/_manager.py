@@ -16,12 +16,15 @@
 It coordinates application code and resource managers, so that they
 are associated with the right transaction.
 """
+import threading
+
+from zope.interface import implementer
 
 from transaction.weakset import WeakSet
 from transaction._transaction import Transaction
+from transaction.interfaces import ITransactionManager
 from transaction.interfaces import TransientError
 
-import threading
 
 # We have to remember sets of synch objects, especially Connections.
 # But we don't want mere registration with a transaction manager to
@@ -49,6 +52,7 @@ def _new_transaction(txn, synchs):
 # so that Transactions "see" synchronizers that get registered after the
 # Transaction object is constructed.
 
+@implementer(ITransactionManager)
 class TransactionManager(object):
 
     def __init__(self):
@@ -56,6 +60,8 @@ class TransactionManager(object):
         self._synchs = WeakSet()
 
     def begin(self):
+        """ See ITransactionManager.
+        """
         if self._txn is not None:
             self._txn.abort()
         txn = self._txn = Transaction(self._synchs, self)
@@ -65,6 +71,8 @@ class TransactionManager(object):
     __enter__ = lambda self: self.begin()
 
     def get(self):
+        """ See ITransactionManager.
+        """
         if self._txn is None:
             self._txn = Transaction(self._synchs, self)
         return self._txn
@@ -74,21 +82,33 @@ class TransactionManager(object):
         self._txn = None
 
     def registerSynch(self, synch):
+        """ See ITransactionManager.
+        """
         self._synchs.add(synch)
 
     def unregisterSynch(self, synch):
+        """ See ITransactionManager.
+        """
         self._synchs.remove(synch)
 
     def isDoomed(self):
+        """ See ITransactionManager.
+        """
         return self.get().isDoomed()
 
     def doom(self):
+        """ See ITransactionManager.
+        """
         return self.get().doom()
 
     def commit(self):
+        """ See ITransactionManager.
+        """
         return self.get().commit()
 
     def abort(self):
+        """ See ITransactionManager.
+        """
         return self.get().abort()
 
     def __exit__(self, t, v, tb):
@@ -98,6 +118,8 @@ class TransactionManager(object):
             self.abort()
 
     def savepoint(self, optimistic=False):
+        """ See ITransactionManager.
+        """
         return self.get().savepoint(optimistic)
 
     def attempts(self, number=3):

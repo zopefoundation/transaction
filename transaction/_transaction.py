@@ -192,9 +192,13 @@ class Transaction(object):
         self._after_commit = []
 
     def isDoomed(self):
+        """ See ITransaction.
+        """
         return self.status is Status.DOOMED
 
     def doom(self):
+        """ See ITransaction.
+        """
         if self.status is not Status.DOOMED:
             if self.status is not Status.ACTIVE:
                 # should not doom transactions in the middle,
@@ -212,6 +216,8 @@ class Transaction(object):
                 self._failure_traceback.getvalue())
 
     def join(self, resource):
+        """ See ITransaction.
+        """
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return
 
@@ -253,6 +259,8 @@ class Transaction(object):
         self._resources = [r for r in self._resources if r is not resource]
 
     def savepoint(self, optimistic=False):
+        """ See ITransaction.
+        """
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return, it raises
 
@@ -289,6 +297,8 @@ class Transaction(object):
 
 
     def register(self, obj):
+        """ See ITransaction.
+        """
         # The old way of registering transaction participants.
         #
         # register() is passed either a persisent object or a
@@ -314,6 +324,8 @@ class Transaction(object):
             adapter.objects.append(obj)
 
     def commit(self):
+        """ See ITransaction.
+        """
         if self.status is Status.DOOMED:
             raise interfaces.DoomedTransaction(
                 'transaction doomed, cannot commit')
@@ -381,9 +393,13 @@ class Transaction(object):
             
 
     def getBeforeCommitHooks(self):
+        """ See ITransaction.
+        """
         return iter(self._before_commit)
 
     def addBeforeCommitHook(self, hook, args=(), kws=None):
+        """ See ITransaction.
+        """
         if kws is None:
             kws = {}
         self._before_commit.append((hook, tuple(args), kws))
@@ -398,9 +414,13 @@ class Transaction(object):
         self._before_commit = []
 
     def getAfterCommitHooks(self):
+        """ See ITransaction.
+        """
         return iter(self._after_commit)
 
     def addAfterCommitHook(self, hook, args=(), kws=None):
+        """ See ITransaction.
+        """
         if kws is None:
             kws = {}
         self._after_commit.append((hook, tuple(args), kws))
@@ -491,6 +511,8 @@ class Transaction(object):
                                rm, exc_info=sys.exc_info())
 
     def abort(self):
+        """ See ITransaction.
+        """
         if self._savepoint2index:
             self._invalidate_all_savepoints()
 
@@ -524,6 +546,8 @@ class Transaction(object):
             del t, v, tb
 
     def note(self, text):
+        """ See ITransaction.
+        """
         text = text.strip()
         if self.description:
             self.description += "\n" + text
@@ -531,9 +555,13 @@ class Transaction(object):
             self.description = text
 
     def setUser(self, user_name, path="/"):
+        """ See ITransaction.
+        """
         self.user = "%s %s" % (path, user_name)
 
     def setExtendedInfo(self, name, value):
+        """ See ITransaction.
+        """
         self._extension[name] = value
 
 # TODO: We need a better name for the adapters.
@@ -699,6 +727,8 @@ class Savepoint:
             savepoints.append(savepoint)
 
     def rollback(self):
+        """ See ISavepoint.
+        """
         transaction = self.transaction
         if transaction is None:
             raise interfaces.InvalidSavepointRollbackError(
