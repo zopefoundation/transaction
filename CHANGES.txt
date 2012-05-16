@@ -4,6 +4,9 @@ Changes
 1.2.1 (unreleased)
 ------------------
 
+- Dropped use of Python3-impatible ``zope.interface.implements`` class
+  advisor in favor of ``zope.interface.implementer`` class decorator.
+
 - Added support for continuous integration using ``tox`` and ``jenkins``.
 
 - Added ``setup.py docs`` alias (installs ``Sphinx`` and dependencies).

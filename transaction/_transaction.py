@@ -103,7 +103,7 @@ import sys
 import weakref
 import traceback
 
-from zope import interface
+from zope.interface import implementer
 
 from transaction.compat import reraise
 from transaction.compat import get_thread_ident
@@ -134,10 +134,10 @@ class Status:
     # to commit or join this transaction will raise TransactionFailedError.
     COMMITFAILED = "Commit failed"
 
+@implementer(interfaces.ITransaction,
+             interfaces.ITransactionDeprecated)
 class Transaction(object):
 
-    interface.implements(interfaces.ITransaction,
-                         interfaces.ITransactionDeprecated)
 
 
     # Assign an index to each savepoint so we can invalidate later savepoints
@@ -672,13 +672,13 @@ class DataManagerAdapter(object):
     def sortKey(self):
         return self._datamanager.sortKey()
 
+@implementer(interfaces.ISavepoint)
 class Savepoint:
     """Transaction savepoint.
 
     Transaction savepoints coordinate savepoints for data managers
     participating in a transaction.
     """
-    interface.implements(interfaces.ISavepoint)
 
     valid = property(lambda self: self.transaction is not None)
 

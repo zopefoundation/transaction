@@ -19,17 +19,15 @@ savepoints.
 See savepoint.txt in the transaction package.
 """
 
-from zope import interface
+from zope.interface import implementer
 import transaction.interfaces
 
-@interface.implementer(transaction.interfaces.IDataManager)
+@implementer(transaction.interfaces.IDataManager)
 class SampleDataManager(object):
     """Sample implementation of data manager that doesn't support savepoints
 
     This data manager stores named simple values, like strings and numbers.
     """
-
-    interface.implements(transaction.interfaces.IDataManager)
 
     def __init__(self, transaction_manager=None):
         if transaction_manager is None:
@@ -162,14 +160,12 @@ class SampleDataManager(object):
     #
     #######################################################################
 
-@interface.implementer(transaction.interfaces.ISavepointDataManager)
+@implementer(transaction.interfaces.ISavepointDataManager)
 class SampleSavepointDataManager(SampleDataManager):
     """Sample implementation of a savepoint-supporting data manager
 
     This extends the basic data manager with savepoint support.
     """
-
-    interface.implements(transaction.interfaces.ISavepointDataManager)
 
     def savepoint(self):
         # When we create the savepoint, we save the existing database state.
@@ -184,10 +180,8 @@ class SampleSavepointDataManager(SampleDataManager):
         # savepoint was done again.  IOW, copy() is necessary.
         self.uncommitted = savepoint.data.copy()
 
-@interface.implementer(transaction.interfaces.IDataManagerSavepoint)
+@implementer(transaction.interfaces.IDataManagerSavepoint)
 class SampleSavepoint:
-
-    interface.implements(transaction.interfaces.IDataManagerSavepoint)
 
     def __init__(self, data_manager, data):
         self.data_manager = data_manager
