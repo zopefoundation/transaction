@@ -4,6 +4,11 @@ Changes
 1.2.1 (unreleased)
 ------------------
 
+- Added ``setup.py docs`` alias (installs ``Sphinx`` and dependencies).
+
+- Added ``setup.py dev`` alias (runs ``setup.py develop`` plus installs
+  ``nose`` and ``coverage``).
+
 - Python 3.3 compatibility.
 
 - Fix "for attempt in transaction.attempts(x)" machinery, which would not

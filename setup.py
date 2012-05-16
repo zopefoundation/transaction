@@ -57,6 +57,10 @@ setup(name='transaction',
       install_requires=[
         'zope.interface',
         ],
+      extras_require = {
+        'docs': ['Sphinx'],
+        'testing': ['nose', 'coverage'],
+      },
       entry_points = """\
       """
       )
