@@ -4,6 +4,8 @@ Changes
 1.2.1 (unreleased)
 ------------------
 
+- Added support for continuous integration using ``tox`` and ``jenkins``.
+
 - Added ``setup.py docs`` alias (installs ``Sphinx`` and dependencies).
 
 - Added ``setup.py dev`` alias (runs ``setup.py develop`` plus installs
