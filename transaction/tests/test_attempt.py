@@ -21,8 +21,9 @@ class TestAttempt(unittest.TestCase):
     def test___exit__no_exc_nonretryable_commit_exception(self):
         manager = DummyManager(raise_on_commit=ValueError)
         inst = self._makeOne(manager)
-        result = inst.__exit__(None, None, None)
-        self.assertFalse(result)
+        self.assertRaises(ValueError, inst.__exit__, None, None, None)
+        self.assertTrue(manager.committed)
+        self.assertTrue(manager.aborted)
 
     def test___exit__no_exc_abort_exception_after_nonretryable_commit_exc(self):
         manager = DummyManager(raise_on_abort=ValueError, 
@@ -53,8 +54,7 @@ class TestAttempt(unittest.TestCase):
     def test___exit__with_exception_value_nonretryable(self):
         manager = DummyManager()
         inst = self._makeOne(manager)
-        result = inst.__exit__(KeyError, KeyError(), None)
-        self.assertFalse(result)
+        self.assertRaises(KeyError, inst.__exit__, KeyError, KeyError(), None)
         self.assertFalse(manager.committed)
         self.assertTrue(manager.aborted)
         
