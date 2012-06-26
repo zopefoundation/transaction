@@ -16,6 +16,7 @@
 It coordinates application code and resource managers, so that they
 are associated with the right transaction.
 """
+import sys
 import threading
 
 from zope.interface import implementer
@@ -24,6 +25,7 @@ from transaction.weakset import WeakSet
 from transaction._transaction import Transaction
 from transaction.interfaces import ITransactionManager
 from transaction.interfaces import TransientError
+from transaction.compat import reraise
 
 
 # We have to remember sets of synch objects, especially Connections.
@@ -152,6 +154,13 @@ class Attempt(object):
     def __init__(self, manager):
         self.manager = manager
 
+    def _retry_or_raise(self, t, v, tb):
+        retry = self.manager._retryable(t, v)
+        self.manager.abort()
+        if retry:
+            return retry # suppress the exception if necessary
+        reraise(t, v, tb) # otherwise reraise the exception
+        
     def __enter__(self):
         return self.manager.__enter__()
 
@@ -159,13 +168,8 @@ class Attempt(object):
         if v is None:
             try:
                 self.manager.commit()
-            except TransientError:
-                self.manager.abort()
-                return True # swallow
             except:
-                self.manager.abort()
-                return False # don't swallow
+                return self._retry_or_raise(*sys.exc_info())
         else:
-            retry = self.manager._retryable(t, v)
-            self.manager.abort()
-            return retry # swallow exception if True, else don't swallow
+            return self._retry_or_raise(t, v, tb)
+        
