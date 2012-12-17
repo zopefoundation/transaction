@@ -105,14 +105,14 @@ import traceback
 
 from zope.interface import implementer
 
-from transaction.compat import reraise
-from transaction.compat import get_thread_ident
-from transaction.compat import native_
-from transaction.compat import bytes_
-from transaction.compat import StringIO
 from transaction.weakset import WeakSet
 from transaction.interfaces import TransactionFailedError
 from transaction import interfaces
+from transaction._compat import reraise
+from transaction._compat import get_thread_ident
+from transaction._compat import native_
+from transaction._compat import bytes_
+from transaction._compat import StringIO
 
 _marker = object()
 

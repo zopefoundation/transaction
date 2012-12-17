@@ -22,10 +22,10 @@ import threading
 from zope.interface import implementer
 
 from transaction.weakset import WeakSet
-from transaction._transaction import Transaction
 from transaction.interfaces import ITransactionManager
 from transaction.interfaces import TransientError
-from transaction.compat import reraise
+from transaction._compat import reraise
+from transaction._transaction import Transaction
 
 
 # We have to remember sets of synch objects, especially Connections.

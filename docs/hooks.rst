@@ -20,7 +20,7 @@ Now register the hook with a transaction.
 .. doctest::
 
     >>> from transaction import begin
-    >>> from transaction.compat import func_name
+    >>> from transaction._compat import func_name
     >>> import transaction
     >>> t = begin()
     >>> t.addBeforeCommitHook(hook, '1')
@@ -187,7 +187,7 @@ Now register the hook with a transaction.
 .. doctest::
 
     >>> from transaction import begin
-    >>> from transaction.compat import func_name
+    >>> from transaction._compat import func_name
     >>> t = begin()
     >>> t.addAfterCommitHook(hook, '1')
 
