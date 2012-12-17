@@ -50,6 +50,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_ctor_defaults(self):
         from transaction.weakset import WeakSet
+        from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
         logger = DummyLogger()
@@ -198,6 +199,7 @@ class TransactionTests(unittest.TestCase):
         from weakref import WeakKeyDictionary
         from transaction import _transaction
         from transaction._transaction import Savepoint
+        from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -214,6 +216,7 @@ class TransactionTests(unittest.TestCase):
         from transaction import _transaction
         from transaction._transaction import Status
         from transaction._compat import StringIO
+        from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -255,6 +258,8 @@ class TransactionTests(unittest.TestCase):
             def __init__(self, t, index):
                 self.transaction = t
                 self._index = index
+            def __lt__(self, other):
+                return self._index < other._index
             def __repr__(self):
                 return '_SP: %d' % self._index
         holdme = []
@@ -384,24 +389,6 @@ class MiscellaneousTests(unittest.TestCase):
 
         transaction.abort() # should do nothing
         self.assertEqual(list(dm.keys()), ['a'])
-
-
-class DummyLogger(object):
-    def __init__(self):
-        self._clear()
-    def _clear(self):
-        self._log = []
-    def log(self, level, msg, *args, **kw):
-        if args:
-            self._log.append((level, msg % args))
-        elif kw:
-            self._log.append((level, msg % kw))
-        else:
-            self._log.append((level, msg))
-    def debug(self, msg, *args, **kw):
-        self.log('DEBUG', msg, *args, **kw)
-    def error(self, msg, *args, **kw):
-        self.log('error', msg, *args, **kw)
 
 def test_suite():
     return unittest.TestSuite((

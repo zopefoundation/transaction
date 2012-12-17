@@ -22,6 +22,24 @@ class DummyFile(object):
         self._lines.extend(lines)
 
 
+class DummyLogger(object):
+    def __init__(self):
+        self._clear()
+    def _clear(self):
+        self._log = []
+    def log(self, level, msg, *args, **kw):
+        if args:
+            self._log.append((level, msg % args))
+        elif kw:
+            self._log.append((level, msg % kw))
+        else:
+            self._log.append((level, msg))
+    def debug(self, msg, *args, **kw):
+        self.log('DEBUG', msg, *args, **kw)
+    def error(self, msg, *args, **kw):
+        self.log('error', msg, *args, **kw)
+
+
 class Monkey(object):
     # context-manager for replacing module names in the scope of a test.
     def __init__(self, module, **kw):

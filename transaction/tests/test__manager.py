@@ -313,48 +313,57 @@ class TransactionManagerTests(unittest.TestCase):
     # first the recoverable errors
 
     def test_abort_w_broken_jar(self):
-
-        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
-        sub1._p_jar = BasicJar(errors='abort')
-
-        nosub1.modify()
-        sub1.modify(nojar=1)
-        sub2.modify()
-
-        try:
-            mgr.abort()
-        except TestTxnException: pass
+        from transaction import _transaction
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
+            sub1._p_jar = BasicJar(errors='abort')
+            nosub1.modify()
+            sub1.modify(nojar=1)
+            sub2.modify()
+            try:
+                mgr.abort()
+            except TestTxnException:
+                pass
 
         assert nosub1._p_jar.cabort == 1
         assert sub2._p_jar.cabort == 1
 
     def test_commit_w_broken_jar_commit(self):
-
-        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
-        sub1._p_jar = BasicJar(errors='commit')
-
-        nosub1.modify()
-        sub1.modify(nojar=1)
-
-        try:
-            mgr.commit()
-        except TestTxnException: pass
+        from transaction import _transaction
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
+            sub1._p_jar = BasicJar(errors='commit')
+            nosub1.modify()
+            sub1.modify(nojar=1)
+            try:
+                mgr.commit()
+            except TestTxnException:
+                pass
 
         assert nosub1._p_jar.ctpc_finish == 0
         assert nosub1._p_jar.ccommit == 1
         assert nosub1._p_jar.ctpc_abort == 1
 
     def test_commit_w_broken_jar_tpc_vote(self):
-
-        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
-        sub1._p_jar = BasicJar(errors='tpc_vote')
-
-        nosub1.modify()
-        sub1.modify(nojar=1)
-
-        try:
-            mgr.commit()
-        except TestTxnException: pass
+        from transaction import _transaction
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
+            sub1._p_jar = BasicJar(errors='tpc_vote')
+            nosub1.modify()
+            sub1.modify(nojar=1)
+            try:
+                mgr.commit()
+            except TestTxnException:
+                pass
 
         assert nosub1._p_jar.ctpc_finish == 0
         assert nosub1._p_jar.ccommit == 1
@@ -371,31 +380,37 @@ class TransactionManagerTests(unittest.TestCase):
         # sub calling method abort
         # sub calling method tpc_abort
         # nosub calling method tpc_abort
-        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
-        sub1._p_jar = BasicJar(errors='tpc_begin')
-
-        nosub1.modify()
-        sub1.modify(nojar=1)
-
-        try:
-            mgr.commit()
-        except TestTxnException:
-            pass
+        from transaction import _transaction
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
+            sub1._p_jar = BasicJar(errors='tpc_begin')
+            nosub1.modify()
+            sub1.modify(nojar=1)
+            try:
+                mgr.commit()
+            except TestTxnException:
+                pass
 
         assert nosub1._p_jar.ctpc_abort == 1
         assert sub1._p_jar.ctpc_abort == 1
 
     def test_commit_w_broken_jar_tpc_abort_tpc_vote(self):
-        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
-        sub1._p_jar = BasicJar(errors=('tpc_abort', 'tpc_vote'))
-
-        nosub1.modify()
-        sub1.modify(nojar=1)
-
-        try:
-            mgr.commit()
-        except TestTxnException:
-            pass
+        from transaction import _transaction
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
+            sub1._p_jar = BasicJar(errors=('tpc_abort', 'tpc_vote'))
+            nosub1.modify()
+            sub1.modify(nojar=1)
+            try:
+                mgr.commit()
+            except TestTxnException:
+                pass
 
         assert nosub1._p_jar.ctpc_abort == 1
 
