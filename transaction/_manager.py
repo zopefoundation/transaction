@@ -21,9 +21,9 @@ import threading
 
 from zope.interface import implementer
 
-from transaction.weakset import WeakSet
 from transaction.interfaces import ITransactionManager
 from transaction.interfaces import TransientError
+from transaction.weakset import WeakSet
 from transaction._compat import reraise
 from transaction._transaction import Transaction
 
@@ -53,6 +53,7 @@ def _new_transaction(txn, synchs):
 # consulting the TM, so we need to pass a mutable collection of synchronizers
 # so that Transactions "see" synchronizers that get registered after the
 # Transaction object is constructed.
+
 
 @implementer(ITransactionManager)
 class TransactionManager(object):
@@ -149,6 +150,7 @@ class ThreadTransactionManager(TransactionManager, threading.local):
     Each thread is associated with a unique transaction.
     """
 
+
 class Attempt(object):
 
     def __init__(self, manager):
@@ -160,7 +162,7 @@ class Attempt(object):
         if retry:
             return retry # suppress the exception if necessary
         reraise(t, v, tb) # otherwise reraise the exception
-        
+
     def __enter__(self):
         return self.manager.__enter__()
 
@@ -172,4 +174,3 @@ class Attempt(object):
                 return self._retry_or_raise(*sys.exc_info())
         else:
             return self._retry_or_raise(t, v, tb)
-        
