@@ -116,11 +116,18 @@ from transaction._compat import StringIO
 
 _marker = object()
 
-_TB_BUFFER = None
-def _makeTracebackBuffer(): #unittests may hook
+_TB_BUFFER = None #unittests may hook
+def _makeTracebackBuffer():
     if _TB_BUFFER is not None:
         return _TB_BUFFER
     return StringIO()
+
+_LOGGER = None #unittests may hook
+def _makeLogger():
+    if _LOGGER is not None:
+        return _LOGGER
+    return logging.getLogger("txn.%d" % get_thread_ident())
+    
 
 # The point of this is to avoid hiding exceptions (which the builtin
 # hasattr() does).
@@ -183,7 +190,7 @@ class Transaction(object):
         # directly by storages, leading underscore notwithstanding.
         self._extension = {}
 
-        self.log = logging.getLogger("txn.%d" % get_thread_ident())
+        self.log = _makeLogger()
         self.log.debug("new transaction")
 
         # If a commit fails, the traceback is saved in _failure_traceback.
