@@ -58,6 +58,7 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(isinstance(t._synchronizers, WeakSet))
         self.assertEqual(len(t._synchronizers), 0)
         self.assertTrue(t._manager is None)
+        self.assertTrue(t._savepoint2index is None)
         self.assertEqual(t._resources, [])
         self.assertEqual(t._adapters, {})
         self.assertEqual(t._voted, {})
@@ -105,8 +106,8 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(t.status, Status.DOOMED)
 
     def test__prior_operation_failed(self):
-        from transaction.tests.common import assertRaisesEx
         from transaction.interfaces import TransactionFailedError
+        from transaction.tests.common import assertRaisesEx
         class _Traceback(object):
             def getvalue(self):
                 return 'TRACEBACK'
@@ -115,6 +116,71 @@ class TransactionTests(unittest.TestCase):
         err = assertRaisesEx(TransactionFailedError, t._prior_operation_failed)
         self.assertTrue(str(err).startswith('An operation previously failed'))
         self.assertTrue(str(err).endswith( "with traceback:\n\nTRACEBACK"))
+
+    def test_join_COMMITFAILED(self):
+        from transaction.interfaces import TransactionFailedError
+        from transaction._transaction import Status
+        class _Traceback(object):
+            def getvalue(self):
+                return 'TRACEBACK'
+        t = self._makeOne()
+        t.status = Status.COMMITFAILED
+        t._failure_traceback = _Traceback()
+        self.assertRaises(TransactionFailedError, t.join, object())
+
+    def test_join_COMMITTING(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        t.status = Status.COMMITTING
+        self.assertRaises(ValueError, t.join, object())
+
+    def test_join_COMMITTED(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        t.status = Status.COMMITTED
+        self.assertRaises(ValueError, t.join, object())
+
+    def test_join_DOOMED_non_preparing_wo_sp2index(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        t.status = Status.DOOMED
+        resource = object()
+        t.join(resource)
+        self.assertEqual(t._resources, [resource])
+
+    def test_join_ACTIVE_w_preparing_w_sp2index(self):
+        from transaction._transaction import AbortSavepoint
+        from transaction._transaction import DataManagerAdapter
+        class _TSP(object):
+            def __init__(self):
+                self._savepoints = []
+        class _DM(object):
+            def prepare(self):
+                pass
+        t = self._makeOne()
+        tsp = _TSP()
+        t._savepoint2index = {tsp: object()}
+        dm = _DM
+        t.join(dm)
+        self.assertEqual(len(t._resources), 1)
+        dma = t._resources[0]
+        self.assertTrue(isinstance(dma, DataManagerAdapter))
+        self.assertTrue(t._resources[0]._datamanager is dm)
+        self.assertEqual(len(tsp._savepoints), 1)
+        self.assertTrue(isinstance(tsp._savepoints[0], AbortSavepoint))
+        self.assertTrue(tsp._savepoints[0].datamanager is dma)
+        self.assertTrue(tsp._savepoints[0].transaction is t)
+
+    def test__unjoin_miss(self):
+        tm = self._makeOne()
+        tm._unjoin(object()) #no raise
+
+    def test__unjoin_hit(self):
+        t = self._makeOne()
+        resource = object()
+        t._resources.append(resource)
+        t._unjoin(resource)
+        self.assertEqual(t._resources, [])
 
     def test_note(self):
         t = self._makeOne()
