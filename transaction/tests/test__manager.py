@@ -157,6 +157,38 @@ class TransactionManagerTests(unittest.TestCase):
         tm.abort()
         self.assertTrue(txn._aborted)
 
+    def test_as_context_manager_wo_error(self):
+        class _Test(object):
+            _committed = False
+            _aborted = False
+            def commit(self):
+                self._committed = True
+            def abort(self):
+                self._aborted = True
+        tm = self._makeOne()
+        with tm:
+            tm._txn = txn = _Test()
+        self.assertTrue(txn._committed)
+        self.assertFalse(txn._aborted)
+
+    def test_as_context_manager_w_error(self):
+        class _Test(object):
+            _committed = False
+            _aborted = False
+            def commit(self):
+                self._committed = True
+            def abort(self):
+                self._aborted = True
+        tm = self._makeOne()
+        try:
+            with tm:
+                tm._txn = txn = _Test()
+                1/0
+        except ZeroDivisionError: 
+            pass
+        self.assertFalse(txn._committed)
+        self.assertTrue(txn._aborted)
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
