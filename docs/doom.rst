@@ -144,7 +144,7 @@ after it's been committed is probably a programming error:
     >>> txn.doom()
     Traceback (most recent call last):
         ...
-    AssertionError
+    ValueError: non-doomable
 
 A doomed transaction should act the same as an active transaction, so we should
 be able to join it:

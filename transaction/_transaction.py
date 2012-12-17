@@ -31,13 +31,13 @@ from transaction._compat import StringIO
 _marker = object()
 
 _TB_BUFFER = None #unittests may hook
-def _makeTracebackBuffer():
+def _makeTracebackBuffer(): #pragma NO COVER
     if _TB_BUFFER is not None:
         return _TB_BUFFER
     return StringIO()
 
 _LOGGER = None #unittests may hook
-def _makeLogger():
+def _makeLogger(): #pragma NO COVER
     if _LOGGER is not None:
         return _LOGGER
     return logging.getLogger("txn.%d" % get_thread_ident())
@@ -130,7 +130,7 @@ class Transaction(object):
             if self.status is not Status.ACTIVE:
                 # should not doom transactions in the middle,
                 # or after, a commit
-                raise AssertionError()
+                raise ValueError('non-doomable')
             self.status = Status.DOOMED
 
     # Raise TransactionFailedError, due to commit()/join()/register()

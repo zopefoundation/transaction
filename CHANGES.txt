@@ -4,6 +4,9 @@ Changes
 1.3.1 (unreleased)
 ------------------
 
+- Raise ValueError from ``Transaction.doom`` if the transaction is in a
+  non-doomable state (rather than using ``assert``).
+
 - Raise ValueError from ``TransactionManager.attempts`` if passed a
   non-positive value (rather than using ``assert``).
 

@@ -48,6 +48,62 @@ class TransactionTests(unittest.TestCase):
     def _makeOne(self, synchronizers=None, manager=None):
         return self._getTargetClass()(synchronizers, manager)
 
+    def test_ctor_defaults(self):
+        from transaction.weakset import WeakSet
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            t = self._makeOne()
+        self.assertTrue(isinstance(t._synchronizers, WeakSet))
+        self.assertEqual(len(t._synchronizers), 0)
+        self.assertTrue(t._manager is None)
+        self.assertEqual(t._resources, [])
+        self.assertEqual(t._adapters, {})
+        self.assertEqual(t._voted, {})
+        self.assertEqual(t._extension, {})
+        self.assertTrue(t.log is logger)
+        self.assertEqual(len(logger._log), 1)
+        self.assertEqual(logger._log[0][0], 'DEBUG')
+        self.assertEqual(logger._log[0][1], 'new transaction')
+        self.assertTrue(t._failure_traceback is None)
+        self.assertEqual(t._before_commit, [])
+        self.assertEqual(t._after_commit, [])
+
+    def test_ctor_w_syncs(self):
+        from transaction.weakset import WeakSet
+        synchs = WeakSet()
+        t = self._makeOne(synchronizers=synchs)
+        self.assertTrue(t._synchronizers is synchs)
+
+    def test_isDoomed(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        self.assertFalse(t.isDoomed())
+        t.status = Status.DOOMED
+        self.assertTrue(t.isDoomed())
+
+    def test_doom_active(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        t.doom()
+        self.assertTrue(t.isDoomed())
+        self.assertEqual(t.status, Status.DOOMED)
+
+    def test_doom_invalid(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        for status in Status.COMMITTING, Status.COMMITTED, Status.COMMITFAILED:
+            t.status = status
+            self.assertRaises(ValueError, t.doom)
+
+    def test_doom_already_doomed(self):
+        from transaction._transaction import Status
+        t = self._makeOne()
+        t.status = Status.DOOMED
+        self.assertTrue(t.isDoomed())
+        self.assertEqual(t.status, Status.DOOMED)
+
     def test_note(self):
         t = self._makeOne()
         try:
@@ -148,6 +204,19 @@ class MiscellaneousTests(unittest.TestCase):
         transaction.abort() # should do nothing
         self.assertEqual(list(dm.keys()), ['a'])
 
+
+class DummyLogger(object):
+    def __init__(self):
+        self._log = []
+    def log(self, level, msg, *args, **kw):
+        if args:
+            self._log.append((level, msg % args))
+        elif kw:
+            self._log.append((level, msg % kw))
+        else:
+            self._log.append((level, msg))
+    def debug(self, msg, *args, **kw):
+        self.log('DEBUG', msg, *args, **kw)
 
 def test_suite():
     return unittest.TestSuite((
