@@ -16,21 +16,85 @@ import unittest
 
 class TransactionManagerTests(unittest.TestCase):
 
-    def _makeDM(self):
+    def _getTargetClass(self):
         from transaction import TransactionManager
-        mgr = TransactionManager()
+        return TransactionManager
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
+    def _makePopulated(self):
+        mgr = self._makeOne()
         sub1 = DataObject(mgr)
         sub2 = DataObject(mgr)
         sub3 = DataObject(mgr)
         nosub1 = DataObject(mgr, nost=1)
         return mgr, sub1, sub2, sub3, nosub1
 
+    def test_begin_wo_existing_txn_wo_synchs(self):
+        from transaction._transaction import Transaction
+        tm = self._makeOne()
+        tm.begin()
+        self.assertTrue(isinstance(tm._txn, Transaction))
+
+    def test_begin_wo_existing_txn_w_synchs(self):
+        from transaction._transaction import Transaction
+        tm = self._makeOne()
+        synch = DummySynch()
+        tm.registerSynch(synch)
+        tm.begin()
+        self.assertTrue(isinstance(tm._txn, Transaction))
+        self.assertTrue(tm._txn in synch._txns)
+
+    def test_begin_w_existing_txn(self):
+        class Existing(object):
+            _aborted = False
+            def abort(self):
+                self._aborted = True
+        tm = self._makeOne()
+        tm._txn = txn = Existing()
+        tm.begin()
+        self.assertFalse(tm._txn is txn)
+        self.assertTrue(txn._aborted)
+
+    def test_get_wo_existing_txn(self):
+        from transaction._transaction import Transaction
+        tm = self._makeOne()
+        txn = tm.get()
+        self.assertTrue(isinstance(txn, Transaction))
+
+    def test_get_w_existing_txn(self):
+        class Existing(object):
+            _aborted = False
+            def abort(self):
+                self._aborted = True
+        tm = self._makeOne()
+        tm._txn = txn = Existing()
+        self.assertTrue(tm.get() is txn)
+
+    def test_free_w_other_txn(self):
+        from transaction._transaction import Transaction
+        tm = self._makeOne()
+        txn = Transaction()
+        tm.begin()
+        self.assertRaises(ValueError, tm.free, txn)
+
+    def test_free_w_existing_txn(self):
+        class Existing(object):
+            _aborted = False
+            def abort(self):
+                self._aborted = True
+        tm = self._makeOne()
+        tm._txn = txn = Existing()
+        tm.free(txn)
+        self.assertTrue(tm._txn is None)
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
     def test_commit_normal(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1.modify()
         sub2.modify()
 
@@ -41,7 +105,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_abort_normal(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1.modify()
         sub2.modify()
 
@@ -54,7 +118,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_commit_w_nonsub_jar(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         nosub1.modify()
 
         mgr.commit()
@@ -63,7 +127,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_abort_w_nonsub_jar(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         nosub1.modify()
 
         mgr.abort()
@@ -84,7 +148,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_abort_w_broken_jar(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1._p_jar = BasicJar(errors='abort')
 
         nosub1.modify()
@@ -100,7 +164,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_commit_w_broken_jar_commit(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1._p_jar = BasicJar(errors='commit')
 
         nosub1.modify()
@@ -116,7 +180,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_commit_w_broken_jar_tpc_vote(self):
 
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1._p_jar = BasicJar(errors='tpc_vote')
 
         nosub1.modify()
@@ -141,7 +205,7 @@ class TransactionManagerTests(unittest.TestCase):
         # sub calling method abort
         # sub calling method tpc_abort
         # nosub calling method tpc_abort
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1._p_jar = BasicJar(errors='tpc_begin')
 
         nosub1.modify()
@@ -156,7 +220,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert sub1._p_jar.ctpc_abort == 1
 
     def test_commit_w_broken_jar_tpc_abort_tpc_vote(self):
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        mgr, sub1, sub2, sub3, nosub1 = self._makePopulated()
         sub1._p_jar = BasicJar(errors=('tpc_abort', 'tpc_vote'))
 
         nosub1.modify()
@@ -248,6 +312,13 @@ class BasicJar:
     def tpc_finish(self, *args):
         self.check('tpc_finish')
         self.ctpc_finish += 1
+
+
+class DummySynch(object):
+    def __init__(self):
+        self._txns = set()
+    def newTransaction(self, txn):
+        self._txns.add(txn)
 
 
 def positive_id(obj):

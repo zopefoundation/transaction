@@ -81,7 +81,8 @@ class TransactionManager(object):
         return self._txn
 
     def free(self, txn):
-        assert txn is self._txn
+        if txn is not self._txn:
+            raise ValueError("Foreign transaction")
         self._txn = None
 
     def registerSynch(self, synch):
