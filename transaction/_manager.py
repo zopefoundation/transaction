@@ -127,7 +127,8 @@ class TransactionManager(object):
         return self.get().savepoint(optimistic)
 
     def attempts(self, number=3):
-        assert number > 0
+        if number <= 0:
+            raise ValueError("number must be positive")
         while number:
             number -= 1
             if number:

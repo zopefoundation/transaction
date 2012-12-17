@@ -209,6 +209,28 @@ class TransactionManagerTests(unittest.TestCase):
         tm.savepoint(True)
         self.assertTrue(txn._sp)
 
+    def test_attempts_w_invalid_count(self):
+        tm = self._makeOne()
+        self.assertRaises(ValueError, list, tm.attempts(0))
+        self.assertRaises(ValueError, list, tm.attempts(-1))
+        self.assertRaises(ValueError, list, tm.attempts(-10))
+
+    def test_attempts_w_valid_count(self):
+        tm = self._makeOne()
+        found = list(tm.attempts(1))
+        self.assertEqual(len(found), 1)
+        self.assertTrue(found[0] is tm)
+
+    def test_attempts_w_default_count(self):
+        from transaction._manager import Attempt
+        tm = self._makeOne()
+        found = list(tm.attempts())
+        self.assertEqual(len(found), 3)
+        for attempt in found[:-1]:
+            self.assertTrue(isinstance(attempt, Attempt))
+            self.assertTrue(attempt.manager is tm)
+        self.assertTrue(found[-1] is tm)
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
