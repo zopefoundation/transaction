@@ -137,6 +137,26 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(txn.isDoomed())
         self.assertTrue(tm.isDoomed())
 
+    def test_commit_w_existing_txn(self):
+        class Existing(object):
+            _committed = False
+            def commit(self):
+                self._committed = True
+        tm = self._makeOne()
+        tm._txn = txn = Existing()
+        tm.commit()
+        self.assertTrue(txn._committed)
+
+    def test_abort_w_existing_txn(self):
+        class Existing(object):
+            _aborted = False
+            def abort(self):
+                self._aborted = True
+        tm = self._makeOne()
+        tm._txn = txn = Existing()
+        tm.abort()
+        self.assertTrue(txn._aborted)
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
