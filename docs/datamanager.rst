@@ -6,9 +6,9 @@ Simple Data Manager
 
 .. doctest::
 
-   >>> from transaction.tests.SampleDataManager import DataManager
+   >>> from transaction.tests.examples import DataManager
 
-This :class:`transaction.tests.SampleDataManager.DataManager` class
+This :class:`transaction.tests.examples.DataManager` class
 provides a trivial data-manager implementation and docstrings to illustrate
 the the protocol and to provide a tool for writing tests.
 

@@ -307,7 +307,7 @@ class MiscellaneousTests(unittest.TestCase):
         # The join method is provided for "backward-compatability" with ZODB 4
         # data managers.
         from transaction import Transaction
-        from transaction.tests.SampleDataManager import DataManager
+        from transaction.tests.examples import DataManager
         from transaction._transaction import DataManagerAdapter
         # The argument to join must be a zodb4 data manager,
         # transaction.interfaces.IDataManager.
@@ -469,23 +469,9 @@ class HoserJar(BasicJar):
         HoserJar.committed += 1
 
 
-def hook():
-    pass
-
-
 def test_suite():
-    from doctest import DocTestSuite
-    suite = unittest.TestSuite((
-        DocTestSuite(),
+    return unittest.TestSuite((
         unittest.makeSuite(TransactionManagerTests),
         unittest.makeSuite(Test_oid_repr),
         unittest.makeSuite(MiscellaneousTests),
         ))
-
-    return suite
-
-# additional_tests is for setuptools "setup.py test" support
-additional_tests = test_suite
-
-if __name__ == '__main__':
-    unittest.TextTestRunner().run(test_suite())

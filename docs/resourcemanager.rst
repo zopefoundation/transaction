@@ -6,9 +6,9 @@ Simple Resource Manager
 
 .. doctest::
 
-   >>> from transaction.tests.SampleResourceManager import ResourceManager
+   >>> from transaction.tests.examples import ResourceManager
 
-This :class:`transaction.tests.SampleResourceManager.ResourceManager`
+This :class:`transaction.tests.examples.ResourceManager`
 class provides a trivial resource-manager implementation and doc
 strings to illustrate the protocol and to provide a tool for writing
 tests.
