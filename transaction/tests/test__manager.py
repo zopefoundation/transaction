@@ -31,6 +31,11 @@ class TransactionManagerTests(unittest.TestCase):
         nosub1 = DataObject(mgr, nost=1)
         return mgr, sub1, sub2, sub3, nosub1
 
+    def test_ctor(self):
+        tm = self._makeOne()
+        self.assertTrue(tm._txn is None)
+        self.assertEqual(len(tm._synchs), 0)
+
     def test_begin_wo_existing_txn_wo_synchs(self):
         from transaction._transaction import Transaction
         tm = self._makeOne()
@@ -88,6 +93,24 @@ class TransactionManagerTests(unittest.TestCase):
         tm._txn = txn = Existing()
         tm.free(txn)
         self.assertTrue(tm._txn is None)
+
+    def test_registerSynch(self):
+        tm = self._makeOne()
+        synch = DummySynch()
+        tm.registerSynch(synch)
+        self.assertEqual(len(tm._synchs), 1)
+        self.assertTrue(synch in tm._synchs)
+
+    def test_unregisterSynch(self):
+        tm = self._makeOne()
+        synch1 = DummySynch()
+        synch2 = DummySynch()
+        tm.registerSynch(synch1)
+        tm.registerSynch(synch2)
+        tm.unregisterSynch(synch1)
+        self.assertEqual(len(tm._synchs), 1)
+        self.assertFalse(synch1 in tm._synchs)
+        self.assertTrue(synch2 in tm._synchs)
 
     # basic tests with two sub trans jars
     # really we only need one, so tests for
