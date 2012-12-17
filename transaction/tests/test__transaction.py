@@ -104,6 +104,18 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(t.isDoomed())
         self.assertEqual(t.status, Status.DOOMED)
 
+    def test__prior_operation_failed(self):
+        from transaction.tests.common import assertRaisesEx
+        from transaction.interfaces import TransactionFailedError
+        class _Traceback(object):
+            def getvalue(self):
+                return 'TRACEBACK'
+        t = self._makeOne()
+        t._failure_traceback = _Traceback()
+        err = assertRaisesEx(TransactionFailedError, t._prior_operation_failed)
+        self.assertTrue(str(err).startswith('An operation previously failed'))
+        self.assertTrue(str(err).endswith( "with traceback:\n\nTRACEBACK"))
+
     def test_note(self):
         t = self._makeOne()
         try:
