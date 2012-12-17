@@ -11,81 +11,56 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Tests of savepoint feature
-"""
 import unittest
-import doctest
 
 
-def testRollbackRollsbackDataManagersThatJoinedLater():
-    """
+class SavepointTests(unittest.TestCase):
 
-A savepoint needs to not just rollback it's savepoints, but needs to
-rollback savepoints for data managers that joined savepoints after the
-savepoint:
+    def testRollbackRollsbackDataManagersThatJoinedLater(self):
+        # A savepoint needs to not just rollback it's savepoints, but needs
+        # to # rollback savepoints for data managers that joined savepoints
+        # after the savepoint:
+        import transaction
+        from transaction.tests import savepointsample
+        dm = savepointsample.SampleSavepointDataManager()
+        dm['name'] = 'bob'
+        sp1 = transaction.savepoint()
+        dm['job'] = 'geek'
+        sp2 = transaction.savepoint()
+        dm['salary'] = 'fun'
+        dm2 = savepointsample.SampleSavepointDataManager()
+        dm2['name'] = 'sally'
 
-    >>> import transaction
-    >>> from transaction.tests import savepointsample
-    >>> dm = savepointsample.SampleSavepointDataManager()
-    >>> dm['name'] = 'bob'
-    >>> sp1 = transaction.savepoint()
-    >>> dm['job'] = 'geek'
-    >>> sp2 = transaction.savepoint()
-    >>> dm['salary'] = 'fun'
-    >>> dm2 = savepointsample.SampleSavepointDataManager()
-    >>> dm2['name'] = 'sally'
+        self.assertTrue('name' in dm)
+        self.assertTrue('job' in dm)
+        self.assertTrue('salary' in dm)
+        self.assertTrue('name' in dm2)
 
-    >>> 'name' in dm
-    True
-    >>> 'job' in dm
-    True
-    >>> 'salary' in dm
-    True
-    >>> 'name' in dm2
-    True
+        sp1.rollback()
 
-    >>> sp1.rollback()
+        self.assertTrue('name' in dm)
+        self.assertFalse('job' in dm)
+        self.assertFalse('salary' in dm)
+        self.assertFalse('name' in dm2)
 
-    >>> 'name' in dm
-    True
-    >>> 'job' in dm
-    False
-    >>> 'salary' in dm
-    False
-    >>> 'name' in dm2
-    False
-
-"""
-
-def test_commit_after_rollback_for_dm_that_joins_after_savepoint():
-    """
-
-There was a problem handling data managers that joined after a
-savepoint.  If the savepoint was rolled back and then changes made,
-the dm would end up being joined twice, leading to extra tpc calls and pain.
-
-    >>> import transaction
-    >>> sp = transaction.savepoint()
-    >>> from transaction.tests import savepointsample
-    >>> dm = savepointsample.SampleSavepointDataManager()
-    >>> dm['name'] = 'bob'
-    >>> sp.rollback()
-    >>> dm['name'] = 'Bob'
-    >>> transaction.commit()
-    >>> dm['name']
-    'Bob'
-    """
+    def test_commit_after_rollback_for_dm_that_joins_after_savepoint(self):
+        # There was a problem handling data managers that joined after a
+        # savepoint.  If the savepoint was rolled back and then changes
+        # made, the dm would end up being joined twice, leading to extra
+        # tpc calls and pain.
+        import transaction
+        from transaction.tests import savepointsample
+        sp = transaction.savepoint()
+        dm = savepointsample.SampleSavepointDataManager()
+        dm['name'] = 'bob'
+        sp.rollback()
+        dm['name'] = 'Bob'
+        transaction.commit()
+        self.assertEqual(dm['name'], 'Bob')
 
 
 
 def test_suite():
     return unittest.TestSuite((
-        doctest.DocTestSuite(),
+            unittest.makeSuite(SavepointTests),
         ))
-
-# additional_tests is for setuptools "setup.py test" support
-additional_tests = test_suite
-
-if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')
-
