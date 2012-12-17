@@ -36,14 +36,13 @@ TODO
     add in tests for objects which are modified multiple times,
     for example an object that gets modified in multiple sub txns.
 """
-from doctest import DocTestSuite
-import struct
 import unittest
-import transaction
 
-_ADDRESS_MASK = 256 ** struct.calcsize('P')
+
 def positive_id(obj):
     """Return id(obj) as a non-negative integer."""
+    import struct
+    _ADDRESS_MASK = 256 ** struct.calcsize('P')
 
     result = id(obj)
     if result < 0:
@@ -54,7 +53,8 @@ def positive_id(obj):
 class TransactionTests(unittest.TestCase):
 
     def setUp(self):
-        mgr = self.transaction_manager = transaction.TransactionManager()
+        from transaction import TransactionManager
+        mgr = self.transaction_manager = TransactionManager()
         self.sub1 = DataObject(mgr)
         self.sub2 = DataObject(mgr)
         self.sub3 = DataObject(mgr)
@@ -367,9 +367,10 @@ def test_join():
     The argument to join must be a zodb4 data manager,
     transaction.interfaces.IDataManager.
 
+    >>> from transaction import Transaction
     >>> from transaction.tests.sampledm import DataManager
     >>> from transaction._transaction import DataManagerAdapter
-    >>> t = transaction.Transaction()
+    >>> t = Transaction()
     >>> dm = DataManager()
     >>> t.join(dm)
 
@@ -400,9 +401,10 @@ def test_addBeforeCommitHook():
 
     Now register the hook with a transaction.
 
+      >>> from transaction import begin
       >>> from transaction.compat import func_name
       >>> import transaction
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addBeforeCommitHook(hook, '1')
 
     We can see that the hook is indeed registered.
@@ -424,15 +426,16 @@ def test_addBeforeCommitHook():
     A hook's registration is consumed whenever the hook is called.  Since
     the hook above was called, it's no longer registered:
 
+      >>> from transaction import commit
       >>> len(list(t.getBeforeCommitHooks()))
       0
-      >>> transaction.commit()
+      >>> commit()
       >>> log
       []
 
     The hook is only called for a full commit, not for a savepoint.
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addBeforeCommitHook(hook, 'A', dict(kw1='B'))
       >>> dummy = t.savepoint()
       >>> log
@@ -444,12 +447,13 @@ def test_addBeforeCommitHook():
 
     If a transaction is aborted, no hook is called.
 
-      >>> t = transaction.begin()
+      >>> from transaction import abort
+      >>> t = begin()
       >>> t.addBeforeCommitHook(hook, ["OOPS!"])
-      >>> transaction.abort()
+      >>> abort()
       >>> log
       []
-      >>> transaction.commit()
+      >>> commit()
       >>> log
       []
 
@@ -465,7 +469,7 @@ def test_addBeforeCommitHook():
       ...     def abort(self, txn):
       ...         pass
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.join(FailingDataManager())
 
       >>> t.addBeforeCommitHook(hook, '2')
@@ -479,7 +483,7 @@ def test_addBeforeCommitHook():
 
     Let's register several hooks.
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addBeforeCommitHook(hook, '4', dict(kw1='4.1'))
       >>> t.addBeforeCommitHook(hook, '5', dict(kw2='5.2'))
 
@@ -509,9 +513,9 @@ def test_addBeforeCommitHook():
       ...         txn.addBeforeCommitHook(hook, '-')
       ...         txn.addBeforeCommitHook(recurse, (txn, arg-1))
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addBeforeCommitHook(recurse, (t, 3))
-      >>> transaction.commit()
+      >>> commit()
       >>> log  #doctest: +NORMALIZE_WHITESPACE
       ['rec3',
                "arg '-' kw1 'no_kw1' kw2 'no_kw2'",
@@ -538,9 +542,9 @@ def test_addAfterCommitHook():
 
     Now register the hook with a transaction.
 
+      >>> from transaction import begin
       >>> from transaction.compat import func_name
-      >>> import transaction
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addAfterCommitHook(hook, '1')
 
     We can see that the hook is indeed registered.
@@ -562,15 +566,16 @@ def test_addAfterCommitHook():
     A hook's registration is consumed whenever the hook is called.  Since
     the hook above was called, it's no longer registered:
 
+      >>> from transaction import commit
       >>> len(list(t.getAfterCommitHooks()))
       0
-      >>> transaction.commit()
+      >>> commit()
       >>> log
       []
 
     The hook is only called after a full commit, not for a savepoint.
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addAfterCommitHook(hook, 'A', dict(kw1='B'))
       >>> dummy = t.savepoint()
       >>> log
@@ -582,12 +587,13 @@ def test_addAfterCommitHook():
 
     If a transaction is aborted, no hook is called.
 
-      >>> t = transaction.begin()
+      >>> from transaction import abort
+      >>> t = begin()
       >>> t.addAfterCommitHook(hook, ["OOPS!"])
-      >>> transaction.abort()
+      >>> abort()
       >>> log
       []
-      >>> transaction.commit()
+      >>> commit()
       >>> log
       []
 
@@ -603,7 +609,7 @@ def test_addAfterCommitHook():
       ...     def abort(self, txn):
       ...         pass
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.join(FailingDataManager())
 
       >>> t.addAfterCommitHook(hook, '2')
@@ -617,7 +623,7 @@ def test_addAfterCommitHook():
 
     Let's register several hooks.
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addAfterCommitHook(hook, '4', dict(kw1='4.1'))
       >>> t.addAfterCommitHook(hook, '5', dict(kw2='5.2'))
 
@@ -647,9 +653,9 @@ def test_addAfterCommitHook():
       ...         txn.addAfterCommitHook(hook, '-')
       ...         txn.addAfterCommitHook(recurse, (txn, arg-1))
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t.addAfterCommitHook(recurse, (t, 3))
-      >>> transaction.commit()
+      >>> commit()
       >>> log  #doctest: +NORMALIZE_WHITESPACE
       ['rec3',
                "True arg '-' kw1 'no_kw1' kw2 'no_kw2'",
@@ -664,18 +670,19 @@ def test_addAfterCommitHook():
     message at error level so that if other hooks are registered they
     can be executed. We don't support execution dependencies at this level.
 
-      >>> mgr = transaction.TransactionManager()
+      >>> from transaction import TransactionManager
+      >>> mgr = TransactionManager()
       >>> do = DataObject(mgr)
 
       >>> def hookRaise(status, arg='no_arg', kw1='no_kw1', kw2='no_kw2'):
       ...     raise TypeError("Fake raise")
 
-      >>> t = transaction.begin()
+      >>> t = begin()
 
       >>> t.addAfterCommitHook(hook, ('-', 1))
       >>> t.addAfterCommitHook(hookRaise, ('-', 2))
       >>> t.addAfterCommitHook(hook, ('-', 3))
-      >>> transaction.commit()
+      >>> commit()
 
       >>> log
       ["True arg '-' kw1 1 kw2 'no_kw2'", "True arg '-' kw1 3 kw2 'no_kw2'"]
@@ -685,15 +692,15 @@ def test_addAfterCommitHook():
     Test that the associated transaction manager has been cleanup when
     after commit hooks are registered
 
-      >>> mgr = transaction.TransactionManager()
+      >>> mgr = TransactionManager()
       >>> do = DataObject(mgr)
 
-      >>> t = transaction.begin()
+      >>> t = begin()
       >>> t._manager._txn is not None
       True
 
       >>> t.addAfterCommitHook(hook, ('-', 1))
-      >>> transaction.commit()
+      >>> commit()
 
       >>> log
       ["True arg '-' kw1 1 kw2 'no_kw2'"]
@@ -709,8 +716,9 @@ def bug239086():
     The original implementation of thread transaction manager made
     invalid assumptions about thread ids.
 
-    >>> import transaction.tests.savepointsample
-    >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> import transaction
+    >>> import transaction.tests.savepointsample as SPS
+    >>> dm = SPS.SampleSavepointDataManager()
     >>> list(dm.keys())
     []
 
@@ -745,7 +753,7 @@ def bug239086():
     >>> list(dm.keys())
     ['a']
 
-    >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+    >>> dm = SPS.SampleSavepointDataManager()
     >>> list(dm.keys())
     []
 
@@ -760,6 +768,7 @@ def bug239086():
     """
 
 def test_suite():
+    from doctest import DocTestSuite
     suite = unittest.TestSuite((
         DocTestSuite(),
         unittest.makeSuite(TransactionTests),
