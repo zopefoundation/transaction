@@ -231,6 +231,30 @@ class TransactionManagerTests(unittest.TestCase):
             self.assertTrue(attempt.manager is tm)
         self.assertTrue(found[-1] is tm)
 
+    def test__retryable_w_transient_error(self):
+        from transaction.interfaces import TransientError
+        tm = self._makeOne()
+        self.assertTrue(tm._retryable(TransientError, object()))
+
+    def test__retryable_w_transient_subclass(self):
+        from transaction.interfaces import TransientError
+        class _Derived(TransientError):
+            pass
+        tm = self._makeOne()
+        self.assertTrue(tm._retryable(_Derived, object()))
+
+    def test__retryable_w_normal_exception_no_resources(self):
+        tm = self._makeOne()
+        self.assertFalse(tm._retryable(Exception, object()))
+
+    def test__retryable_w_normal_exception_w_resource_voting_yes(self):
+        class _Resource(object):
+            def should_retry(self, err):
+                return True
+        tm = self._makeOne()
+        tm.get()._resources.append(_Resource())
+        self.assertTrue(tm._retryable(Exception, object()))
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
