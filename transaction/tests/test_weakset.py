@@ -11,15 +11,12 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-
 import unittest
-from transaction.weakset import WeakSet
 
-class Dummy:
-    pass
 
 class WeakSetTests(unittest.TestCase):
     def test_contains(self):
+        from transaction.weakset import WeakSet
         w = WeakSet()
         dummy = Dummy()
         w.add(dummy)
@@ -29,6 +26,7 @@ class WeakSetTests(unittest.TestCase):
 
     def test_len(self):
         import gc
+        from transaction.weakset import WeakSet
         w = WeakSet()
         d1 = Dummy()
         d2 = Dummy()
@@ -40,6 +38,7 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(len(w), 1)
 
     def test_remove(self):
+        from transaction.weakset import WeakSet
         w = WeakSet()
         dummy = Dummy()
         w.add(dummy)
@@ -49,6 +48,7 @@ class WeakSetTests(unittest.TestCase):
 
     def test_as_weakref_list(self):
         import gc
+        from transaction.weakset import WeakSet
         w = WeakSet()
         dummy = Dummy()
         dummy2 = Dummy()
@@ -64,6 +64,7 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(set(L), set([dummy, dummy2]))
 
     def test_map(self):
+        from transaction.weakset import WeakSet
         w = WeakSet()
         dummy = Dummy()
         dummy2 = Dummy()
@@ -77,10 +78,10 @@ class WeakSetTests(unittest.TestCase):
         for thing in dummy, dummy2, dummy3:
             self.assertEqual(thing.poked, 1)
         
+
+class Dummy:
+    pass
         
+
 def test_suite():
     return unittest.makeSuite(WeakSetTests)
-
-if __name__ == '__main__':
-    unittest.main()
-    
