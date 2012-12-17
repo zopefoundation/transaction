@@ -39,6 +39,36 @@ TODO
 import unittest
 
 
+class DummyFile(object):
+    def __init__(self):
+        self._lines = []
+    def write(self, text):
+        self._lines.append(text)
+    def writelines(self, lines):
+        self._lines.extend(lines)
+
+class Monkey(object):
+    # context-manager for replacing module names in the scope of a test.
+    def __init__(self, module, **kw):
+        self.module = module
+        self.to_restore = dict([(key, getattr(module, key)) for key in kw])
+        for key, value in kw.items():
+            setattr(module, key, value)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for key, value in self.to_restore.items():
+            setattr(self.module, key, value)
+
+def assertRaisesEx(e_type, checked, *args, **kw):
+    try:
+        checked(*args, **kw)
+    except e_type as e:
+        return e
+    assert(0, "Didn't raise: %s" % e_type.__name__)
+
 def positive_id(obj):
     """Return id(obj) as a non-negative integer."""
     import struct
@@ -50,41 +80,45 @@ def positive_id(obj):
         assert result > 0
     return result
 
-class TransactionTests(unittest.TestCase):
+class TransactionManagerTests(unittest.TestCase):
 
-    def setUp(self):
+    def _makeDM(self):
         from transaction import TransactionManager
-        mgr = self.transaction_manager = TransactionManager()
-        self.sub1 = DataObject(mgr)
-        self.sub2 = DataObject(mgr)
-        self.sub3 = DataObject(mgr)
-        self.nosub1 = DataObject(mgr, nost=1)
+        mgr = TransactionManager()
+        sub1 = DataObject(mgr)
+        sub2 = DataObject(mgr)
+        sub3 = DataObject(mgr)
+        nosub1 = DataObject(mgr, nost=1)
+        return mgr, sub1, sub2, sub3, nosub1
 
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
     def testTransactionCommit(self):
 
-        self.sub1.modify()
-        self.sub2.modify()
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1.modify()
+        sub2.modify()
 
-        self.transaction_manager.commit()
+        mgr.commit()
 
-        assert self.sub1._p_jar.ccommit_sub == 0
-        assert self.sub1._p_jar.ctpc_finish == 1
+        assert sub1._p_jar.ccommit_sub == 0
+        assert sub1._p_jar.ctpc_finish == 1
 
     def testTransactionAbort(self):
 
-        self.sub1.modify()
-        self.sub2.modify()
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1.modify()
+        sub2.modify()
 
-        self.transaction_manager.abort()
+        mgr.abort()
 
-        assert self.sub2._p_jar.cabort == 1
+        assert sub2._p_jar.cabort == 1
 
     def testTransactionNote(self):
 
-        t = self.transaction_manager.get()
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        t = mgr.get()
 
         t.note('This is a note.')
         self.assertEqual(t.description, 'This is a note.')
@@ -98,20 +132,22 @@ class TransactionTests(unittest.TestCase):
 
     def testNSJTransactionCommit(self):
 
-        self.nosub1.modify()
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        nosub1.modify()
 
-        self.transaction_manager.commit()
+        mgr.commit()
 
-        assert self.nosub1._p_jar.ctpc_finish == 1
+        assert nosub1._p_jar.ctpc_finish == 1
 
     def testNSJTransactionAbort(self):
 
-        self.nosub1.modify()
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        nosub1.modify()
 
-        self.transaction_manager.abort()
+        mgr.abort()
 
-        assert self.nosub1._p_jar.ctpc_finish == 0
-        assert self.nosub1._p_jar.cabort == 1
+        assert nosub1._p_jar.ctpc_finish == 0
+        assert nosub1._p_jar.cabort == 1
 
 
     ### Failure Mode Tests
@@ -126,87 +162,90 @@ class TransactionTests(unittest.TestCase):
 
     def testExceptionInAbort(self):
 
-        self.sub1._p_jar = BasicJar(errors='abort')
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1._p_jar = BasicJar(errors='abort')
 
-        self.nosub1.modify()
-        self.sub1.modify(nojar=1)
-        self.sub2.modify()
+        nosub1.modify()
+        sub1.modify(nojar=1)
+        sub2.modify()
 
         try:
-            self.transaction_manager.abort()
+            mgr.abort()
         except TestTxnException: pass
 
-        assert self.nosub1._p_jar.cabort == 1
-        assert self.sub2._p_jar.cabort == 1
+        assert nosub1._p_jar.cabort == 1
+        assert sub2._p_jar.cabort == 1
 
     def testExceptionInCommit(self):
 
-        self.sub1._p_jar = BasicJar(errors='commit')
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1._p_jar = BasicJar(errors='commit')
 
-        self.nosub1.modify()
-        self.sub1.modify(nojar=1)
+        nosub1.modify()
+        sub1.modify(nojar=1)
 
         try:
-            self.transaction_manager.commit()
+            mgr.commit()
         except TestTxnException: pass
 
-        assert self.nosub1._p_jar.ctpc_finish == 0
-        assert self.nosub1._p_jar.ccommit == 1
-        assert self.nosub1._p_jar.ctpc_abort == 1
+        assert nosub1._p_jar.ctpc_finish == 0
+        assert nosub1._p_jar.ccommit == 1
+        assert nosub1._p_jar.ctpc_abort == 1
 
     def testExceptionInTpcVote(self):
 
-        self.sub1._p_jar = BasicJar(errors='tpc_vote')
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1._p_jar = BasicJar(errors='tpc_vote')
 
-        self.nosub1.modify()
-        self.sub1.modify(nojar=1)
+        nosub1.modify()
+        sub1.modify(nojar=1)
 
         try:
-            self.transaction_manager.commit()
+            mgr.commit()
         except TestTxnException: pass
 
-        assert self.nosub1._p_jar.ctpc_finish == 0
-        assert self.nosub1._p_jar.ccommit == 1
-        assert self.nosub1._p_jar.ctpc_abort == 1
-        assert self.sub1._p_jar.ctpc_abort == 1
+        assert nosub1._p_jar.ctpc_finish == 0
+        assert nosub1._p_jar.ccommit == 1
+        assert nosub1._p_jar.ctpc_abort == 1
+        assert sub1._p_jar.ctpc_abort == 1
 
     def testExceptionInTpcBegin(self):
-        """
-        ok this test reveals a bug in the TM.py
-        as the nosub tpc_abort there is ignored.
+        # ok this test reveals a bug in the TM.py
+        # as the nosub tpc_abort there is ignored.
 
-        nosub calling method tpc_begin
-        nosub calling method commit
-        sub calling method tpc_begin
-        sub calling method abort
-        sub calling method tpc_abort
-        nosub calling method tpc_abort
-        """
-        self.sub1._p_jar = BasicJar(errors='tpc_begin')
+        # nosub calling method tpc_begin
+        # nosub calling method commit
+        # sub calling method tpc_begin
+        # sub calling method abort
+        # sub calling method tpc_abort
+        # nosub calling method tpc_abort
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1._p_jar = BasicJar(errors='tpc_begin')
 
-        self.nosub1.modify()
-        self.sub1.modify(nojar=1)
+        nosub1.modify()
+        sub1.modify(nojar=1)
 
         try:
-            self.transaction_manager.commit()
+            mgr.commit()
         except TestTxnException:
             pass
 
-        assert self.nosub1._p_jar.ctpc_abort == 1
-        assert self.sub1._p_jar.ctpc_abort == 1
+        assert nosub1._p_jar.ctpc_abort == 1
+        assert sub1._p_jar.ctpc_abort == 1
 
     def testExceptionInTpcAbort(self):
-        self.sub1._p_jar = BasicJar(errors=('tpc_abort', 'tpc_vote'))
+        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+        sub1._p_jar = BasicJar(errors=('tpc_abort', 'tpc_vote'))
 
-        self.nosub1.modify()
-        self.sub1.modify(nojar=1)
+        nosub1.modify()
+        sub1.modify(nojar=1)
 
         try:
-            self.transaction_manager.commit()
+            mgr.commit()
         except TestTxnException:
             pass
 
-        assert self.nosub1._p_jar.ctpc_abort == 1
+        assert nosub1._p_jar.ctpc_abort == 1
 
     # last test, check the hosing mechanism
 
@@ -217,7 +256,8 @@ class TransactionTests(unittest.TestCase):
 ##        # recover from such an error if it occurs during the very first
 ##        # tpc_finish() call of the second phase.
 
-##        for obj in self.sub1, self.sub2:
+##        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
+##        for obj in sub1, sub2:
 ##            j = HoserJar(errors='tpc_finish')
 ##            j.reset()
 ##            obj._p_jar = j
@@ -230,7 +270,7 @@ class TransactionTests(unittest.TestCase):
 
 ##        self.assert_(Transaction.hosed)
 
-##        self.sub2.modify()
+##        sub2.modify()
 
 ##        try:
 ##            transaction.commit()
@@ -241,6 +281,7 @@ class TransactionTests(unittest.TestCase):
 
 
 class Test_oid_repr(unittest.TestCase):
+
     def _callFUT(self, oid):
         from transaction._transaction import oid_repr
         return oid_repr(oid)
@@ -258,6 +299,76 @@ class Test_oid_repr(unittest.TestCase):
     def test_as_string_all_Fs(self):
         s = '\1'*8
         self.assertEqual(self._callFUT(s), '0x0101010101010101')
+
+
+class MiscellaneousTests(unittest.TestCase):
+
+    def test_BBB_join(self):
+        # The join method is provided for "backward-compatability" with ZODB 4
+        # data managers.
+        from transaction import Transaction
+        from transaction.tests.SampleDataManager import DataManager
+        from transaction._transaction import DataManagerAdapter
+        # The argument to join must be a zodb4 data manager,
+        # transaction.interfaces.IDataManager.
+        t = Transaction()
+        dm = DataManager()
+        t.join(dm)
+        # The end result is that a data manager adapter is one of the
+        # transaction's objects:
+        self.assertTrue(isinstance(t._resources[0], DataManagerAdapter))
+        self.assertTrue(t._resources[0]._datamanager is dm)
+
+    def test_bug239086(self):
+        # The original implementation of thread transaction manager made
+        # invalid assumptions about thread ids.
+        import threading
+        import transaction
+        import transaction.tests.savepointsample as SPS
+        dm = SPS.SampleSavepointDataManager()
+        self.assertEqual(list(dm.keys()), [])
+
+        class Sync:
+             def __init__(self, label):
+                 self.label = label
+                 self.log = []
+             def beforeCompletion(self, t):
+                 self.log.append('%s %s' % (self.label, 'before'))
+             def afterCompletion(self, t):
+                 self.log.append('%s %s' % (self.label, 'after'))
+             def newTransaction(self, t):
+                 self.log.append('%s %s' % (self.label, 'new'))
+
+        def run_in_thread(f):
+            t = threading.Thread(target=f)
+            t.start()
+            t.join()
+
+        sync = Sync(1)
+        @run_in_thread
+        def first():
+            transaction.manager.registerSynch(sync)
+            transaction.manager.begin()
+            dm['a'] = 1
+        self.assertEqual(sync.log, ['1 new'])
+
+        @run_in_thread
+        def second():
+            transaction.abort() # should do nothing.
+        self.assertEqual(sync.log, ['1 new'])
+        self.assertEqual(list(dm.keys()), ['a'])
+
+        dm = SPS.SampleSavepointDataManager()
+        self.assertEqual(list(dm.keys()), [])
+
+        @run_in_thread
+        def first():
+            dm['a'] = 1
+        self.assertEqual(sync.log, ['1 new'])
+
+        transaction.abort() # should do nothing
+        self.assertEqual(list(dm.keys()), ['a'])
+
 
 class DataObject:
 
@@ -358,421 +469,17 @@ class HoserJar(BasicJar):
         HoserJar.committed += 1
 
 
-def test_join():
-    """White-box test of the join method
-
-    The join method is provided for "backward-compatability" with ZODB 4
-    data managers.
-
-    The argument to join must be a zodb4 data manager,
-    transaction.interfaces.IDataManager.
-
-    >>> from transaction import Transaction
-    >>> from transaction.tests.sampledm import DataManager
-    >>> from transaction._transaction import DataManagerAdapter
-    >>> t = Transaction()
-    >>> dm = DataManager()
-    >>> t.join(dm)
-
-    The end result is that a data manager adapter is one of the
-    transaction's objects:
-
-    >>> isinstance(t._resources[0], DataManagerAdapter)
-    True
-    >>> t._resources[0]._datamanager is dm
-    True
-
-    """
-
 def hook():
     pass
 
-def test_addBeforeCommitHook():
-    """Test addBeforeCommitHook.
-
-    Let's define a hook to call, and a way to see that it was called.
-
-      >>> log = []
-      >>> def reset_log():
-      ...     del log[:]
-
-      >>> def hook(arg='no_arg', kw1='no_kw1', kw2='no_kw2'):
-      ...     log.append("arg %r kw1 %r kw2 %r" % (arg, kw1, kw2))
-
-    Now register the hook with a transaction.
-
-      >>> from transaction import begin
-      >>> from transaction.compat import func_name
-      >>> import transaction
-      >>> t = begin()
-      >>> t.addBeforeCommitHook(hook, '1')
-
-    We can see that the hook is indeed registered.
-
-      >>> [(func_name(hook), args, kws)
-      ...  for hook, args, kws in t.getBeforeCommitHooks()]
-      [('hook', ('1',), {})]
-
-    When transaction commit starts, the hook is called, with its
-    arguments.
-
-      >>> log
-      []
-      >>> t.commit()
-      >>> log
-      ["arg '1' kw1 'no_kw1' kw2 'no_kw2'"]
-      >>> reset_log()
-
-    A hook's registration is consumed whenever the hook is called.  Since
-    the hook above was called, it's no longer registered:
-
-      >>> from transaction import commit
-      >>> len(list(t.getBeforeCommitHooks()))
-      0
-      >>> commit()
-      >>> log
-      []
-
-    The hook is only called for a full commit, not for a savepoint.
-
-      >>> t = begin()
-      >>> t.addBeforeCommitHook(hook, 'A', dict(kw1='B'))
-      >>> dummy = t.savepoint()
-      >>> log
-      []
-      >>> t.commit()
-      >>> log
-      ["arg 'A' kw1 'B' kw2 'no_kw2'"]
-      >>> reset_log()
-
-    If a transaction is aborted, no hook is called.
-
-      >>> from transaction import abort
-      >>> t = begin()
-      >>> t.addBeforeCommitHook(hook, ["OOPS!"])
-      >>> abort()
-      >>> log
-      []
-      >>> commit()
-      >>> log
-      []
-
-    The hook is called before the commit does anything, so even if the
-    commit fails the hook will have been called.  To provoke failures in
-    commit, we'll add failing resource manager to the transaction.
-
-      >>> class CommitFailure(Exception):
-      ...     pass
-      >>> class FailingDataManager:
-      ...     def tpc_begin(self, txn, sub=False):
-      ...         raise CommitFailure('failed')
-      ...     def abort(self, txn):
-      ...         pass
-
-      >>> t = begin()
-      >>> t.join(FailingDataManager())
-
-      >>> t.addBeforeCommitHook(hook, '2')
-      >>> t.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
-      Traceback (most recent call last):
-      ...
-      CommitFailure: failed
-      >>> log
-      ["arg '2' kw1 'no_kw1' kw2 'no_kw2'"]
-      >>> reset_log()
-
-    Let's register several hooks.
-
-      >>> t = begin()
-      >>> t.addBeforeCommitHook(hook, '4', dict(kw1='4.1'))
-      >>> t.addBeforeCommitHook(hook, '5', dict(kw2='5.2'))
-
-    They are returned in the same order by getBeforeCommitHooks.
-
-      >>> [(func_name(hook), args, kws)  #doctest: +NORMALIZE_WHITESPACE
-      ...  for hook, args, kws in t.getBeforeCommitHooks()]
-      [('hook', ('4',), {'kw1': '4.1'}),
-       ('hook', ('5',), {'kw2': '5.2'})]
-
-    And commit also calls them in this order.
-
-      >>> t.commit()
-      >>> len(log)
-      2
-      >>> log  #doctest: +NORMALIZE_WHITESPACE
-      ["arg '4' kw1 '4.1' kw2 'no_kw2'",
-       "arg '5' kw1 'no_kw1' kw2 '5.2'"]
-      >>> reset_log()
-
-    While executing, a hook can itself add more hooks, and they will all
-    be called before the real commit starts.
-
-      >>> def recurse(txn, arg):
-      ...     log.append('rec' + str(arg))
-      ...     if arg:
-      ...         txn.addBeforeCommitHook(hook, '-')
-      ...         txn.addBeforeCommitHook(recurse, (txn, arg-1))
-
-      >>> t = begin()
-      >>> t.addBeforeCommitHook(recurse, (t, 3))
-      >>> commit()
-      >>> log  #doctest: +NORMALIZE_WHITESPACE
-      ['rec3',
-               "arg '-' kw1 'no_kw1' kw2 'no_kw2'",
-       'rec2',
-               "arg '-' kw1 'no_kw1' kw2 'no_kw2'",
-       'rec1',
-               "arg '-' kw1 'no_kw1' kw2 'no_kw2'",
-       'rec0']
-      >>> reset_log()
-
-    """
-
-def test_addAfterCommitHook():
-    """Test addAfterCommitHook.
-
-    Let's define a hook to call, and a way to see that it was called.
-
-      >>> log = []
-      >>> def reset_log():
-      ...     del log[:]
-
-      >>> def hook(status, arg='no_arg', kw1='no_kw1', kw2='no_kw2'):
-      ...     log.append("%r arg %r kw1 %r kw2 %r" % (status, arg, kw1, kw2))
-
-    Now register the hook with a transaction.
-
-      >>> from transaction import begin
-      >>> from transaction.compat import func_name
-      >>> t = begin()
-      >>> t.addAfterCommitHook(hook, '1')
-
-    We can see that the hook is indeed registered.
-
-      >>> [(func_name(hook), args, kws)
-      ...  for hook, args, kws in t.getAfterCommitHooks()]
-      [('hook', ('1',), {})]
-
-    When transaction commit is done, the hook is called, with its
-    arguments.
-
-      >>> log
-      []
-      >>> t.commit()
-      >>> log
-      ["True arg '1' kw1 'no_kw1' kw2 'no_kw2'"]
-      >>> reset_log()
-
-    A hook's registration is consumed whenever the hook is called.  Since
-    the hook above was called, it's no longer registered:
-
-      >>> from transaction import commit
-      >>> len(list(t.getAfterCommitHooks()))
-      0
-      >>> commit()
-      >>> log
-      []
-
-    The hook is only called after a full commit, not for a savepoint.
-
-      >>> t = begin()
-      >>> t.addAfterCommitHook(hook, 'A', dict(kw1='B'))
-      >>> dummy = t.savepoint()
-      >>> log
-      []
-      >>> t.commit()
-      >>> log
-      ["True arg 'A' kw1 'B' kw2 'no_kw2'"]
-      >>> reset_log()
-
-    If a transaction is aborted, no hook is called.
-
-      >>> from transaction import abort
-      >>> t = begin()
-      >>> t.addAfterCommitHook(hook, ["OOPS!"])
-      >>> abort()
-      >>> log
-      []
-      >>> commit()
-      >>> log
-      []
-
-    The hook is called after the commit is done, so even if the
-    commit fails the hook will have been called.  To provoke failures in
-    commit, we'll add failing resource manager to the transaction.
-
-      >>> class CommitFailure(Exception):
-      ...     pass
-      >>> class FailingDataManager:
-      ...     def tpc_begin(self, txn):
-      ...         raise CommitFailure('failed')
-      ...     def abort(self, txn):
-      ...         pass
-
-      >>> t = begin()
-      >>> t.join(FailingDataManager())
-
-      >>> t.addAfterCommitHook(hook, '2')
-      >>> t.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
-      Traceback (most recent call last):
-      ...
-      CommitFailure: failed
-      >>> log
-      ["False arg '2' kw1 'no_kw1' kw2 'no_kw2'"]
-      >>> reset_log()
-
-    Let's register several hooks.
-
-      >>> t = begin()
-      >>> t.addAfterCommitHook(hook, '4', dict(kw1='4.1'))
-      >>> t.addAfterCommitHook(hook, '5', dict(kw2='5.2'))
-
-    They are returned in the same order by getAfterCommitHooks.
-
-      >>> [(func_name(hook), args, kws)     #doctest: +NORMALIZE_WHITESPACE
-      ...  for hook, args, kws in t.getAfterCommitHooks()]
-      [('hook', ('4',), {'kw1': '4.1'}),
-       ('hook', ('5',), {'kw2': '5.2'})]
-
-    And commit also calls them in this order.
-
-      >>> t.commit()
-      >>> len(log)
-      2
-      >>> log  #doctest: +NORMALIZE_WHITESPACE
-      ["True arg '4' kw1 '4.1' kw2 'no_kw2'",
-       "True arg '5' kw1 'no_kw1' kw2 '5.2'"]
-      >>> reset_log()
-
-    While executing, a hook can itself add more hooks, and they will all
-    be called before the real commit starts.
-
-      >>> def recurse(status, txn, arg):
-      ...     log.append('rec' + str(arg))
-      ...     if arg:
-      ...         txn.addAfterCommitHook(hook, '-')
-      ...         txn.addAfterCommitHook(recurse, (txn, arg-1))
-
-      >>> t = begin()
-      >>> t.addAfterCommitHook(recurse, (t, 3))
-      >>> commit()
-      >>> log  #doctest: +NORMALIZE_WHITESPACE
-      ['rec3',
-               "True arg '-' kw1 'no_kw1' kw2 'no_kw2'",
-       'rec2',
-               "True arg '-' kw1 'no_kw1' kw2 'no_kw2'",
-       'rec1',
-               "True arg '-' kw1 'no_kw1' kw2 'no_kw2'",
-       'rec0']
-      >>> reset_log()
-
-    If an after commit hook is raising an exception then it will log a
-    message at error level so that if other hooks are registered they
-    can be executed. We don't support execution dependencies at this level.
-
-      >>> from transaction import TransactionManager
-      >>> mgr = TransactionManager()
-      >>> do = DataObject(mgr)
-
-      >>> def hookRaise(status, arg='no_arg', kw1='no_kw1', kw2='no_kw2'):
-      ...     raise TypeError("Fake raise")
-
-      >>> t = begin()
-
-      >>> t.addAfterCommitHook(hook, ('-', 1))
-      >>> t.addAfterCommitHook(hookRaise, ('-', 2))
-      >>> t.addAfterCommitHook(hook, ('-', 3))
-      >>> commit()
-
-      >>> log
-      ["True arg '-' kw1 1 kw2 'no_kw2'", "True arg '-' kw1 3 kw2 'no_kw2'"]
-
-      >>> reset_log()
-
-    Test that the associated transaction manager has been cleanup when
-    after commit hooks are registered
-
-      >>> mgr = TransactionManager()
-      >>> do = DataObject(mgr)
-
-      >>> t = begin()
-      >>> t._manager._txn is not None
-      True
-
-      >>> t.addAfterCommitHook(hook, ('-', 1))
-      >>> commit()
-
-      >>> log
-      ["True arg '-' kw1 1 kw2 'no_kw2'"]
-
-      >>> t._manager._txn is not None
-      False
-
-      >>> reset_log()
-    """
-
-def bug239086():
-    """
-    The original implementation of thread transaction manager made
-    invalid assumptions about thread ids.
-
-    >>> import transaction
-    >>> import transaction.tests.savepointsample as SPS
-    >>> dm = SPS.SampleSavepointDataManager()
-    >>> list(dm.keys())
-    []
-
-    >>> class Sync:
-    ...      def __init__(self, label):
-    ...          self.label = label
-    ...      def beforeCompletion(self, t):
-    ...          print('%s %s' % (self.label, 'before'))
-    ...      def afterCompletion(self, t):
-    ...          print('%s %s' % (self.label, 'after'))
-    ...      def newTransaction(self, t):
-    ...          print('%s %s' % (self.label, 'new'))
-    >>> sync = Sync(1)
-
-    >>> import threading
-    >>> def run_in_thread(f):
-    ...     t = threading.Thread(target=f)
-    ...     t.start()
-    ...     t.join()
-
-    >>> @run_in_thread
-    ... def first():
-    ...     transaction.manager.registerSynch(sync)
-    ...     transaction.manager.begin()
-    ...     dm['a'] = 1
-    1 new
-
-    >>> @run_in_thread
-    ... def second():
-    ...     transaction.abort() # should do nothing.
-
-    >>> list(dm.keys())
-    ['a']
-
-    >>> dm = SPS.SampleSavepointDataManager()
-    >>> list(dm.keys())
-    []
-
-    >>> @run_in_thread
-    ... def first():
-    ...     dm['a'] = 1
-
-    >>> transaction.abort() # should do nothing
-    >>> list(dm.keys())
-    ['a']
-
-    """
 
 def test_suite():
     from doctest import DocTestSuite
     suite = unittest.TestSuite((
         DocTestSuite(),
-        unittest.makeSuite(TransactionTests),
+        unittest.makeSuite(TransactionManagerTests),
         unittest.makeSuite(Test_oid_repr),
+        unittest.makeSuite(MiscellaneousTests),
         ))
 
     return suite

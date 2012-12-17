@@ -116,6 +116,12 @@ from transaction import interfaces
 
 _marker = object()
 
+_TB_BUFFER = None
+def _makeTracebackBuffer(): #unittests may hook
+    if _TB_BUFFER is not None:
+        return _TB_BUFFER
+    return StringIO()
+
 # The point of this is to avoid hiding exceptions (which the builtin
 # hasattr() does).
 def myhasattr(obj, attr):
@@ -364,7 +370,7 @@ class Transaction(object):
     def _saveAndGetCommitishError(self):
         self.status = Status.COMMITFAILED
         # Save the traceback for TransactionFailedError.
-        ft = self._failure_traceback = StringIO()
+        ft = self._failure_traceback = _makeTracebackBuffer()
         t = None
         v = None
         tb = None

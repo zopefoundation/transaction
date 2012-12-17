@@ -9,6 +9,7 @@ Contents:
    convenience
    doom
    savepoint
+   hooks
    datamanager
    resourcemanager
    api
