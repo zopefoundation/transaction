@@ -70,6 +70,26 @@ def assertRaisesEx(e_type, checked, *args, **kw):
     raise AssertionError("Didn't raise: %s" % e_type.__name__)
 
 
+class TransactionTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from transaction._transaction import Transaction
+        return Transaction
+
+    def _makeOne(self, synchronizers=None, manager=None):
+        return self._getTargetClass()(synchronizers, manager)
+
+    def test_note(self):
+        t = self._makeOne()
+        try:
+            t.note('This is a note.')
+            self.assertEqual(t.description, 'This is a note.')
+            t.note('Another.')
+            self.assertEqual(t.description, 'This is a note.\nAnother.')
+        finally:
+            t.abort()
+
+
 class Test_oid_repr(unittest.TestCase):
 
     def _callFUT(self, oid):
@@ -152,7 +172,7 @@ class MiscellaneousTests(unittest.TestCase):
         self.assertEqual(list(dm.keys()), [])
 
         @run_in_thread
-        def first():
+        def third():
             dm['a'] = 1
         self.assertEqual(sync.log, ['1 new'])
 
@@ -162,6 +182,7 @@ class MiscellaneousTests(unittest.TestCase):
 
 def test_suite():
     return unittest.TestSuite((
+        unittest.makeSuite(TransactionTests),
         unittest.makeSuite(Test_oid_repr),
         unittest.makeSuite(MiscellaneousTests),
         ))

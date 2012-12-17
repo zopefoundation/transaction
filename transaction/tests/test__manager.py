@@ -28,7 +28,7 @@ class TransactionManagerTests(unittest.TestCase):
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
-    def testTransactionCommit(self):
+    def test_commit_normal(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         sub1.modify()
@@ -39,7 +39,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert sub1._p_jar.ccommit_sub == 0
         assert sub1._p_jar.ctpc_finish == 1
 
-    def testTransactionAbort(self):
+    def test_abort_normal(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         sub1.modify()
@@ -49,22 +49,10 @@ class TransactionManagerTests(unittest.TestCase):
 
         assert sub2._p_jar.cabort == 1
 
-    def testTransactionNote(self):
-
-        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
-        t = mgr.get()
-
-        t.note('This is a note.')
-        self.assertEqual(t.description, 'This is a note.')
-        t.note('Another.')
-        self.assertEqual(t.description, 'This is a note.\nAnother.')
-
-        t.abort()
-
 
     # repeat adding in a nonsub trans jars
 
-    def testNSJTransactionCommit(self):
+    def test_commit_w_nonsub_jar(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         nosub1.modify()
@@ -73,7 +61,7 @@ class TransactionManagerTests(unittest.TestCase):
 
         assert nosub1._p_jar.ctpc_finish == 1
 
-    def testNSJTransactionAbort(self):
+    def test_abort_w_nonsub_jar(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         nosub1.modify()
@@ -94,7 +82,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     # first the recoverable errors
 
-    def testExceptionInAbort(self):
+    def test_abort_w_broken_jar(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         sub1._p_jar = BasicJar(errors='abort')
@@ -110,7 +98,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert nosub1._p_jar.cabort == 1
         assert sub2._p_jar.cabort == 1
 
-    def testExceptionInCommit(self):
+    def test_commit_w_broken_jar_commit(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         sub1._p_jar = BasicJar(errors='commit')
@@ -126,7 +114,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert nosub1._p_jar.ccommit == 1
         assert nosub1._p_jar.ctpc_abort == 1
 
-    def testExceptionInTpcVote(self):
+    def test_commit_w_broken_jar_tpc_vote(self):
 
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         sub1._p_jar = BasicJar(errors='tpc_vote')
@@ -143,7 +131,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert nosub1._p_jar.ctpc_abort == 1
         assert sub1._p_jar.ctpc_abort == 1
 
-    def testExceptionInTpcBegin(self):
+    def test_commit_w_broken_jar_tpc_begin(self):
         # ok this test reveals a bug in the TM.py
         # as the nosub tpc_abort there is ignored.
 
@@ -167,7 +155,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert nosub1._p_jar.ctpc_abort == 1
         assert sub1._p_jar.ctpc_abort == 1
 
-    def testExceptionInTpcAbort(self):
+    def test_commit_w_broken_jar_tpc_abort_tpc_vote(self):
         mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
         sub1._p_jar = BasicJar(errors=('tpc_abort', 'tpc_vote'))
 
@@ -180,38 +168,6 @@ class TransactionManagerTests(unittest.TestCase):
             pass
 
         assert nosub1._p_jar.ctpc_abort == 1
-
-    # last test, check the hosing mechanism
-
-##    def testHoserStoppage(self):
-##        # It's hard to test the "hosed" state of the database, where
-##        # hosed means that a failure occurred in the second phase of
-##        # the two phase commit.  It's hard because the database can
-##        # recover from such an error if it occurs during the very first
-##        # tpc_finish() call of the second phase.
-
-##        mgr, sub1, sub2, sub3, nosub1 = self._makeDM()
-##        for obj in sub1, sub2:
-##            j = HoserJar(errors='tpc_finish')
-##            j.reset()
-##            obj._p_jar = j
-##            obj.modify(nojar=1)
-
-##        try:
-##            transaction.commit()
-##        except TestTxnException:
-##            pass
-
-##        self.assert_(Transaction.hosed)
-
-##        sub2.modify()
-
-##        try:
-##            transaction.commit()
-##        except Transaction.POSException.TransactionError:
-##            pass
-##        else:
-##            self.fail("Hosed Application didn't stop commits")
 
 
 class DataObject:
@@ -292,28 +248,6 @@ class BasicJar:
     def tpc_finish(self, *args):
         self.check('tpc_finish')
         self.ctpc_finish += 1
-
-
-class HoserJar(BasicJar):
-
-    # The HoserJars coordinate their actions via the class variable
-    # committed.  The check() method will only raise its exception
-    # if committed > 0.
-
-    committed = 0
-
-    def reset(self):
-        # Calling reset() on any instance will reset the class variable.
-        HoserJar.committed = 0
-
-    def check(self, method):
-        if HoserJar.committed > 0:
-            BasicJar.check(self, method)
-
-    def tpc_finish(self, *args):
-        self.check('tpc_finish')
-        self.ctpc_finish += 1
-        HoserJar.committed += 1
 
 
 def positive_id(obj):
