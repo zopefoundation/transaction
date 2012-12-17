@@ -104,9 +104,9 @@ commit, we'll add failing resource manager to the transaction.
 
     >>> t.addBeforeCommitHook(hook, '2')
 
-    >>> from transaction.tests.test_transaction import DummyFile
-    >>> from transaction.tests.test_transaction import Monkey
-    >>> from transaction.tests.test_transaction import assertRaisesEx
+    >>> from transaction.tests.test__transaction import DummyFile
+    >>> from transaction.tests.test__transaction import Monkey
+    >>> from transaction.tests.test__transaction import assertRaisesEx
     >>> from transaction import _transaction
     >>> buffer = DummyFile()
     >>> with Monkey(_transaction, _TB_BUFFER=buffer):
@@ -270,9 +270,9 @@ commit, we'll add failing resource manager to the transaction.
     >>> t.join(FailingDataManager())
 
     >>> t.addAfterCommitHook(hook, '2')
-    >>> from transaction.tests.test_transaction import DummyFile
-    >>> from transaction.tests.test_transaction import Monkey
-    >>> from transaction.tests.test_transaction import assertRaisesEx
+    >>> from transaction.tests.test__transaction import DummyFile
+    >>> from transaction.tests.test__transaction import Monkey
+    >>> from transaction.tests.test__transaction import assertRaisesEx
     >>> from transaction import _transaction
     >>> buffer = DummyFile()
     >>> with Monkey(_transaction, _TB_BUFFER=buffer):
