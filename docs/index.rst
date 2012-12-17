@@ -10,6 +10,7 @@ Contents:
    doom
    savepoint
    datamanager
+   resourcemanager
    api
 
 

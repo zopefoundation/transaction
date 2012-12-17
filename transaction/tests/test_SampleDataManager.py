@@ -13,7 +13,7 @@
 ##############################################################################
 """Sample objects for use in tests
 
-Used by the 'datamanaber' chapter in the Sphinx docs.
+Used by the 'datamanager' chapter in the Sphinx docs.
 """
 
 class DataManager(object):
