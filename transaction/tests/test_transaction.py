@@ -36,10 +36,8 @@ TODO
     add in tests for objects which are modified multiple times,
     for example an object that gets modified in multiple sub txns.
 """
-from doctest import DocTestSuite, DocFileSuite, IGNORE_EXCEPTION_DETAIL
-
+from doctest import DocTestSuite
 import struct
-import sys
 import unittest
 import transaction
 
@@ -763,14 +761,10 @@ def bug239086():
 
 def test_suite():
     suite = unittest.TestSuite((
-        DocFileSuite('doom.txt'),
         DocTestSuite(),
         unittest.makeSuite(TransactionTests),
         unittest.makeSuite(Test_oid_repr),
         ))
-    if sys.version_info >= (2, 6):
-        suite.addTest(DocFileSuite('convenience.txt',
-                      optionflags=IGNORE_EXCEPTION_DETAIL))
 
     return suite
 

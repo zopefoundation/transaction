@@ -24,6 +24,8 @@ demonstrating the correct operation of savepoint support within the
 transaction system.  This data manager is very simple.  It provides flat
 storage of named immutable values, like strings and numbers.
 
+.. doctest::
+
     >>> import transaction
     >>> from transaction.tests import savepointsample
     >>> dm = savepointsample.SampleSavepointDataManager()
@@ -31,11 +33,15 @@ storage of named immutable values, like strings and numbers.
 
 As with other data managers, we can commit changes:
 
+.. doctest::
+
     >>> transaction.commit()
     >>> dm['name']
     'bob'
 
 and abort changes:
+
+.. doctest::
 
     >>> dm['name'] = 'sally'
     >>> dm['name']
@@ -52,6 +58,8 @@ account is invalid, we roll back the change for that entry.  The success or
 failure of an entry is indicated in the output status.  First we'll initialize
 some accounts:
 
+.. doctest::
+
     >>> dm['bob-balance'] = 0.0
     >>> dm['bob-credit'] = 0.0
     >>> dm['sally-balance'] = 0.0
@@ -60,12 +68,16 @@ some accounts:
 
 Now, we'll define a validation function to validate an account:
 
+.. doctest::
+
     >>> def validate_account(name):
     ...     if dm[name+'-balance'] + dm[name+'-credit'] < 0:
     ...         raise ValueError('Overdrawn', name)
 
 And a function to apply entries.  If the function fails in some unexpected
 way, it rolls back all of its changes and prints the error:
+
+.. doctest::
 
     >>> def apply_entries(entries):
     ...     savepoint = transaction.savepoint()
@@ -85,6 +97,8 @@ way, it rolls back all of its changes and prints the error:
     ...         print("%s" % ('Unexpected exception'))
 
 Now let's try applying some entries:
+
+.. doctest::
 
     >>> apply_entries([
     ...     ('bob',   10.0),
@@ -109,6 +123,8 @@ Now let's try applying some entries:
 
 If we provide entries that cause an unexpected error:
 
+.. doctest::
+
     >>> apply_entries([
     ...     ('bob',   10.0),
     ...     ('sally', 10.0),
@@ -123,6 +139,8 @@ Because the apply_entries used a savepoint for the entire function, it was
 able to rollback the partial changes without rolling back changes made in the
 previous call to ``apply_entries``:
 
+.. doctest::
+
     >>> dm['bob-balance']
     30.0
 
@@ -131,6 +149,8 @@ previous call to ``apply_entries``:
 
 If we now abort the outer transactions, the earlier changes will go
 away:
+
+.. doctest::
 
     >>> transaction.abort()
 
@@ -144,6 +164,8 @@ Savepoint invalidation
 ----------------------
 
 A savepoint can be used any number of times:
+
+.. doctest::
 
     >>> dm['bob-balance'] = 100.0
     >>> dm['bob-balance']
@@ -169,6 +191,8 @@ A savepoint can be used any number of times:
     100.0
 
 However, using a savepoint invalidates any savepoints that come after it:
+
+.. doctest::
 
     >>> dm['bob-balance'] = 200.0
     >>> dm['bob-balance']
@@ -203,6 +227,8 @@ Databases without savepoint support
 Normally it's an error to use savepoints with databases that don't support
 savepoints:
 
+.. doctest::
+
     >>> dm_no_sp = savepointsample.SampleDataManager()
     >>> dm_no_sp['name'] = 'bob'
     >>> transaction.commit()
@@ -218,6 +244,8 @@ However, a flag can be passed to the transaction savepoint method to indicate
 that databases without savepoint support should be tolerated until a savepoint
 is rolled back.  This allows transactions to proceed if there are no reasons
 to roll back:
+
+.. doctest::
 
     >>> dm_no_sp['name'] = 'sally'
     >>> savepoint = transaction.savepoint(1)
@@ -245,6 +273,8 @@ the transaction is aborted.
 In the previous example, we got an error when we tried to rollback the
 savepoint.  If we try to commit the transaction, the commit will fail:
 
+.. doctest::
+
     >>> transaction.commit() #doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
@@ -255,10 +285,14 @@ savepoint.  If we try to commit the transaction, the commit will fail:
 
 We have to abort it to make any progress:
 
+.. doctest::
+
     >>> transaction.abort()
 
 Similarly, in our earlier example, where we tried to take a savepoint with a
 data manager that didn't support savepoints:
+
+.. doctest::
 
     >>> dm_no_sp['name'] = 'sally'
     >>> dm['name'] = 'sally'
@@ -279,6 +313,8 @@ data manager that didn't support savepoints:
 
 After clearing the transaction with an abort, we can get on with new
 transactions:
+
+.. doctest::
 
     >>> dm_no_sp['name'] = 'sally'
     >>> dm['name'] = 'sally'

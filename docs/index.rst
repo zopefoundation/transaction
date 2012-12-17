@@ -6,6 +6,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   convenience
+   doom
+   savepoint
    api
 
 

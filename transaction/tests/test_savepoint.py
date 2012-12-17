@@ -80,7 +80,6 @@ the dm would end up being joined twice, leading to extra tpc calls and pain.
 
 def test_suite():
     return unittest.TestSuite((
-        doctest.DocFileSuite('savepoint.txt'),
         doctest.DocTestSuite(),
         ))
 
