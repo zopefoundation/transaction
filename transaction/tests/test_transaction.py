@@ -67,7 +67,7 @@ def assertRaisesEx(e_type, checked, *args, **kw):
         checked(*args, **kw)
     except e_type as e:
         return e
-    assert(0, "Didn't raise: %s" % e_type.__name__)
+    raise AssertionError("Didn't raise: %s" % e_type.__name__)
 
 def positive_id(obj):
     """Return id(obj) as a non-negative integer."""
