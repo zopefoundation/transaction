@@ -21,6 +21,7 @@ class DummyFile(object):
     def writelines(self, lines):
         self._lines.extend(lines)
 
+
 class Monkey(object):
     # context-manager for replacing module names in the scope of a test.
     def __init__(self, module, **kw):
