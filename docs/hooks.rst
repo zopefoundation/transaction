@@ -341,7 +341,7 @@ can be executed. We don't support execution dependencies at this level.
 .. doctest::
 
     >>> from transaction import TransactionManager
-    >>> from transaction.tests.test_transaction import DataObject
+    >>> from transaction.tests.test__manager import DataObject
     >>> mgr = TransactionManager()
     >>> do = DataObject(mgr)
 
