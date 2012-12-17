@@ -112,6 +112,31 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertFalse(synch1 in tm._synchs)
         self.assertTrue(synch2 in tm._synchs)
 
+    def test_isDoomed_wo_existing_txn(self):
+        tm = self._makeOne()
+        self.assertFalse(tm.isDoomed())
+        tm._txn.doom()
+        self.assertTrue(tm.isDoomed())
+
+    def test_isDoomed_w_existing_txn(self):
+        class Existing(object):
+            _doomed = False
+            def isDoomed(self):
+                return self._doomed
+        tm = self._makeOne()
+        tm._txn = txn = Existing()
+        self.assertFalse(tm.isDoomed())
+        txn._doomed = True
+        self.assertTrue(tm.isDoomed())
+
+    def test_doom(self):
+        tm = self._makeOne()
+        txn = tm.get()
+        self.assertFalse(txn.isDoomed())
+        tm.doom()
+        self.assertTrue(txn.isDoomed())
+        self.assertTrue(tm.isDoomed())
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
