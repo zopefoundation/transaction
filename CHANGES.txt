@@ -4,6 +4,11 @@ Changes
 1.3.1 (unreleased)
 ------------------
 
+- Refactored existing doctests as Sphinx documentation (snippets are exercised
+  via 'tox').
+
+- 100% unit test coverage.
+
 - Raise ValueError from ``Transaction.doom`` if the transaction is in a
   non-doomable state (rather than using ``assert``).
 
