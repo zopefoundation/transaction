@@ -1269,6 +1269,39 @@ class SavepointTests(unittest.TestCase):
         self.assertTrue(txn._sarce)
 
 
+class AbortSavepointTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from transaction._transaction import AbortSavepoint
+        return AbortSavepoint
+
+    def _makeOne(self, datamanager, transaction):
+        return self._getTargetClass()(datamanager, transaction)
+
+    def test_ctor(self):
+        dm = object()
+        txn = object()
+        asp = self._makeOne(dm, txn)
+        self.assertTrue(asp.datamanager is dm)
+        self.assertTrue(asp.transaction is txn)
+
+    def test_rollback(self):
+        class _DM(object):
+            _aborted = None
+            def abort(self, txn):
+                self._aborted = txn
+        class _TXN(object):
+            _unjoined = None
+            def _unjoin(self, datamanager):
+                self._unjoin = datamanager
+        dm = _DM()
+        txn = _TXN()
+        asp = self._makeOne(dm, txn)
+        asp.rollback()
+        self.assertTrue(dm._aborted is txn)
+        self.assertTrue(txn._unjoin is dm)
+
+
 class MiscellaneousTests(unittest.TestCase):
 
     def test_BBB_join(self):
@@ -1380,5 +1413,6 @@ def test_suite():
         unittest.makeSuite(Test_oid_repr),
         unittest.makeSuite(DataManagerAdapterTests),
         unittest.makeSuite(SavepointTests),
+        unittest.makeSuite(AbortSavepointTests),
         unittest.makeSuite(MiscellaneousTests),
         ))
