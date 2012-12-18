@@ -234,7 +234,6 @@ class Transaction(object):
         # be stored when the transaction commits.  For other
         # objects, the object implements the standard two-phase
         # commit protocol.
-
         manager = getattr(obj, "_p_jar", obj)
         if manager is None:
             raise ValueError("Register with no manager")

@@ -290,6 +290,46 @@ class TransactionTests(unittest.TestCase):
         t._invalidate_all_savepoints()
         self.assertEqual(list(t._savepoint2index), [])
 
+    def test_register_wo_jar(self):
+        class _Dummy(object):
+            _p_jar = None
+        t = self._makeOne()
+        self.assertRaises(ValueError, t.register, _Dummy())
+
+    def test_register_w_jar(self):
+        class _Manager(object):
+            pass
+        mgr = _Manager()
+        class _Dummy(object):
+            _p_jar = mgr
+        t = self._makeOne()
+        dummy = _Dummy()
+        t.register(dummy)
+        resources = list(t._resources)
+        self.assertEqual(len(resources), 1)
+        adapter = resources[0]
+        self.assertTrue(adapter.manager is mgr)
+        self.assertTrue(dummy in adapter.objects)
+        items = list(t._adapters.items())
+        self.assertEqual(len(items), 1)
+        self.assertTrue(items[0][0] is mgr)
+        self.assertTrue(items[0][1] is adapter)
+
+    def test_register_w_jar_already_adapted(self):
+        class _Adapter(object):
+            def __init__(self):
+                self.objects = []
+        class _Manager(object):
+            pass
+        mgr = _Manager()
+        class _Dummy(object):
+            _p_jar = mgr
+        t = self._makeOne()
+        t._adapters[mgr] = adapter = _Adapter()
+        dummy = _Dummy()
+        t.register(dummy)
+        self.assertTrue(dummy in adapter.objects)
+
     def test_note(self):
         t = self._makeOne()
         try:
