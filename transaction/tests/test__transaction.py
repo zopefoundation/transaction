@@ -945,6 +945,122 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._extension, {'frob': 'quxxxx', 'baz': 'spam'})
 
 
+class MultiObjectResourceAdapterTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from transaction._transaction import MultiObjectResourceAdapter
+        return MultiObjectResourceAdapter
+
+    def _makeOne(self, jar):
+        return self._getTargetClass()(jar)
+
+    def _makeJar(self, key):
+        class _Resource(Resource):
+            def __init__(self, key):
+                super(_Resource, self).__init__(key)
+                self._c = []
+                self._a = []
+            def commit(self, obj, txn):
+                self._c.append((obj, txn))
+            def abort(self, obj, txn):
+                self._a.append((obj, txn))
+        return _Resource(key)
+
+    def _makeDummy(self, kind, name):
+        class _Dummy(object):
+            def __init__(self, kind, name):
+                self._kind = kind
+                self._name = name
+            def __repr__(self):
+                return '<%s: %s>' % (self._kind, self._name)
+        return _Dummy(kind, name)
+
+    def test_ctor(self):
+        jar = self._makeJar('aaa')
+        mora = self._makeOne(jar)
+        self.assertTrue(mora.manager is jar)
+        self.assertEqual(mora.objects, [])
+        self.assertEqual(mora.ncommitted, 0)
+
+    def test___repr__(self):
+        jar = self._makeJar('bbb')
+        mora = self._makeOne(jar)
+        self.assertEqual(repr(mora),
+                         '<MultiObjectResourceAdapter '
+                            'for Resource: bbb at %s>' % id(mora))
+
+    def test_sortKey(self):
+        jar = self._makeJar('ccc')
+        mora = self._makeOne(jar)
+        self.assertEqual(mora.sortKey(), 'ccc')
+
+    def test_tpc_begin(self):
+        jar = self._makeJar('ddd')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_begin(txn)
+        self.assertTrue(jar._b)
+
+    def test_commit(self):
+        jar = self._makeJar('eee')
+        objects = [self._makeDummy('obj', 'a'), self._makeDummy('obj', 'b')]
+        mora = self._makeOne(jar)
+        mora.objects.extend(objects)
+        txn = self._makeDummy('txn', 'c')
+        mora.commit(txn)
+        self.assertEqual(jar._c, [(objects[0], txn), (objects[1], txn)])
+
+    def test_tpc_vote(self):
+        jar = self._makeJar('fff')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_vote(txn)
+        self.assertTrue(jar._v)
+
+    def test_tpc_finish(self):
+        jar = self._makeJar('ggg')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_finish(txn)
+        self.assertTrue(jar._f)
+
+    def test_abort(self):
+        jar = self._makeJar('hhh')
+        objects = [self._makeDummy('obj', 'a'), self._makeDummy('obj', 'b')]
+        mora = self._makeOne(jar)
+        mora.objects.extend(objects)
+        txn = self._makeDummy('txn', 'c')
+        mora.abort(txn)
+        self.assertEqual(jar._a, [(objects[0], txn), (objects[1], txn)])
+
+    def test_abort_w_error(self):
+        from transaction.tests.common import DummyLogger
+        jar = self._makeJar('hhh')
+        objects = [self._makeDummy('obj', 'a'),
+                   self._makeDummy('obj', 'b'),
+                   self._makeDummy('obj', 'c'),
+                  ]
+        _old_abort = jar.abort
+        def _abort(obj, txn):
+            if obj._name == 'b':
+                raise ValueError()
+            _old_abort(obj, txn)
+        jar.abort = _abort
+        mora = self._makeOne(jar)
+        mora.objects.extend(objects)
+        txn = self._makeDummy('txn', 'c')
+        txn.log = log = DummyLogger()
+        self.assertRaises(ValueError, mora.abort, txn)
+        self.assertEqual(jar._a, [(objects[0], txn), (objects[2], txn)])
+
+    def test_tpc_abort(self):
+        jar = self._makeJar('iii')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_abort(txn)
+        self.assertTrue(jar._x)
+
+
 class Test_oid_repr(unittest.TestCase):
 
     def _callFUT(self, oid):
@@ -1071,6 +1187,7 @@ class Resource(object):
 def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(TransactionTests),
+        unittest.makeSuite(MultiObjectResourceAdapterTests),
         unittest.makeSuite(Test_oid_repr),
         unittest.makeSuite(MiscellaneousTests),
         ))
