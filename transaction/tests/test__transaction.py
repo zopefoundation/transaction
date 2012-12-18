@@ -1084,6 +1084,14 @@ class Test_oid_repr(unittest.TestCase):
 
 class MiscellaneousTests(unittest.TestCase):
 
+    def test_rm_key_miss(self):
+        from transaction._transaction import rm_key
+        self.assertTrue(rm_key(object()) is None)
+
+    def test_rm_key_hit(self):
+        from transaction._transaction import rm_key
+        self.assertEqual(rm_key(Resource('zzz')), 'zzz')
+
     def test_BBB_join(self):
         # The join method is provided for "backward-compatability" with ZODB 4
         # data managers.
