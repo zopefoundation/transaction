@@ -1115,6 +1115,87 @@ class Test_oid_repr(unittest.TestCase):
         self.assertEqual(self._callFUT(s), '0x0101010101010101')
 
 
+class DataManagerAdapterTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from transaction._transaction import DataManagerAdapter
+        return DataManagerAdapter
+
+    def _makeOne(self, jar):
+        return self._getTargetClass()(jar)
+
+    def _makeJar(self, key):
+        class _Resource(Resource):
+            _p = False
+            def prepare(self, txn):
+                self._p = True
+        return _Resource(key)
+
+    def _makeDummy(self, kind, name):
+        class _Dummy(object):
+            def __init__(self, kind, name):
+                self._kind = kind
+                self._name = name
+            def __repr__(self):
+                return '<%s: %s>' % (self._kind, self._name)
+        return _Dummy(kind, name)
+
+    def test_ctor(self):
+        jar = self._makeJar('aaa')
+        dma = self._makeOne(jar)
+        self.assertTrue(dma._datamanager is jar)
+
+    def test_commit(self):
+        jar = self._makeJar('bbb')
+        mora = self._makeOne(jar)
+        txn = self._makeDummy('txn', 'c')
+        mora.commit(txn)
+        self.assertFalse(jar._c) #no-op
+
+    def test_abort(self):
+        jar = self._makeJar('ccc')
+        mora = self._makeOne(jar)
+        txn = self._makeDummy('txn', 'c')
+        mora.abort(txn)
+        self.assertTrue(jar._a)
+
+    def test_tpc_begin(self):
+        jar = self._makeJar('ddd')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_begin(txn)
+        self.assertFalse(jar._b) #no-op
+
+    def test_tpc_abort(self):
+        jar = self._makeJar('eee')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_abort(txn)
+        self.assertFalse(jar._f)
+        self.assertTrue(jar._a)
+
+    def test_tpc_finish(self):
+        jar = self._makeJar('fff')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_finish(txn)
+        self.assertFalse(jar._f)
+        self.assertTrue(jar._c)
+
+    def test_tpc_vote(self):
+        jar = self._makeJar('ggg')
+        mora = self._makeOne(jar)
+        txn = object()
+        mora.tpc_vote(txn)
+        self.assertFalse(jar._v)
+        self.assertTrue(jar._p)
+
+    def test_sortKey(self):
+        jar = self._makeJar('hhh')
+        mora = self._makeOne(jar)
+        self.assertEqual(mora.sortKey(), 'hhh')
+
+
 class MiscellaneousTests(unittest.TestCase):
 
     def test_BBB_join(self):
@@ -1224,5 +1305,6 @@ def test_suite():
         unittest.makeSuite(Test_rm_key),
         unittest.makeSuite(Test_object_hint),
         unittest.makeSuite(Test_oid_repr),
+        unittest.makeSuite(DataManagerAdapterTests),
         unittest.makeSuite(MiscellaneousTests),
         ))
