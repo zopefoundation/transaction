@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.4.0 (unreleased)
-------------------
+1.4.0b1 (2012-12-18)
+--------------------
 
 - Converted existing doctests into Sphinx documentation (snippets are
   exercised via 'tox').
