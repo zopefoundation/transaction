@@ -1196,6 +1196,79 @@ class DataManagerAdapterTests(unittest.TestCase):
         self.assertEqual(mora.sortKey(), 'hhh')
 
 
+class SavepointTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from transaction._transaction import Savepoint
+        return Savepoint
+
+    def _makeOne(self, txn, optimistic, *resources):
+        return self._getTargetClass()(txn, optimistic, *resources)
+
+    def test_ctor_w_savepoint_oblivious_resource_non_optimistic(self):
+        txn = object()
+        resource = object()
+        self.assertRaises(TypeError, self._makeOne, txn, False, resource)
+
+    def test_ctor_w_savepoint_oblivious_resource_optimistic(self):
+        from transaction._transaction import NoRollbackSavepoint
+        txn = object()
+        resource = object()
+        sp = self._makeOne(txn, True, resource)
+        self.assertEqual(len(sp._savepoints), 1)
+        self.assertTrue(isinstance(sp._savepoints[0], NoRollbackSavepoint))
+        self.assertTrue(sp._savepoints[0].datamanager is resource)
+
+    def test_ctor_w_savepoint_aware_resources(self):
+        class _Aware(object):
+            def savepoint(self):
+                return self
+        txn = object()
+        one = _Aware()
+        another = _Aware()
+        sp = self._makeOne(txn, True, one, another)
+        self.assertEqual(len(sp._savepoints), 2)
+        self.assertTrue(isinstance(sp._savepoints[0], _Aware))
+        self.assertTrue(sp._savepoints[0] is one)
+        self.assertTrue(isinstance(sp._savepoints[1], _Aware))
+        self.assertTrue(sp._savepoints[1] is another)
+
+    def test_rollback_w_txn_None(self):
+        from transaction.interfaces import InvalidSavepointRollbackError
+        txn = None
+        class _Aware(object):
+            def savepoint(self):
+                return self
+        resource = _Aware()
+        sp = self._makeOne(txn, False, resource)
+        self.assertRaises(InvalidSavepointRollbackError, sp.rollback)
+
+    def test_rollback_w_sp_error(self):
+        class _TXN(object):
+            _sarce = False
+            _raia = None
+            def _saveAndRaiseCommitishError(self):
+                import sys
+                from transaction._compat import reraise
+                self._sarce = True
+                reraise(*sys.exc_info())
+            def _remove_and_invalidate_after(self, sp):
+                self._raia = sp
+        class _Broken(object):
+            def rollback(self):
+                raise ValueError()
+        _broken = _Broken()
+        class _GonnaRaise(object):
+            def savepoint(self):
+                return _broken
+        txn = _TXN()
+        resource = _GonnaRaise()
+        sp = self._makeOne(txn, False, resource)
+        self.assertRaises(ValueError, sp.rollback)
+        self.assertTrue(txn._raia is sp)
+        self.assertTrue(txn._sarce)
+
+
 class MiscellaneousTests(unittest.TestCase):
 
     def test_BBB_join(self):
@@ -1306,5 +1379,6 @@ def test_suite():
         unittest.makeSuite(Test_object_hint),
         unittest.makeSuite(Test_oid_repr),
         unittest.makeSuite(DataManagerAdapterTests),
+        unittest.makeSuite(SavepointTests),
         unittest.makeSuite(MiscellaneousTests),
         ))
