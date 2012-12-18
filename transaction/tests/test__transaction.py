@@ -1061,6 +1061,39 @@ class MultiObjectResourceAdapterTests(unittest.TestCase):
         self.assertTrue(jar._x)
 
 
+class Test_rm_key(unittest.TestCase):
+
+    def _callFUT(self, oid):
+        from transaction._transaction import rm_key
+        return rm_key(oid)
+
+    def test_miss(self):
+        self.assertTrue(self._callFUT(object()) is None)
+
+    def test_hit(self):
+        self.assertEqual(self._callFUT(Resource('zzz')), 'zzz')
+
+
+class Test_object_hint(unittest.TestCase):
+
+    def _callFUT(self, oid):
+        from transaction._transaction import object_hint
+        return object_hint(oid)
+
+    def test_miss(self):
+        class _Test(object):
+            pass
+        test = _Test()
+        self.assertEqual(self._callFUT(test), "_Test oid=None")
+
+    def test_hit(self):
+        class _Test(object):
+            pass
+        test = _Test()
+        test._p_oid = 'OID'
+        self.assertEqual(self._callFUT(test), "_Test oid='OID'")
+
+
 class Test_oid_repr(unittest.TestCase):
 
     def _callFUT(self, oid):
@@ -1083,29 +1116,6 @@ class Test_oid_repr(unittest.TestCase):
 
 
 class MiscellaneousTests(unittest.TestCase):
-
-    def test_rm_key_miss(self):
-        from transaction._transaction import rm_key
-        self.assertTrue(rm_key(object()) is None)
-
-    def test_rm_key_hit(self):
-        from transaction._transaction import rm_key
-        self.assertEqual(rm_key(Resource('zzz')), 'zzz')
-
-    def test_object_hint_miss(self):
-        from transaction._transaction import object_hint
-        class _Test(object):
-            pass
-        test = _Test()
-        self.assertEqual(object_hint(test), "_Test oid=None")
-
-    def test_object_hint_hit(self):
-        from transaction._transaction import object_hint
-        class _Test(object):
-            pass
-        test = _Test()
-        test._p_oid = 'OID'
-        self.assertEqual(object_hint(test), "_Test oid='OID'")
 
     def test_BBB_join(self):
         # The join method is provided for "backward-compatability" with ZODB 4
@@ -1211,6 +1221,8 @@ def test_suite():
     return unittest.TestSuite((
         unittest.makeSuite(TransactionTests),
         unittest.makeSuite(MultiObjectResourceAdapterTests),
+        unittest.makeSuite(Test_rm_key),
+        unittest.makeSuite(Test_object_hint),
         unittest.makeSuite(Test_oid_repr),
         unittest.makeSuite(MiscellaneousTests),
         ))
