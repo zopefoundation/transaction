@@ -16,7 +16,7 @@
 Sample data manager implementation that illustrates how to implement
 savepoints.
 
-See savepoint.txt in the transaction package.
+Used by savepoint.rst in the Sphinx docs.
 """
 
 from zope.interface import implementer

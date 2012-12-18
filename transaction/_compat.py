@@ -18,33 +18,28 @@ else:
     binary_type = str
     long = long
 
-def text_(s, encoding='latin-1', errors='strict'):
-    if isinstance(s, binary_type):
-        return s.decode(encoding, errors)
-    return s # pragma: no cover
-
-def bytes_(s, encoding='latin-1', errors='strict'):
+def bytes_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
     if isinstance(s, text_type):
         return s.encode(encoding, errors)
     return s
 
 if PY3: # pragma: no cover
-    def native_(s, encoding='latin-1', errors='strict'):
+    def native_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
         if isinstance(s, text_type):
             return s
         return str(s, encoding, errors)
 else:
-    def native_(s, encoding='latin-1', errors='strict'):
+    def native_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
         if isinstance(s, text_type):
             return s.encode(encoding, errors)
         return str(s)
 
-if PY3:
+if PY3: #pragma NO COVER
     from io import StringIO
 else:
     from io import BytesIO as StringIO
 
-if PY3:
+if PY3: #pragma NO COVER
     from collections import MutableMapping
 else:
     from UserDict import UserDict as MutableMapping
@@ -54,13 +49,13 @@ if PY3: # pragma: no cover
     exec_ = getattr(builtins, "exec")
 
 
-    def reraise(tp, value, tb=None):
+    def reraise(tp, value, tb=None): #pragma NO COVER
         if value.__traceback__ is not tb:
             raise value.with_traceback(tb)
         raise value
 
 else: # pragma: no cover
-    def exec_(code, globs=None, locs=None):
+    def exec_(code, globs=None, locs=None): #pragma NO COVER
         """Execute code in a namespace."""
         if globs is None:
             frame = sys._getframe(1)
@@ -77,7 +72,7 @@ else: # pragma: no cover
 """)
 
 
-if PY3:
+if PY3: #pragma NO COVER
     try:
         from threading import get_ident as get_thread_ident
     except ImportError:
@@ -87,9 +82,9 @@ else:
     
     
 if PY3:
-    def func_name(func):
+    def func_name(func): #pragma NO COVER
         return func.__name__
 else:
-    def func_name(func):
+    def func_name(func): #pragma NO COVER
         return func.func_name
-    
+ 

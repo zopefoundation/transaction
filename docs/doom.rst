@@ -25,6 +25,8 @@ use savepoints and doom() safely.
 
 To see how it works we first need to create a stub data manager:
 
+.. doctest::
+
     >>> from transaction.interfaces import IDataManager
     >>> from zope.interface import implementer
     >>> @implementer(IDataManager)
@@ -45,6 +47,8 @@ To see how it works we first need to create a stub data manager:
 
 Start a new transaction:
 
+.. doctest::
+
     >>> import transaction
     >>> txn = transaction.begin()
     >>> dm = DataManager()
@@ -56,10 +60,14 @@ sends all outstanding SQL to a relational database for objects changed during
 the transaction. This expensive operation is not necessary if the transaction
 has been doomed. A non-doomed transaction should return False:
 
+.. doctest::
+
     >>> txn.isDoomed()
     False
 
 We can doom a transaction by calling .doom() on it:
+
+.. doctest::
 
     >>> txn.doom()
     >>> txn.isDoomed()
@@ -67,15 +75,21 @@ We can doom a transaction by calling .doom() on it:
 
 We can doom it again if we like:
 
+.. doctest::
+
     >>> txn.doom()
 
 The data manager is unchanged at this point:
+
+.. doctest::
 
     >>> dm.total()
     0
 
 Attempting to commit a doomed transaction any number of times raises a
 DoomedTransaction:
+
+.. doctest::
 
     >>> txn.commit() # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
@@ -86,14 +100,20 @@ DoomedTransaction:
 
 But still leaves the data manager unchanged:
 
+.. doctest::
+
     >>> dm.total()
     0
 
 But the doomed transaction can be aborted:
 
+.. doctest::
+
     >>> txn.abort()
 
 Which aborts the data manager:
+
+.. doctest::
 
     >>> dm.total()
     1
@@ -102,6 +122,8 @@ Which aborts the data manager:
 
 Dooming the current transaction can also be done directly from the transaction
 module. We can also begin a new transaction directly after dooming the old one:
+
+.. doctest::
 
     >>> txn = transaction.begin()
     >>> transaction.isDoomed()
@@ -115,15 +137,19 @@ After committing a transaction we get an assertion error if we try to doom the
 transaction. This could be made more specific, but trying to doom a transaction
 after it's been committed is probably a programming error:
 
+.. doctest::
+
     >>> txn = transaction.begin()
     >>> txn.commit()
     >>> txn.doom()
     Traceback (most recent call last):
         ...
-    AssertionError
+    ValueError: non-doomable
 
 A doomed transaction should act the same as an active transaction, so we should
 be able to join it:
+
+.. doctest::
 
     >>> txn = transaction.begin()
     >>> txn.doom()
@@ -131,6 +157,8 @@ be able to join it:
     >>> txn.join(dm2)
 
 Clean up:
+
+.. doctest::
 
     >>> txn = transaction.begin()
     >>> txn.abort()

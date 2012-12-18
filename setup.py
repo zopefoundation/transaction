@@ -60,7 +60,7 @@ setup(name='transaction',
         'zope.interface',
         ],
       extras_require = {
-        'docs': ['Sphinx'],
+        'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
         'testing': ['nose', 'coverage'],
       },
       entry_points = """\

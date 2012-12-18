@@ -11,92 +11,6 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ############################################################################
-"""Transaction objects manage resources for an individual activity.
-
-Compatibility issues
---------------------
-
-The implementation of Transaction objects involves two layers of
-backwards compatibility, because this version of transaction supports
-both ZODB 3 and ZODB 4.  Zope is evolving towards the ZODB4
-interfaces.
-
-Transaction has two methods for a resource manager to call to
-participate in a transaction -- register() and join().  join() takes a
-resource manager and adds it to the list of resources.  register() is
-for backwards compatibility.  It takes a persistent object and
-registers its _p_jar attribute.  TODO: explain adapter
-
-Two-phase commit
-----------------
-
-A transaction commit involves an interaction between the transaction
-object and one or more resource managers.  The transaction manager
-calls the following four methods on each resource manager; it calls
-tpc_begin() on each resource manager before calling commit() on any of
-them.
-
-    1. tpc_begin(txn)
-    2. commit(txn)
-    3. tpc_vote(txn)
-    4. tpc_finish(txn)
-
-Before-commit hook
-------------------
-
-Sometimes, applications want to execute some code when a transaction is
-committed.  For example, one might want to delay object indexing until a
-transaction commits, rather than indexing every time an object is changed.
-Or someone might want to check invariants only after a set of operations.  A
-pre-commit hook is available for such use cases:  use addBeforeCommitHook(),
-passing it a callable and arguments.  The callable will be called with its
-arguments at the start of the commit (but not for substransaction commits).
-
-After-commit hook
-------------------
-
-Sometimes, applications want to execute code after a transaction commit
-attempt succeeds or aborts. For example, one might want to launch non
-transactional code after a successful commit. Or still someone might
-want to launch asynchronous code after.  A post-commit hook is
-available for such use cases: use addAfterCommitHook(), passing it a
-callable and arguments.  The callable will be called with a Boolean
-value representing the status of the commit operation as first
-argument (true if successfull or false iff aborted) preceding its
-arguments at the start of the commit (but not for substransaction
-commits). Commit hooks are not called for transaction.abort().
-
-Error handling
---------------
-
-When errors occur during two-phase commit, the transaction manager
-aborts all the resource managers.  The specific methods it calls
-depend on whether the error occurs before or after the call to
-tpc_vote() on that transaction manager.
-
-If the resource manager has not voted, then the resource manager will
-have one or more uncommitted objects.  There are two cases that lead
-to this state; either the transaction manager has not called commit()
-for any objects on this resource manager or the call that failed was a
-commit() for one of the objects of this resource manager.  For each
-uncommitted object, including the object that failed in its commit(),
-call abort().
-
-Once uncommitted objects are aborted, tpc_abort() or abort_sub() is
-called on each resource manager.
-
-Synchronization
----------------
-
-You can register sychronization objects (synchronizers) with the
-tranasction manager.  The synchronizer must implement
-beforeCompletion() and afterCompletion() methods.  The transaction
-manager calls beforeCompletion() when it starts a top-level two-phase
-commit.  It calls afterCompletion() when a top-level transaction is
-committed or aborted.  The methods are passed the current Transaction
-as their only argument.
-"""
-
 import binascii
 import logging
 import sys
@@ -105,16 +19,29 @@ import traceback
 
 from zope.interface import implementer
 
-from transaction.compat import reraise
-from transaction.compat import get_thread_ident
-from transaction.compat import native_
-from transaction.compat import bytes_
-from transaction.compat import StringIO
 from transaction.weakset import WeakSet
 from transaction.interfaces import TransactionFailedError
 from transaction import interfaces
+from transaction._compat import reraise
+from transaction._compat import get_thread_ident
+from transaction._compat import native_
+from transaction._compat import bytes_
+from transaction._compat import StringIO
 
 _marker = object()
+
+_TB_BUFFER = None #unittests may hook
+def _makeTracebackBuffer(): #pragma NO COVER
+    if _TB_BUFFER is not None:
+        return _TB_BUFFER
+    return StringIO()
+
+_LOGGER = None #unittests may hook
+def _makeLogger(): #pragma NO COVER
+    if _LOGGER is not None:
+        return _LOGGER
+    return logging.getLogger("txn.%d" % get_thread_ident())
+    
 
 # The point of this is to avoid hiding exceptions (which the builtin
 # hasattr() does).
@@ -177,7 +104,7 @@ class Transaction(object):
         # directly by storages, leading underscore notwithstanding.
         self._extension = {}
 
-        self.log = logging.getLogger("txn.%d" % get_thread_ident())
+        self.log = _makeLogger()
         self.log.debug("new transaction")
 
         # If a commit fails, the traceback is saved in _failure_traceback.
@@ -203,7 +130,7 @@ class Transaction(object):
             if self.status is not Status.ACTIVE:
                 # should not doom transactions in the middle,
                 # or after, a commit
-                raise AssertionError()
+                raise ValueError('non-doomable')
             self.status = Status.DOOMED
 
     # Raise TransactionFailedError, due to commit()/join()/register()
@@ -307,7 +234,6 @@ class Transaction(object):
         # be stored when the transaction commits.  For other
         # objects, the object implements the standard two-phase
         # commit protocol.
-
         manager = getattr(obj, "_p_jar", obj)
         if manager is None:
             raise ValueError("Register with no manager")
@@ -364,7 +290,7 @@ class Transaction(object):
     def _saveAndGetCommitishError(self):
         self.status = Status.COMMITFAILED
         # Save the traceback for TransactionFailedError.
-        ft = self._failure_traceback = StringIO()
+        ft = self._failure_traceback = _makeTracebackBuffer()
         t = None
         v = None
         tb = None
@@ -379,7 +305,6 @@ class Transaction(object):
             return t, v, tb
         finally:
             del t, v, tb
-        
 
     def _saveAndRaiseCommitishError(self):
         t = None
@@ -390,7 +315,6 @@ class Transaction(object):
             reraise(t, v, tb)
         finally:
             del t, v, tb
-            
 
     def getBeforeCommitHooks(self):
         """ See ITransaction.
@@ -566,6 +490,7 @@ class Transaction(object):
 
 # TODO: We need a better name for the adapters.
 
+
 class MultiObjectResourceAdapter(object):
     """Adapt the old-style register() call to the new-style join().
 
@@ -573,7 +498,6 @@ class MultiObjectResourceAdapter(object):
     the transaction manager.  With register(), an individual object
     is passed to register().
     """
-
     def __init__(self, jar):
         self.manager = jar
         self.objects = []
@@ -624,6 +548,7 @@ class MultiObjectResourceAdapter(object):
         finally:
             del t, v, tb
 
+
 def rm_key(rm):
     func = getattr(rm, 'sortKey', None)
     if func is not None:
@@ -634,13 +559,14 @@ def object_hint(o):
 
     This function does not raise an exception.
     """
-
     # We should always be able to get __class__.
     klass = o.__class__.__name__
-    # oid would be great, but may this isn't a persistent object.
+    # oid would be great, but maybe this isn't a persistent object.
     oid = getattr(o, "_p_oid", _marker)
     if oid is not _marker:
         oid = oid_repr(oid)
+    else:
+        oid = 'None'
     return "%s oid=%s" % (klass, oid)
 
 def oid_repr(oid):
@@ -656,6 +582,7 @@ def oid_repr(oid):
         return '0x' + as_hex
     else:
         return repr(oid)
+
 
 # TODO: deprecate for 3.6.
 class DataManagerAdapter(object):
@@ -700,6 +627,7 @@ class DataManagerAdapter(object):
     def sortKey(self):
         return self._datamanager.sortKey()
 
+
 @implementer(interfaces.ISavepoint)
 class Savepoint:
     """Transaction savepoint.
@@ -742,6 +670,7 @@ class Savepoint:
             # Mark the transaction as failed.
             transaction._saveAndRaiseCommitishError() # reraises!
 
+
 class AbortSavepoint:
 
     def __init__(self, datamanager, transaction):
@@ -751,6 +680,7 @@ class AbortSavepoint:
     def rollback(self):
         self.datamanager.abort(self.transaction)
         self.transaction._unjoin(self.datamanager)
+
 
 class NoRollbackSavepoint:
 

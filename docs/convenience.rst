@@ -10,12 +10,16 @@ with support
 
 We can now use the with statement to define transaction boundaries.
 
+.. doctest::
+
     >>> import transaction.tests.savepointsample
     >>> dm = transaction.tests.savepointsample.SampleSavepointDataManager()
     >>> list(dm.keys())
     []
 
 We can use it with a manager:
+
+.. doctest::
 
     >>> with transaction.manager as t:
     ...     dm['z'] = 3
@@ -46,7 +50,9 @@ Retries
 
 Commits can fail for transient reasons, especially conflicts.
 Applications will often retry transactions some number of times to
-overcome transient failures.  This typically looks something like::
+overcome transient failures.  This typically looks something like:
+
+.. doctest::
 
     for i in range(3):
         try:
@@ -62,6 +68,7 @@ This is rather ugly.
 Transaction managers provide a helper for this case. To show this,
 we'll use a contrived example:
 
+.. doctest::
 
     >>> ntry = 0
     >>> with transaction.manager:
@@ -96,6 +103,8 @@ a transaction object will be assigned to the variable named.
 
 By default, it tries 3 times. We can tell it how many times to try:
 
+.. doctest::
+
     >>> for attempt in transaction.manager.attempts(2):
     ...     with attempt:
     ...         ntry += 1
@@ -110,6 +119,8 @@ propagated.
 
 Of course, other errors are propagated directly:
 
+.. doctest::
+
     >>> ntry = 0
     >>> for attempt in transaction.manager.attempts():
     ...     with attempt:
@@ -121,6 +132,8 @@ Of course, other errors are propagated directly:
     ValueError: 3
 
 We can use the default transaction manager:
+
+.. doctest::
 
     >>> for attempt in transaction.attempts():
     ...     with attempt as t:
@@ -139,6 +152,8 @@ wraps other other systems that raise exceptions outside of it's
 control.  Data  managers can provide a should_retry method that takes
 an exception instance and returns True if the transaction should be
 attempted again.
+
+.. doctest::
 
     >>> class DM(transaction.tests.savepointsample.SampleSavepointDataManager):
     ...     def should_retry(self, e):

@@ -23,76 +23,63 @@ API works.
 These tests use a TestConnection object that implements the old API.
 They check that the right methods are called and in roughly the right
 order.
-
-Common cases
-------------
-
-First, check that a basic transaction commit works.
-
->>> cn = TestConnection()
->>> cn.register(Object())
->>> cn.register(Object())
->>> cn.register(Object())
->>> transaction.commit()
->>> len(cn.committed)
-3
->>> len(cn.aborted)
-0
->>> cn.calls
-['begin', 'vote', 'finish']
-
-Second, check that a basic transaction abort works.  If the
-application calls abort(), then the transaction never gets into the
-two-phase commit.  It just aborts each object.
-
->>> cn = TestConnection()
->>> cn.register(Object())
->>> cn.register(Object())
->>> cn.register(Object())
->>> transaction.abort()
->>> len(cn.committed)
-0
->>> len(cn.aborted)
-3
->>> cn.calls
-[]
-
-Error handling
---------------
-
-The tricky part of the implementation is recovering from an error that
-occurs during the two-phase commit.  We override the commit() and
-abort() methods of Object to cause errors during commit.
-
-Note that the implementation uses lists internally, so that objects
-are committed in the order they are registered.  (In the presence of
-multiple resource managers, objects from a single resource manager are
-committed in order.  I'm not sure if this is an accident of the
-implementation or a feature that should be supported by any
-implementation.)
-
-The order of resource managers depends on sortKey().
-
->>> cn = TestConnection()
->>> cn.register(Object())
->>> cn.register(CommitError())
->>> cn.register(Object())
->>> transaction.commit()
-Traceback (most recent call last):
- ...
-RuntimeError: commit
->>> len(cn.committed)
-1
->>> len(cn.aborted)
-3
-
-Clean up:
-
->>> transaction.abort()
 """
+import unittest
 
-import doctest
-import transaction
+
+class BBBTests(unittest.TestCase):
+
+    def setUp(self):
+        from transaction import abort
+        abort()
+    tearDown = setUp
+
+    def test_basic_commit(self):
+        import transaction
+        cn = TestConnection()
+        cn.register(Object())
+        cn.register(Object())
+        cn.register(Object())
+        transaction.commit()
+        self.assertEqual(len(cn.committed), 3)
+        self.assertEqual(len(cn.aborted), 0)
+        self.assertEqual(cn.calls, ['begin', 'vote', 'finish'])
+
+    def test_basic_abort(self):
+        # If the application calls abort(), then the transaction never gets
+        # into the two-phase commit.  It just aborts each object.
+        import transaction
+        cn = TestConnection()
+        cn.register(Object())
+        cn.register(Object())
+        cn.register(Object())
+        transaction.abort()
+        self.assertEqual(len(cn.committed), 0)
+        self.assertEqual(len(cn.aborted), 3)
+        self.assertEqual(cn.calls, [])
+
+    def test_tpc_error(self):
+        # The tricky part of the implementation is recovering from an error
+        # that occurs during the two-phase commit.  We override the commit()
+        # and abort() methods of Object to cause errors during commit.
+
+        # Note that the implementation uses lists internally, so that objects
+        # are committed in the order they are registered.  (In the presence
+        # of multiple resource managers, objects from a single resource
+        # manager are committed in order.  I'm not sure if this is an
+        # accident of the implementation or a feature that should be
+        # supported by any implementation.)
+
+        # The order of resource managers depends on sortKey().
+        import transaction
+        cn = TestConnection()
+        cn.register(Object())
+        cn.register(CommitError())
+        cn.register(Object())
+        self.assertRaises(RuntimeError, transaction.commit)
+        self.assertEqual(len(cn.committed), 1)
+        self.assertEqual(len(cn.aborted), 3)
+
 
 class Object(object):
 
@@ -102,20 +89,24 @@ class Object(object):
     def abort(self):
         pass
 
+
 class CommitError(Object):
 
     def commit(self):
         raise RuntimeError("commit")
+
 
 class AbortError(Object):
 
     def abort(self):
         raise RuntimeError("abort")
 
+
 class BothError(CommitError, AbortError):
     pass
 
-class TestConnection:
+
+class TestConnection(object):
 
     def __init__(self):
         self.committed = []
@@ -123,6 +114,7 @@ class TestConnection:
         self.calls = []
 
     def register(self, obj):
+        import transaction
         obj._p_jar = self
         transaction.get().register(obj)
 
@@ -150,7 +142,6 @@ class TestConnection:
         self.aborted.append(obj)
 
 def test_suite():
-    return doctest.DocTestSuite()
-
-# additional_tests is for setuptools "setup.py test" support
-additional_tests = test_suite
+    return unittest.TestSuite((
+        unittest.makeSuite(BBBTests),
+    ))
