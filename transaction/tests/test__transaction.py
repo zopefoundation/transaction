@@ -59,6 +59,8 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(isinstance(txn._synchronizers, WeakSet))
         self.assertEqual(len(txn._synchronizers), 0)
         self.assertTrue(txn._manager is None)
+        self.assertEqual(txn.user, "")
+        self.assertEqual(txn.description, "")
         self.assertTrue(txn._savepoint2index is None)
         self.assertEqual(txn._savepoint_index, 0)
         self.assertEqual(txn._resources, [])
@@ -919,6 +921,28 @@ class TransactionTests(unittest.TestCase):
             self.assertEqual(txn.description, 'This is a note.\nAnother.')
         finally:
             txn.abort()
+
+    def test_setUser_default_path(self):
+        txn = self._makeOne()
+        txn.setUser('phreddy')
+        self.assertEqual(txn.user, '/ phreddy')
+
+    def test_setUser_explicit_path(self):
+        txn = self._makeOne()
+        txn.setUser('phreddy', '/bedrock')
+        self.assertEqual(txn.user, '/bedrock phreddy')
+
+    def test_setExtendedInfo_single(self):
+        txn = self._makeOne()
+        txn.setExtendedInfo('frob', 'qux')
+        self.assertEqual(txn._extension, {'frob': 'qux'})
+
+    def test_setExtendedInfo_multiple(self):
+        txn = self._makeOne()
+        txn.setExtendedInfo('frob', 'qux')
+        txn.setExtendedInfo('baz', 'spam')
+        txn.setExtendedInfo('frob', 'quxxxx')
+        self.assertEqual(txn._extension, {'frob': 'quxxxx', 'baz': 'spam'})
 
 
 class Test_oid_repr(unittest.TestCase):
