@@ -559,13 +559,14 @@ def object_hint(o):
 
     This function does not raise an exception.
     """
-
     # We should always be able to get __class__.
     klass = o.__class__.__name__
-    # oid would be great, but may this isn't a persistent object.
+    # oid would be great, but maybe this isn't a persistent object.
     oid = getattr(o, "_p_oid", _marker)
     if oid is not _marker:
         oid = oid_repr(oid)
+    else:
+        oid = 'None'
     return "%s oid=%s" % (klass, oid)
 
 def oid_repr(oid):

@@ -1092,6 +1092,21 @@ class MiscellaneousTests(unittest.TestCase):
         from transaction._transaction import rm_key
         self.assertEqual(rm_key(Resource('zzz')), 'zzz')
 
+    def test_object_hint_miss(self):
+        from transaction._transaction import object_hint
+        class _Test(object):
+            pass
+        test = _Test()
+        self.assertEqual(object_hint(test), "_Test oid=None")
+
+    def test_object_hint_hit(self):
+        from transaction._transaction import object_hint
+        class _Test(object):
+            pass
+        test = _Test()
+        test._p_oid = 'OID'
+        self.assertEqual(object_hint(test), "_Test oid='OID'")
+
     def test_BBB_join(self):
         # The join method is provided for "backward-compatability" with ZODB 4
         # data managers.
