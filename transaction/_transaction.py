@@ -305,7 +305,6 @@ class Transaction(object):
             return t, v, tb
         finally:
             del t, v, tb
-        
 
     def _saveAndRaiseCommitishError(self):
         t = None
@@ -316,7 +315,6 @@ class Transaction(object):
             reraise(t, v, tb)
         finally:
             del t, v, tb
-            
 
     def getBeforeCommitHooks(self):
         """ See ITransaction.

@@ -540,6 +540,80 @@ class TransactionTests(unittest.TestCase):
             self.assertTrue(synch._before is t)
             self.assertTrue(synch._after is t) #called in _cleanup
 
+    def test_getBeforeCommitHooks_empty(self):
+        tm = self._makeOne()
+        self.assertEqual(list(tm.getBeforeCommitHooks()), [])
+
+    def test_addBeforeCommitHook(self):
+        def _hook(*args, **kw):
+            pass
+        tm = self._makeOne()
+        tm.addBeforeCommitHook(_hook, ('one',), dict(uno=1))
+        self.assertEqual(list(tm.getBeforeCommitHooks()),
+                         [(_hook, ('one',), {'uno': 1})])
+
+    def test_addBeforeCommitHook_w_kws(self):
+        def _hook(*args, **kw):
+            pass
+        tm = self._makeOne()
+        tm.addBeforeCommitHook(_hook, ('one',))
+        self.assertEqual(list(tm.getBeforeCommitHooks()),
+                         [(_hook, ('one',), {})])
+
+    def test_getAfterCommitHooks_empty(self):
+        tm = self._makeOne()
+        self.assertEqual(list(tm.getAfterCommitHooks()), [])
+
+    def test_addAfterCommitHook(self):
+        def _hook(*args, **kw):
+            pass
+        tm = self._makeOne()
+        tm.addAfterCommitHook(_hook, ('one',), dict(uno=1))
+        self.assertEqual(list(tm.getAfterCommitHooks()),
+                         [(_hook, ('one',), {'uno': 1})])
+
+    def test_addAfterCommitHook_wo_kws(self):
+        def _hook(*args, **kw):
+            pass
+        tm = self._makeOne()
+        tm.addAfterCommitHook(_hook, ('one',))
+        self.assertEqual(list(tm.getAfterCommitHooks()),
+                         [(_hook, ('one',), {})])
+
+    def test_callAfterCommitHook_w_error(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        _hooked2 = []
+        def _hook1(*args, **kw):
+            raise ValueError()
+        def _hook2(*args, **kw):
+            _hooked2.append((args, kw))
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            tm = self._makeOne()
+        logger._clear()
+        tm.addAfterCommitHook(_hook1, ('one',))
+        tm.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
+        tm._callAfterCommitHooks()
+        # second hook gets called even if first raises
+        self.assertEqual(_hooked2, [((True, 'two',), {'dos': 2})])
+        self.assertEqual(len(logger._log), 1)
+        self.assertEqual(logger._log[0][0], 'error')
+        self.assertTrue(logger._log[0][1].startswith(
+                            "Error in after commit hook"))
+
+    def test_callAfterCommitHook_w_abort(self):
+        _hooked2 = [], []
+        def _hook1(*args, **kw):
+            raise ValueError()
+        def _hook2(*args, **kw):
+            _hooked2.append((args, kw))
+        tm = self._makeOne()
+        tm.addAfterCommitHook(_hook1, ('one',))
+        tm.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
+        tm._callAfterCommitHooks()
+
     def test_note(self):
         t = self._makeOne()
         try:
