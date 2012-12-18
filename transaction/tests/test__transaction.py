@@ -174,8 +174,8 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(tsp._savepoints[0].transaction is t)
 
     def test__unjoin_miss(self):
-        tm = self._makeOne()
-        tm._unjoin(object()) #no raise
+        txn = self._makeOne()
+        txn._unjoin(object()) #no raise
 
     def test__unjoin_hit(self):
         t = self._makeOne()
@@ -468,23 +468,7 @@ class TransactionTests(unittest.TestCase):
             def tpc_begin(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
-        class Resource(object):
-            _b = _c = _v = _f = _a = _x =False
-            def sortKey(self):
-                return 'aaa'
-            def tpc_begin(self, txn):
-                self._b = True
-            def commit(self, txn):
-                self._c = True
-            def tpc_vote(self, txn):
-                self._v = True
-            def tpc_finish(self, txn):
-                self._f = True
-            def abort(self, txn):
-                self._a = True
-            def tpc_abort(self, txn):
-                self._x = True
-        resource = Resource()
+        resource = Resource('aaa')
         _hooked1, _hooked2 = [], []
         def _hook1(*args, **kw):
             _hooked1.append((args, kw))
@@ -541,43 +525,43 @@ class TransactionTests(unittest.TestCase):
             self.assertTrue(synch._after is t) #called in _cleanup
 
     def test_getBeforeCommitHooks_empty(self):
-        tm = self._makeOne()
-        self.assertEqual(list(tm.getBeforeCommitHooks()), [])
+        txn = self._makeOne()
+        self.assertEqual(list(txn.getBeforeCommitHooks()), [])
 
     def test_addBeforeCommitHook(self):
         def _hook(*args, **kw):
             pass
-        tm = self._makeOne()
-        tm.addBeforeCommitHook(_hook, ('one',), dict(uno=1))
-        self.assertEqual(list(tm.getBeforeCommitHooks()),
+        txn = self._makeOne()
+        txn.addBeforeCommitHook(_hook, ('one',), dict(uno=1))
+        self.assertEqual(list(txn.getBeforeCommitHooks()),
                          [(_hook, ('one',), {'uno': 1})])
 
     def test_addBeforeCommitHook_w_kws(self):
         def _hook(*args, **kw):
             pass
-        tm = self._makeOne()
-        tm.addBeforeCommitHook(_hook, ('one',))
-        self.assertEqual(list(tm.getBeforeCommitHooks()),
+        txn = self._makeOne()
+        txn.addBeforeCommitHook(_hook, ('one',))
+        self.assertEqual(list(txn.getBeforeCommitHooks()),
                          [(_hook, ('one',), {})])
 
     def test_getAfterCommitHooks_empty(self):
-        tm = self._makeOne()
-        self.assertEqual(list(tm.getAfterCommitHooks()), [])
+        txn = self._makeOne()
+        self.assertEqual(list(txn.getAfterCommitHooks()), [])
 
     def test_addAfterCommitHook(self):
         def _hook(*args, **kw):
             pass
-        tm = self._makeOne()
-        tm.addAfterCommitHook(_hook, ('one',), dict(uno=1))
-        self.assertEqual(list(tm.getAfterCommitHooks()),
+        txn = self._makeOne()
+        txn.addAfterCommitHook(_hook, ('one',), dict(uno=1))
+        self.assertEqual(list(txn.getAfterCommitHooks()),
                          [(_hook, ('one',), {'uno': 1})])
 
     def test_addAfterCommitHook_wo_kws(self):
         def _hook(*args, **kw):
             pass
-        tm = self._makeOne()
-        tm.addAfterCommitHook(_hook, ('one',))
-        self.assertEqual(list(tm.getAfterCommitHooks()),
+        txn = self._makeOne()
+        txn.addAfterCommitHook(_hook, ('one',))
+        self.assertEqual(list(txn.getAfterCommitHooks()),
                          [(_hook, ('one',), {})])
 
     def test_callAfterCommitHook_w_error(self):
@@ -591,11 +575,11 @@ class TransactionTests(unittest.TestCase):
             _hooked2.append((args, kw))
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
-            tm = self._makeOne()
+            txn = self._makeOne()
         logger._clear()
-        tm.addAfterCommitHook(_hook1, ('one',))
-        tm.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
-        tm._callAfterCommitHooks()
+        txn.addAfterCommitHook(_hook1, ('one',))
+        txn.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
+        txn._callAfterCommitHooks()
         # second hook gets called even if first raises
         self.assertEqual(_hooked2, [((True, 'two',), {'dos': 2})])
         self.assertEqual(len(logger._log), 1)
@@ -614,14 +598,138 @@ class TransactionTests(unittest.TestCase):
             _hooked2.append((args, kw))
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
-            tm = self._makeOne()
+            txn = self._makeOne()
         logger._clear()
-        tm.addAfterCommitHook(_hook1, ('one',))
-        tm.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
-        tm._callAfterCommitHooks()
+        txn.addAfterCommitHook(_hook1, ('one',))
+        txn.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
+        txn._callAfterCommitHooks()
         self.assertEqual(logger._log[0][0], 'error')
         self.assertTrue(logger._log[0][1].startswith(
                             "Error in after commit hook"))
+
+    def test__commitResources_normal(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        resources = [Resource('bbb'), Resource('aaa')]
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn._resources.extend(resources)
+        txn._commitResources()
+        self.assertEqual(len(txn._voted), 2)
+        for r in resources:
+            self.assertTrue(r._b and r._c and r._v and r._f)
+            self.assertFalse(r._a and r._x)
+            self.assertTrue(id(r) in txn._voted)
+        self.assertEqual(len(logger._log), 2)
+        self.assertEqual(logger._log[0][0], 'debug')
+        self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
+        self.assertEqual(logger._log[1][0], 'debug')
+        self.assertEqual(logger._log[1][1], 'commit Resource: bbb')
+
+    def test__commitResources_error_in_tpc_begin(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        resources = [Resource('bbb', 'tpc_begin'), Resource('aaa')]
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn._resources.extend(resources)
+        self.assertRaises(ValueError, txn._commitResources)
+        for r in resources:
+            if r._key == 'aaa':
+                self.assertTrue(r._b)
+            else:
+                self.assertFalse(r._b)
+            self.assertFalse(r._c and r._v and r._f)
+            self.assertTrue(r._a and r._x)
+        self.assertEqual(len(logger._log), 0)
+
+    def test__commitResources_error_in_commit(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        resources = [Resource('bbb', 'commit'), Resource('aaa')]
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn._resources.extend(resources)
+        self.assertRaises(ValueError, txn._commitResources)
+        for r in resources:
+            self.assertTrue(r._b)
+            if r._key == 'aaa':
+                self.assertTrue(r._c)
+            else:
+                self.assertFalse(r._c)
+            self.assertFalse(r._v and r._f)
+            self.assertTrue(r._a and r._x)
+        self.assertEqual(len(logger._log), 1)
+        self.assertEqual(logger._log[0][0], 'debug')
+        self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
+
+    def test__commitResources_error_in_tpc_vote(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        resources = [Resource('bbb', 'tpc_vote'), Resource('aaa')]
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn._resources.extend(resources)
+        self.assertRaises(ValueError, txn._commitResources)
+        self.assertEqual(len(txn._voted), 1)
+        for r in resources:
+            self.assertTrue(r._b and r._c)
+            if r._key == 'aaa':
+                self.assertTrue(id(r) in txn._voted)
+                self.assertTrue(r._v)
+                self.assertFalse(r._f)
+                self.assertFalse(r._a)
+                self.assertTrue(r._x)
+            else:
+                self.assertFalse(id(r) in txn._voted)
+                self.assertFalse(r._v)
+                self.assertFalse(r._f)
+                self.assertTrue(r._a and r._x)
+        self.assertEqual(len(logger._log), 2)
+        self.assertEqual(logger._log[0][0], 'debug')
+        self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
+        self.assertEqual(logger._log[1][0], 'debug')
+        self.assertEqual(logger._log[1][1], 'commit Resource: bbb')
+
+    def test__commitResources_error_in_tpc_finish(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        resources = [Resource('bbb', 'tpc_finish'), Resource('aaa')]
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn._resources.extend(resources)
+        self.assertRaises(ValueError, txn._commitResources)
+        for r in resources:
+            self.assertTrue(r._b and r._c and r._v)
+            self.assertTrue(id(r) in txn._voted)
+            if r._key == 'aaa':
+                self.assertTrue(r._f)
+            else:
+                self.assertFalse(r._f)
+            self.assertFalse(r._a and r._x) #no cleanup if tpc_finish raises
+        self.assertEqual(len(logger._log), 3)
+        self.assertEqual(logger._log[0][0], 'debug')
+        self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
+        self.assertEqual(logger._log[1][0], 'debug')
+        self.assertEqual(logger._log[1][1], 'commit Resource: bbb')
+        self.assertEqual(logger._log[2][0], 'critical')
+        self.assertTrue(logger._log[2][1].startswith(
+                        'A storage error occurred'))
 
     def test_note(self):
         t = self._makeOne()
@@ -722,6 +830,40 @@ class MiscellaneousTests(unittest.TestCase):
 
         transaction.abort() # should do nothing
         self.assertEqual(list(dm.keys()), ['a'])
+
+class Resource(object):
+    _b = _c = _v = _f = _a = _x = False
+    def __init__(self, key, error=None):
+        self._key = key
+        self._error = error
+    def __repr__(self):
+        return 'Resource: %s' % self._key
+    def sortKey(self):
+        return self._key
+    def tpc_begin(self, txn):
+        if self._error == 'tpc_begin':
+            raise ValueError()
+        self._b = True
+    def commit(self, txn):
+        if self._error == 'commit':
+            raise ValueError()
+        self._c = True
+    def tpc_vote(self, txn):
+        if self._error == 'tpc_vote':
+            raise ValueError()
+        self._v = True
+    def tpc_finish(self, txn):
+        if self._error == 'tpc_finish':
+            raise ValueError()
+        self._f = True
+    def abort(self, txn):
+        if self._error == 'abort':
+            raise ValueError()
+        self._a = True
+    def tpc_abort(self, txn):
+        if self._error == 'tpc_abort':
+            raise ValueError()
+        self._x = True
 
 def test_suite():
     return unittest.TestSuite((

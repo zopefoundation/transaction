@@ -38,6 +38,8 @@ class DummyLogger(object):
         self.log('debug', msg, *args, **kw)
     def error(self, msg, *args, **kw):
         self.log('error', msg, *args, **kw)
+    def critical(self, msg, *args, **kw):
+        self.log('critical', msg, *args, **kw)
 
 
 class Monkey(object):
