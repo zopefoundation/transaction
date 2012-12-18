@@ -9,14 +9,14 @@ Changes
 
 - 100% unit test coverage.
 
-- Raise ValueError from ``Transaction.doom`` if the transaction is in a
-  non-doomable state (rather than using ``assert``).
+- Backward incompatibility:   raise ValueError rather than AssertionError
+  for runtime errors:
 
-- Raise ValueError from ``TransactionManager.attempts`` if passed a
-  non-positive value (rather than using ``assert``).
+  - In ``Transaction.doom`` if the transaction is in a non-doomable state.
 
-- Raise ValueError from ``TransactionManager.free`` if passed a foreign
-  transaction (rather tna using ``assert``).
+  - In ``TransactionManager.attempts`` if passed a non-positive value.
+
+  - In ``TransactionManager.free`` if passed a foreign transaction.
 
 - Declared support for Python 3.3 in ``setup.py``, and added ``tox`` testing.
 

@@ -65,5 +65,4 @@ setup(name='transaction',
       },
       entry_points = """\
       """
-      )
-
+)
