@@ -490,6 +490,7 @@ class Transaction(object):
 
 # TODO: We need a better name for the adapters.
 
+
 class MultiObjectResourceAdapter(object):
     """Adapt the old-style register() call to the new-style join().
 
@@ -497,7 +498,6 @@ class MultiObjectResourceAdapter(object):
     the transaction manager.  With register(), an individual object
     is passed to register().
     """
-
     def __init__(self, jar):
         self.manager = jar
         self.objects = []
@@ -548,6 +548,7 @@ class MultiObjectResourceAdapter(object):
         finally:
             del t, v, tb
 
+
 def rm_key(rm):
     func = getattr(rm, 'sortKey', None)
     if func is not None:
@@ -580,6 +581,7 @@ def oid_repr(oid):
         return '0x' + as_hex
     else:
         return repr(oid)
+
 
 # TODO: deprecate for 3.6.
 class DataManagerAdapter(object):
@@ -624,6 +626,7 @@ class DataManagerAdapter(object):
     def sortKey(self):
         return self._datamanager.sortKey()
 
+
 @implementer(interfaces.ISavepoint)
 class Savepoint:
     """Transaction savepoint.
@@ -666,6 +669,7 @@ class Savepoint:
             # Mark the transaction as failed.
             transaction._saveAndRaiseCommitishError() # reraises!
 
+
 class AbortSavepoint:
 
     def __init__(self, datamanager, transaction):
@@ -675,6 +679,7 @@ class AbortSavepoint:
     def rollback(self):
         self.datamanager.abort(self.transaction)
         self.transaction._unjoin(self.datamanager)
+
 
 class NoRollbackSavepoint:
 
