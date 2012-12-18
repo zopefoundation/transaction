@@ -1302,6 +1302,26 @@ class AbortSavepointTests(unittest.TestCase):
         self.assertTrue(txn._unjoin is dm)
 
 
+class NoRollbackSavepointTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from transaction._transaction import NoRollbackSavepoint
+        return NoRollbackSavepoint
+
+    def _makeOne(self, datamanager):
+        return self._getTargetClass()(datamanager)
+
+    def test_ctor(self):
+        dm = object()
+        nrsp = self._makeOne(dm)
+        self.assertTrue(nrsp.datamanager is dm)
+
+    def test_rollback(self):
+        dm = object()
+        nrsp = self._makeOne(dm)
+        self.assertRaises(TypeError, nrsp.rollback)
+
+
 class MiscellaneousTests(unittest.TestCase):
 
     def test_BBB_join(self):
@@ -1414,5 +1434,6 @@ def test_suite():
         unittest.makeSuite(DataManagerAdapterTests),
         unittest.makeSuite(SavepointTests),
         unittest.makeSuite(AbortSavepointTests),
+        unittest.makeSuite(NoRollbackSavepointTests),
         unittest.makeSuite(MiscellaneousTests),
         ))
