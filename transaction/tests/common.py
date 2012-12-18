@@ -35,7 +35,7 @@ class DummyLogger(object):
         else:
             self._log.append((level, msg))
     def debug(self, msg, *args, **kw):
-        self.log('DEBUG', msg, *args, **kw)
+        self.log('debug', msg, *args, **kw)
     def error(self, msg, *args, **kw):
         self.log('error', msg, *args, **kw)
 
