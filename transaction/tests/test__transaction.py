@@ -604,15 +604,24 @@ class TransactionTests(unittest.TestCase):
                             "Error in after commit hook"))
 
     def test_callAfterCommitHook_w_abort(self):
-        _hooked2 = [], []
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        _hooked2 = []
         def _hook1(*args, **kw):
             raise ValueError()
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
-        tm = self._makeOne()
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            tm = self._makeOne()
+        logger._clear()
         tm.addAfterCommitHook(_hook1, ('one',))
         tm.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
         tm._callAfterCommitHooks()
+        self.assertEqual(logger._log[0][0], 'error')
+        self.assertTrue(logger._log[0][1].startswith(
+                            "Error in after commit hook"))
 
     def test_note(self):
         t = self._makeOne()
