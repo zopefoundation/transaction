@@ -4,6 +4,8 @@ Changes
 1.4.0 (unreleased)
 ------------------
 
+- Updated Trove classifiers.
+
 1.4.0b1 (2012-12-18)
 --------------------
 
