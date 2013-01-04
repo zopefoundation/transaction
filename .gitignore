@@ -1,0 +1,7 @@
+.tox
+__pycache__
+*.egg-info
+.coverage
+nosetests.xml
+coverage.xml
+_build
