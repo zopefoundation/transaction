@@ -4,7 +4,8 @@ Changes
 1.4.1 (unreleased)
 ------------------
 
-- TBD
+- Document that values returned by ``sortKey`` must be strings, in order
+  to guarantee total ordering.
 
 1.4.0 (2013-01-03)
 ------------------

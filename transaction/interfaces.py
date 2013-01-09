@@ -396,6 +396,8 @@ class IDataManager(zope.interface.Interface):
     def sortKey():
         """Return a key to use for ordering registered DataManagers.
 
+        In order to guarantee a total ordering, keys must be strings.
+
         ZODB uses a global sort order to prevent deadlock when it commits
         transactions involving multiple resource managers.  The resource
         manager must define a sortKey() method that provides a global ordering
