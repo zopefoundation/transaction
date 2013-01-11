@@ -1,7 +1,14 @@
-.tox
+*.pyc
+*.so
 __pycache__
-*.egg-info
+build
+docs/_build
+bin
+develop-eggs
+eggs
+parts
+.tox
 .coverage
 nosetests.xml
 coverage.xml
-_build
+*.egg-info
