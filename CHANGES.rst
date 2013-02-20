@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.4.1 (unreleased)
+1.4.1 (2013-02-20)
 ------------------
 
 - Document that values returned by ``sortKey`` must be strings, in order
