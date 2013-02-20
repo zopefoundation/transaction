@@ -7,6 +7,9 @@ Changes
 - Document that values returned by ``sortKey`` must be strings, in order
   to guarantee total ordering.
 
+- Fix occasional RuntimeError: dictionary changed size during iteration errors
+  in transaction.weakset on Python 3.
+
 1.4.0 (2013-01-03)
 ------------------
 

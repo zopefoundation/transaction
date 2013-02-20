@@ -73,9 +73,11 @@ class WeakSet(object):
     # And so on.  Stress tests showed that it was easy to get into a state
     # where a WeakSet grows without bounds, despite that almost all its
     # elements are actually trash.  By returning a list of weakrefs instead,
-    # we avoid that, although the decision to use weakrefs is now# very
+    # we avoid that, although the decision to use weakrefs is now very
     # visible to our clients.
     def as_weakref_list(self):
         # We're cheating by breaking into the internals of Python's
         # WeakValueDictionary here (accessing its .data attribute).
-        return self.data.data.values()
+        # Python 3: be sure to freeze the list, to avoid RuntimeError:
+        # dictionary changed size during iteration.
+        return list(self.data.data.values())
