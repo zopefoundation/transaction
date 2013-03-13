@@ -11,11 +11,9 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-
-__version__ = '1.4.2dev'
-
+"""Setup
+"""
 import os
-
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -24,7 +22,7 @@ README = (open(os.path.join(here, 'README.rst')).read()
           open(os.path.join(here, 'CHANGES.rst')).read())
 
 setup(name='transaction',
-      version=__version__,
+      version='1.4.2dev',
       description='Transaction management for Python',
       long_description=README,
       classifiers=[
