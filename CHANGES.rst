@@ -4,7 +4,7 @@ Changes
 1.4.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added support for Python 3.4.
 
 
 1.4.1 (2013-02-20)
