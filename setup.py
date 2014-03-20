@@ -22,7 +22,7 @@ README = (open(os.path.join(here, 'README.rst')).read()
           open(os.path.join(here, 'CHANGES.rst')).read())
 
 setup(name='transaction',
-      version='1.4.3',
+      version='1.4.3dev',
       description='Transaction management for Python',
       long_description=README,
       classifiers=[
