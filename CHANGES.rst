@@ -4,12 +4,14 @@ Changes
 1.4.4 (unreleased)
 ------------------
 
-- Adde 100% branch coverage (in addition to 100% statement coverage).
+- Add support for PyPy3.
+
+- Require 100% branch coverage (in addition to 100% statement coverage).
 
 1.4.3 (2014-03-20)
 ------------------
 
-- Added support for Python 3.4.
+- Add support for Python 3.4.
 
 1.4.2 (skipped)
 ---------------
