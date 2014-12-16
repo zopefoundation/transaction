@@ -17,9 +17,15 @@ import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-README = (open(os.path.join(here, 'README.rst')).read()
-          + '\n\n' +
-          open(os.path.join(here, 'CHANGES.rst')).read())
+
+def _read_file(filename):
+    try:
+        with open(os.path.join(here, filename)) as f:
+            return f.read()
+    except IOError:  # Travis???
+        return ''
+
+README = _read_file('README.rst') + '\n\n' + _read_file('CHANGES.rst')
 
 setup(name='transaction',
       version='1.4.4dev',
