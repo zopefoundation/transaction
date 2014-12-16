@@ -12,3 +12,4 @@ parts
 nosetests.xml
 coverage.xml
 *.egg-info
+.installed.cfg
