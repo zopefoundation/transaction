@@ -636,8 +636,6 @@ class Savepoint:
     participating in a transaction.
     """
 
-    valid = property(lambda self: self.transaction is not None)
-
     def __init__(self, transaction, optimistic, *resources):
         self.transaction = transaction
         self._savepoints = savepoints = []
@@ -653,6 +651,10 @@ class Savepoint:
                 savepoint = savepoint()
 
             savepoints.append(savepoint)
+
+    @property
+    def valid(self):
+        return self.transaction is not None
 
     def rollback(self):
         """ See ISavepoint.

@@ -106,6 +106,7 @@ class TransactionTests(unittest.TestCase):
         from transaction._transaction import Status
         txn = self._makeOne()
         txn.status = Status.DOOMED
+        txn.doom()
         self.assertTrue(txn.isDoomed())
         self.assertEqual(txn.status, Status.DOOMED)
 
@@ -652,6 +653,36 @@ class TransactionTests(unittest.TestCase):
             self.assertTrue(r._a and r._x)
         self.assertEqual(len(logger._log), 0)
 
+    def test__commitResources_error_in_afterCompletion(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        class _Synchrnonizers(object):
+            def __init__(self, res):
+                self._res = res
+            def map(self, func):
+                for res in self._res:
+                    func(res)
+        resources = [Resource('bbb', 'tpc_begin'),
+                     Resource('aaa', 'afterCompletion')]
+        sync = _Synchrnonizers(resources)
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne(sync)
+        logger._clear()
+        txn._resources.extend(resources)
+        self.assertRaises(ValueError, txn._commitResources)
+        for r in resources:
+            if r._key == 'aaa':
+                self.assertTrue(r._b)
+            else:
+                self.assertFalse(r._b)
+            self.assertFalse(r._c and r._v and r._f)
+            self.assertTrue(r._a and r._x)
+        self.assertEqual(len(logger._log), 0)
+        self.assertTrue(resources[0]._after)
+        self.assertFalse(resources[1]._after)
+
     def test__commitResources_error_in_commit(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
@@ -858,7 +889,8 @@ class TransactionTests(unittest.TestCase):
             def abort(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
-        resource = Resource('aaa')
+        aaa = Resource('aaa')
+        broken2 = BrokenResource()
         _hooked1, _hooked2 = [], []
         def _hook1(*args, **kw):
             _hooked1.append((args, kw))
@@ -869,8 +901,9 @@ class TransactionTests(unittest.TestCase):
             txn = self._makeOne()
             txn._after_commit.append((_hook1, ('one',), {'uno': 1}))
             txn._after_commit.append((_hook2, (), {}))
+            txn._resources.append(aaa)
             txn._resources.append(broken)
-            txn._resources.append(resource)
+            txn._resources.append(broken2)
             logger._clear()
             self.assertRaises(ValueError, txn.abort)
         # Hooks are neither called nor cleared on abort
@@ -878,8 +911,8 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked2, [])
         self.assertEqual(list(txn.getAfterCommitHooks()),
                          [(_hook1, ('one',), {'uno': 1}), (_hook2, (), {})])
-        self.assertTrue(resource._a)
-        self.assertFalse(resource._x)
+        self.assertTrue(aaa._a)
+        self.assertFalse(aaa._x)
 
     def test_abort_error_w_synchronizers(self):
         from transaction.weakset import WeakSet
@@ -1042,7 +1075,7 @@ class MultiObjectResourceAdapterTests(unittest.TestCase):
                   ]
         _old_abort = jar.abort
         def _abort(obj, txn):
-            if obj._name == 'b':
+            if obj._name in ('b', 'c'):
                 raise ValueError()
             _old_abort(obj, txn)
         jar.abort = _abort
@@ -1051,7 +1084,7 @@ class MultiObjectResourceAdapterTests(unittest.TestCase):
         txn = self._makeDummy('txn', 'c')
         txn.log = log = DummyLogger()
         self.assertRaises(ValueError, mora.abort, txn)
-        self.assertEqual(jar._a, [(objects[0], txn), (objects[2], txn)])
+        self.assertEqual(jar._a, [(objects[0], txn)])
 
     def test_tpc_abort(self):
         jar = self._makeJar('iii')
@@ -1113,6 +1146,10 @@ class Test_oid_repr(unittest.TestCase):
     def test_as_string_all_Fs(self):
         s = '\1'*8
         self.assertEqual(self._callFUT(s), '0x0101010101010101')
+
+    def test_as_string_xxx(self):
+        s = '\20'*8
+        self.assertEqual(self._callFUT(s), '0x1010101010101010')
 
 
 class DataManagerAdapterTests(unittest.TestCase):
@@ -1232,6 +1269,14 @@ class SavepointTests(unittest.TestCase):
         self.assertTrue(sp._savepoints[0] is one)
         self.assertTrue(isinstance(sp._savepoints[1], _Aware))
         self.assertTrue(sp._savepoints[1] is another)
+
+    def test_valid_wo_transacction(self):
+        sp = self._makeOne(None, True, object())
+        self.assertFalse(sp.valid)
+
+    def test_valid_w_transacction(self):
+        sp = self._makeOne(object(), True, object())
+        self.assertTrue(sp.valid)
 
     def test_rollback_w_txn_None(self):
         from transaction.interfaces import InvalidSavepointRollbackError
@@ -1391,7 +1436,7 @@ class MiscellaneousTests(unittest.TestCase):
         self.assertEqual(list(dm.keys()), ['a'])
 
 class Resource(object):
-    _b = _c = _v = _f = _a = _x = False
+    _b = _c = _v = _f = _a = _x = _after = False
     def __init__(self, key, error=None):
         self._key = key
         self._error = error
@@ -1423,6 +1468,10 @@ class Resource(object):
         if self._error == 'tpc_abort':
             raise ValueError()
         self._x = True
+    def afterCompletion(self, txn):
+        if self._error == 'afterCompletion':
+            raise ValueError()
+        self._after = True
 
 def test_suite():
     return unittest.TestSuite((
