@@ -79,6 +79,33 @@ class WeakSetTests(unittest.TestCase):
         w.map(poker)
         for thing in dummy, dummy2, dummy3:
             self.assertEqual(thing.poked, 1)
+
+    def test_map_w_gced_element(self):
+        import gc
+        from transaction.weakset import WeakSet
+        w = WeakSet()
+        dummy = Dummy()
+        dummy2 = Dummy()
+        dummy3 = [Dummy()]
+        w.add(dummy)
+        w.add(dummy2)
+        w.add(dummy3[0])
+
+        _orig = w.as_weakref_list
+        def _as_weakref_list():
+            # simulate race condition during iteration of list
+            # object is collected after being iterated.
+            result = _orig()
+            del dummy3[:]
+            gc.collect()
+            return result
+        w.as_weakref_list = _as_weakref_list
+            
+        def poker(x):
+            x.poked = 1
+        w.map(poker)
+        for thing in dummy, dummy2:
+            self.assertEqual(thing.poked, 1)
         
 
 class Dummy:
