@@ -12,9 +12,10 @@
 #
 ##############################################################################
 
-import zope.interface
+from zope.interface import Attribute
+from zope.interface import Interface
 
-class ITransactionManager(zope.interface.Interface):
+class ITransactionManager(Interface):
     """An object that manages a sequence of transactions.
 
     Applications use transaction managers to establish transaction boundaries.
@@ -73,7 +74,7 @@ class ITransactionManager(zope.interface.Interface):
         life.  See ISynchronizer for details.
         """
 
-class ITransaction(zope.interface.Interface):
+class ITransaction(Interface):
     """Object representing a running transaction.
 
     Objects with this interface may represent different transactions
@@ -82,7 +83,7 @@ class ITransaction(zope.interface.Interface):
     deprecated and will go away in ZODB 3.6).
     """
 
-    user = zope.interface.Attribute(
+    user = Attribute(
         """A user name associated with the transaction.
 
         The format of the user name is defined by the application.  The value
@@ -94,7 +95,7 @@ class ITransaction(zope.interface.Interface):
         raise an exception, or truncate the value).
         """)
 
-    description = zope.interface.Attribute(
+    description = Attribute(
         """A textual description of the transaction.
 
         The value is of Python type str.  Method note() is the intended
@@ -283,7 +284,7 @@ class ITransaction(zope.interface.Interface):
         by a top-level transaction commit.
         """
 
-class ITransactionDeprecated(zope.interface.Interface):
+class ITransactionDeprecated(Interface):
     """Deprecated parts of the transaction API."""
 
     def begin(info=None):
@@ -298,7 +299,7 @@ class ITransactionDeprecated(zope.interface.Interface):
         """Register the given object for transaction control."""
 
 
-class IDataManager(zope.interface.Interface):
+class IDataManager(Interface):
     """Objects that manage transactional storage.
 
     These objects may manage data for other objects, or they may manage
@@ -310,7 +311,7 @@ class IDataManager(zope.interface.Interface):
     the transaction.
     """
 
-    transaction_manager = zope.interface.Attribute(
+    transaction_manager = Attribute(
         """The transaction manager (TM) used by this data manager.
 
         This is a public attribute, intended for read-only use.  The value
@@ -417,7 +418,7 @@ class ISavepointDataManager(IDataManager):
         """Return a data-manager savepoint (IDataManagerSavepoint).
         """
 
-class IDataManagerSavepoint(zope.interface.Interface):
+class IDataManagerSavepoint(Interface):
     """Savepoint for data-manager changes for use in transaction savepoints.
 
     Datamanager savepoints are used by, and only by, transaction savepoints.
@@ -434,7 +435,7 @@ class IDataManagerSavepoint(zope.interface.Interface):
         """Rollback any work done since the savepoint.
         """
 
-class ISavepoint(zope.interface.Interface):
+class ISavepoint(Interface):
     """A transaction savepoint.
     """
 
@@ -444,7 +445,7 @@ class ISavepoint(zope.interface.Interface):
         InvalidSavepointRollbackError is raised if the savepoint isn't valid.
         """
 
-    valid = zope.interface.Attribute(
+    valid = Attribute(
         "Boolean indicating whether the savepoint is valid")
 
 class InvalidSavepointRollbackError(Exception):
@@ -457,7 +458,7 @@ class InvalidSavepointRollbackError(Exception):
     - An earlier savepoint in the same transaction has been rolled back.
     """
 
-class ISynchronizer(zope.interface.Interface):
+class ISynchronizer(Interface):
     """Objects that participate in the transaction-boundary notification API.
     """
 
