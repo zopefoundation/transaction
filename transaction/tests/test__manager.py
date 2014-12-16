@@ -255,6 +255,19 @@ class TransactionManagerTests(unittest.TestCase):
         tm.get()._resources.append(_Resource())
         self.assertTrue(tm._retryable(Exception, object()))
 
+    def test__retryable_w_multiple(self):
+        class _Resource(object):
+            _should = True
+            def should_retry(self, err):
+                return self._should
+        tm = self._makeOne()
+        res1 = _Resource()
+        res1._should = False
+        res2 = _Resource()
+        tm.get()._resources.append(res1)
+        tm.get()._resources.append(res2)
+        self.assertTrue(tm._retryable(Exception, object()))
+
     # basic tests with two sub trans jars
     # really we only need one, so tests for
     # sub1 should identical to tests for sub2
