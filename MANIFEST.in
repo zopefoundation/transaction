@@ -13,7 +13,7 @@ global-exclude *.pyo
 global-exclude *.so
 global-exclude coverage.xml
 
-prune docs/_build/
+prune docs/_build
 
 include .coveragerc
 include .travis.yml
