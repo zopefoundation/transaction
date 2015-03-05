@@ -4,6 +4,9 @@ Changes
 1.4.4 (unreleased)
 ------------------
 
+- Call newTransaction() on synchronizers when a new transaction is started
+  implicitly by a call to transaction.get().
+
 - Add support for PyPy3.
 
 - Require 100% branch coverage (in addition to 100% statement coverage).
