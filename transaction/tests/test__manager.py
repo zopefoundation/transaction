@@ -56,17 +56,28 @@ class TransactionManagerTests(unittest.TestCase):
             _aborted = False
             def abort(self):
                 self._aborted = True
+                self._manager.free(self)
         tm = self._makeOne()
         tm._txn = txn = Existing()
+        txn._manager = tm
         tm.begin()
         self.assertFalse(tm._txn is txn)
         self.assertTrue(txn._aborted)
 
-    def test_get_wo_existing_txn(self):
+    def test_get_wo_existing_txn_wo_synchs(self):
         from transaction._transaction import Transaction
         tm = self._makeOne()
         txn = tm.get()
         self.assertTrue(isinstance(txn, Transaction))
+
+    def test_begin_wo_existing_txn_w_synchs(self):
+        from transaction._transaction import Transaction
+        tm = self._makeOne()
+        synch = DummySynch()
+        tm.registerSynch(synch)
+        tm.get()
+        self.assertTrue(isinstance(tm._txn, Transaction))
+        self.assertTrue(tm._txn in synch._txns)
 
     def test_get_w_existing_txn(self):
         class Existing(object):

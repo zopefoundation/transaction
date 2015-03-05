@@ -76,9 +76,9 @@ class TransactionManager(object):
     def get(self):
         """ See ITransactionManager.
         """
-        if self._txn is None:
-            self._txn = Transaction(self._synchs, self)
-        return self._txn
+        if self._txn is not None:
+            return self._txn
+        return self.begin()
 
     def free(self, txn):
         if txn is not self._txn:
