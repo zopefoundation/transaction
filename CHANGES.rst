@@ -4,7 +4,7 @@ Changes
 1.4.4 (unreleased)
 ------------------
 
-- Add support for PyPy3.
+- Add support for PyPy3 and Jython 2.7.
 
 - Require 100% branch coverage (in addition to 100% statement coverage).
 

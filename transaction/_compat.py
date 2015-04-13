@@ -2,6 +2,7 @@ import sys
 import types
 
 PY3 = sys.version_info[0] == 3
+JYTHON = sys.platform.startswith('java')
 
 if PY3: # pragma: no cover
     string_types = str,
@@ -79,12 +80,11 @@ if PY3: #pragma NO COVER
         from threading import _get_ident as get_thread_ident
 else:
     from thread import get_ident as get_thread_ident
-    
-    
+
+
 if PY3:
     def func_name(func): #pragma NO COVER
         return func.__name__
 else:
     def func_name(func): #pragma NO COVER
         return func.func_name
- 

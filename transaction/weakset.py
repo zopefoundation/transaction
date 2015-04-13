@@ -13,6 +13,7 @@
 ############################################################################
 
 import weakref
+from ._compat import PY3
 
 # A simple implementation of weak sets, supplying just enough of Python's
 # sets.Set interface for our needs.
@@ -62,7 +63,6 @@ class WeakSet(object):
     # underlying dict may change size during iteration, due to gc or
     # activity from other threads).  as_weakef_list() is safe.
     #
-    # Something like this should really be a method of Python's weak dicts.
     # If we invoke self.data.values() instead, we get back a list of live
     # objects instead of weakrefs.  If gc occurs while this list is alive,
     # all the objects move to an older generation (because they're strongly
@@ -76,8 +76,8 @@ class WeakSet(object):
     # we avoid that, although the decision to use weakrefs is now very
     # visible to our clients.
     def as_weakref_list(self):
-        # We're cheating by breaking into the internals of Python's
-        # WeakValueDictionary here (accessing its .data attribute).
-        # Python 3: be sure to freeze the list, to avoid RuntimeError:
+        # Python 3: be sure to freeze the iterator, to avoid RuntimeError:
         # dictionary changed size during iteration.
-        return list(self.data.data.values())
+        # On Python2 we already get a list, no need to copy
+        refs = self.data.valuerefs()
+        return list(refs) if PY3 else refs
