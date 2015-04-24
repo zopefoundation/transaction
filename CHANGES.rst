@@ -4,6 +4,9 @@ Changes
 1.4.4 (unreleased)
 ------------------
 
+- Use the standard ``valuerefs()`` method rather than relying on
+  implementation details of ``WeakValueDictionary`` in ``WeakSet``.
+
 - Add support for PyPy3.
 
 - Require 100% branch coverage (in addition to 100% statement coverage).

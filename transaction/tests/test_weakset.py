@@ -12,7 +12,7 @@
 #
 ##############################################################################
 import unittest
-
+from transaction._compat import JYTHON
 
 class WeakSetTests(unittest.TestCase):
     def test_contains(self):
@@ -35,7 +35,9 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(len(w), 2)
         del d1
         gc.collect()
-        self.assertEqual(len(w), 1)
+        if not JYTHON:
+            # The Jython GC is non deterministic
+            self.assertEqual(len(w), 1)
 
     def test_remove(self):
         from transaction.weakset import WeakSet
@@ -100,17 +102,17 @@ class WeakSetTests(unittest.TestCase):
             gc.collect()
             return result
         w.as_weakref_list = _as_weakref_list
-            
+
         def poker(x):
             x.poked = 1
         w.map(poker)
         for thing in dummy, dummy2:
             self.assertEqual(thing.poked, 1)
-        
+
 
 class Dummy:
     pass
-        
+
 
 def test_suite():
     return unittest.makeSuite(WeakSetTests)
