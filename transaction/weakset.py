@@ -75,9 +75,12 @@ class WeakSet(object):
     # elements are actually trash.  By returning a list of weakrefs instead,
     # we avoid that, although the decision to use weakrefs is now very
     # visible to our clients.
-    def as_weakref_list(self):
+    if PY3: #pragma: no cover (coverage tests run under 2.7)
         # Python 3: be sure to freeze the iterator, to avoid RuntimeError:
         # dictionary changed size during iteration.
+        def as_weakref_list(self):
+            return list(self.data.valuerefs())
+    else:
         # On Python2 we already get a list, no need to copy
-        refs = self.data.valuerefs()
-        return list(refs) if PY3 else refs
+        def as_weakref_list(self):
+            return self.data.valuerefs()
