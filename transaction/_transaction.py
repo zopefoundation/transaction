@@ -494,7 +494,7 @@ class Transaction(object):
 class MultiObjectResourceAdapter(object):
     """Adapt the old-style register() call to the new-style join().
 
-    With join(), a resource mananger like a Connection registers with
+    With join(), a resource manager like a Connection registers with
     the transaction manager.  With register(), an individual object
     is passed to register().
     """
