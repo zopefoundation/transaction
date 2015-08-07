@@ -389,7 +389,7 @@ class Transaction(object):
                 rm.tpc_begin(self)
             for rm in L:
                 rm.commit(self)
-                self.log.debug("commit %r" % rm)
+                self.log.debug("commit %r", rm)
             for rm in L:
                 rm.tpc_vote(self)
                 self._voted[id(rm)] = True
