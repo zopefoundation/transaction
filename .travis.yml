@@ -9,7 +9,7 @@ python:
     - pypy
     - pypy3
 install:
-    - pip install . --use-mirrors
+    - pip install .
 script:
     - python setup.py test -q
 notifications:
