@@ -27,7 +27,7 @@ def _read_file(filename):
 README = _read_file('README.rst') + '\n\n' + _read_file('CHANGES.rst')
 
 setup(name='transaction',
-      version='1.4.5.dev0',
+      version='1.5.0.dev0',
       description='Transaction management for Python',
       long_description=README,
       classifiers=[
@@ -40,10 +40,8 @@ setup(name='transaction',
         "Operating System :: Unix",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: Implementation :: CPython",
