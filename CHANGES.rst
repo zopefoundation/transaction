@@ -6,6 +6,8 @@ Changes
 
 - Drop support for Python 2.6 and 3.2.
 
+- Add support for Python 3.5.
+
 1.4.4 (2015-05-19)
 ------------------
 
