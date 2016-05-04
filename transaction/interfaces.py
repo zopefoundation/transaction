@@ -74,6 +74,20 @@ class ITransactionManager(Interface):
         life.  See ISynchronizer for details.
         """
 
+    def clearSynchs():
+        """Unregister all registered ISynchronizers.
+
+        This exists to support test cleanup/initialization
+        """
+
+    def registeredSynchs():
+        """Determine if any ISynchronizers are registered.
+
+        Return true is any are registered, and return False otherwise.
+
+        This exists to support test cleanup/initialization
+        """
+
 class ITransaction(Interface):
     """Object representing a running transaction.
 

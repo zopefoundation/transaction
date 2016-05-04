@@ -105,12 +105,27 @@ class TransactionManagerTests(unittest.TestCase):
         tm = self._makeOne()
         synch1 = DummySynch()
         synch2 = DummySynch()
+        self.assertFalse(tm.registeredSynchs())
         tm.registerSynch(synch1)
+        self.assertTrue(tm.registeredSynchs())
         tm.registerSynch(synch2)
+        self.assertTrue(tm.registeredSynchs())
         tm.unregisterSynch(synch1)
+        self.assertTrue(tm.registeredSynchs())
         self.assertEqual(len(tm._synchs), 1)
         self.assertFalse(synch1 in tm._synchs)
         self.assertTrue(synch2 in tm._synchs)
+        tm.unregisterSynch(synch2)
+        self.assertFalse(tm.registeredSynchs())
+
+    def test_clearSynchs(self):
+        tm = self._makeOne()
+        synch1 = DummySynch()
+        synch2 = DummySynch()
+        tm.registerSynch(synch1)
+        tm.registerSynch(synch2)
+        tm.clearSynchs()
+        self.assertEqual(len(tm._synchs), 0)
 
     def test_isDoomed_wo_existing_txn(self):
         tm = self._makeOne()

@@ -50,6 +50,9 @@ class WeakSet(object):
     def remove(self, obj):
         del self.data[id(obj)]
 
+    def clear(self):
+        self.data.clear()
+
     # f is a one-argument function.  Execute f(elt) for each elt in the
     # set.  f's return value is ignored.
     def map(self, f):

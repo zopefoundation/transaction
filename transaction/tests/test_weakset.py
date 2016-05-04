@@ -48,6 +48,19 @@ class WeakSetTests(unittest.TestCase):
         w.remove(dummy)
         self.assertEqual(dummy in w, False)
 
+    def test_clear(self):
+        from transaction.weakset import WeakSet
+        w = WeakSet()
+        dummy = Dummy()
+        w.add(dummy)
+        dummy2 = Dummy()
+        w.add(dummy2)
+        self.assertEqual(dummy in w, True)
+        self.assertEqual(dummy2 in w, True)
+        w.clear()
+        self.assertEqual(dummy in w, False)
+        self.assertEqual(dummy2 in w, False)
+
     def test_as_weakref_list(self):
         import gc
         from transaction.weakset import WeakSet
