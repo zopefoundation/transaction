@@ -95,6 +95,16 @@ class TransactionManager(object):
         """
         self._synchs.remove(synch)
 
+    def clearSynchs(self):
+        """ See ITransactionManager.
+        """
+        self._synchs.clear()
+
+    def registeredSynchs(self):
+        """ See ITransactionManager.
+        """
+        return bool(self._synchs)
+
     def isDoomed(self):
         """ See ITransactionManager.
         """
