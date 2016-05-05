@@ -1,12 +1,15 @@
 Changes
 =======
 
-1.5.0 (unreleased)
+1.5.0 (2016-05-05)
 ------------------
 
 - Drop support for Python 2.6 and 3.2.
 
 - Add support for Python 3.5.
+
+- Added APIs for interogating and clearing internal state to support
+  client tests.
 
 1.4.4 (2015-05-19)
 ------------------
