@@ -41,7 +41,7 @@ def _makeLogger(): #pragma NO COVER
     if _LOGGER is not None:
         return _LOGGER
     return logging.getLogger("txn.%d" % get_thread_ident())
-    
+
 
 # The point of this is to avoid hiding exceptions (which the builtin
 # hasattr() does).
@@ -281,8 +281,7 @@ class Transaction(object):
             finally:
                 del t, v, tb
         else:
-            if self._manager:
-                self._manager.free(self)
+            self._free()
             self._synchronizers.map(lambda s: s.afterCompletion(self))
             self._callAfterCommitHooks(status=True)
         self.log.debug("commit")
@@ -434,6 +433,17 @@ class Transaction(object):
                 self.log.error("Error in tpc_abort() on manager %s",
                                rm, exc_info=sys.exc_info())
 
+    def _free(self):
+        # Called when the transaction has been committed or aborted
+        # to break references---this transaction object will not be returned
+        # as the current transaction from its manager after this, and all
+        # IDatamanager objects joined to it will forgotten
+        if self._manager:
+            self._manager.free(self)
+
+        del self._resources[:]
+
+
     def abort(self):
         """ See ITransaction.
         """
@@ -447,7 +457,7 @@ class Transaction(object):
             t = None
             v = None
             tb = None
-            
+
             for rm in self._resources:
                 try:
                     rm.abort(self)
@@ -457,8 +467,7 @@ class Transaction(object):
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
 
-            if self._manager:
-                self._manager.free(self)
+            self._free()
 
             self._synchronizers.map(lambda s: s.afterCompletion(self))
 
