@@ -461,6 +461,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked1, [((True, 'one',), {'uno': 1})])
         self.assertEqual(_hooked2, [((True,), {})])
         self.assertEqual(txn._after_commit, [])
+        self.assertEqual(txn._resources, [])
 
     def test_commit_error_w_afterCompleteHooks(self):
         from transaction import _transaction
@@ -527,6 +528,17 @@ class TransactionTests(unittest.TestCase):
         for synch in synchs:
             self.assertTrue(synch._before is txn)
             self.assertTrue(synch._after is txn) #called in _cleanup
+
+    def test_commit_clears_resources(self):
+        class DM(object):
+            tpc_begin = commit = tpc_finish = tpc_vote = lambda s, txn: True
+
+        dm = DM()
+        txn = self._makeOne()
+        txn.join(dm)
+        self.assertEqual(txn._resources, [dm])
+        txn.commit()
+        self.assertEqual(txn._resources, [])
 
     def test_getBeforeCommitHooks_empty(self):
         txn = self._makeOne()
@@ -878,6 +890,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked2, [])
         self.assertEqual(list(txn.getAfterCommitHooks()),
                          [(_hook1, ('one',), {'uno': 1}), (_hook2, (), {})])
+        self.assertEqual(txn._resources, [])
 
     def test_abort_error_w_afterCompleteHooks(self):
         from transaction import _transaction
@@ -944,6 +957,17 @@ class TransactionTests(unittest.TestCase):
         for synch in synchs:
             self.assertTrue(synch._before is t)
             self.assertTrue(synch._after is t) #called in _cleanup
+
+    def test_abort_clears_resources(self):
+        class DM(object):
+            abort = lambda s, txn: True
+
+        dm = DM()
+        txn = self._makeOne()
+        txn.join(dm)
+        self.assertEqual(txn._resources, [dm])
+        txn.abort()
+        self.assertEqual(txn._resources, [])
 
     def test_note(self):
         txn = self._makeOne()
@@ -1486,3 +1510,6 @@ def test_suite():
         unittest.makeSuite(NoRollbackSavepointTests),
         unittest.makeSuite(MiscellaneousTests),
         ))
+
+if __name__ == '__main__':
+    unittest.main()

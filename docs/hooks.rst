@@ -360,7 +360,7 @@ can be executed. We don't support execution dependencies at this level.
 
     >>> reset_log()
 
-Test that the associated transaction manager has been cleanup when
+Test that the associated transaction manager has been cleaned up when
 after commit hooks are registered
 
 .. doctest::

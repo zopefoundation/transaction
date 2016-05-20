@@ -1,6 +1,12 @@
 Changes
 =======
 
+1.6.0 (TBD)
+-----------
+
+- Drop references to data managers joined to a transaction when it is
+  committed or aborted.
+
 1.5.0 (2016-05-05)
 ------------------
 
