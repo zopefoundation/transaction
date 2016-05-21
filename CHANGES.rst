@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.6.0 (TBD)
------------
+1.6.0 (2016-05-21)
+------------------
 
 - New transaction API for storing data on behalf of objects, such as
   data managers.

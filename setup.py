@@ -11,8 +11,8 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-"""Setup
-"""
+version = '1.6.0'
+
 import os
 from setuptools import setup, find_packages
 
@@ -27,7 +27,7 @@ def _read_file(filename):
 README = _read_file('README.rst') + '\n\n' + _read_file('CHANGES.rst')
 
 setup(name='transaction',
-      version='1.5.0',
+      version=version,
       description='Transaction management for Python',
       long_description=README,
       classifiers=[
