@@ -4,6 +4,9 @@ Changes
 1.6.0 (TBD)
 -----------
 
+- New transaction API for storing data on behalf of objects, such as
+  data managers.
+
 - Drop references to data managers joined to a transaction when it is
   committed or aborted.
 
