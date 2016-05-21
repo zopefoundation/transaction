@@ -306,6 +306,10 @@ class ITransaction(Interface):
         transaction-specific data on the transaction itself.  The
         transaction knows nothing about the data, but simply holds it
         on behalf of the object.
+
+        The object passed should be the object that needs the data, as
+        opposed to simple object like a string. (Internally, the id of
+        the object is used as the key.)
         """
 
     def data(self, object):
