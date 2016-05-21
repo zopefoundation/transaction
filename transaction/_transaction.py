@@ -441,8 +441,29 @@ class Transaction(object):
         if self._manager:
             self._manager.free(self)
 
+        if hasattr(self, '_data'):
+            delattr(self, '_data')
+
         del self._resources[:]
 
+    def data(self, ob):
+        try:
+            data = self._data
+        except AttributeError:
+            raise KeyError(ob)
+
+        try:
+            return data[id(ob)]
+        except KeyError:
+            raise KeyError(ob)
+
+    def set_data(self, ob, ob_data):
+        try:
+            data = self._data
+        except AttributeError:
+            data = self._data = {}
+
+        data[id(ob)] = ob_data
 
     def abort(self):
         """ See ITransaction.
@@ -496,6 +517,7 @@ class Transaction(object):
         """ See ITransaction.
         """
         self._extension[name] = value
+
 
 # TODO: We need a better name for the adapters.
 

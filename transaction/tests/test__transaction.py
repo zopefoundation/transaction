@@ -1001,6 +1001,29 @@ class TransactionTests(unittest.TestCase):
         txn.setExtendedInfo('frob', 'quxxxx')
         self.assertEqual(txn._extension, {'frob': 'quxxxx', 'baz': 'spam'})
 
+    def test_data(self):
+        txn = self._makeOne()
+
+        # Can't get data that wasn't set:
+        with self.assertRaises(KeyError) as c:
+            txn.data(self)
+        self.assertEqual(c.exception.args, (self,))
+
+        data = dict(a=1)
+        txn.set_data(self, data)
+        self.assertEqual(txn.data(self), data)
+
+        # Can't get something we haven't stored.
+        with self.assertRaises(KeyError) as c:
+            txn.data(data)
+        self.assertEqual(c.exception.args, (data,))
+
+        # When the transaction ends, data are discarded:
+        txn.commit()
+        with self.assertRaises(KeyError) as c:
+            txn.data(self)
+        self.assertEqual(c.exception.args, (self,))
+
 
 class MultiObjectResourceAdapterTests(unittest.TestCase):
 

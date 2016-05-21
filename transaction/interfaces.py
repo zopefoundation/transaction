@@ -298,6 +298,26 @@ class ITransaction(Interface):
         by a top-level transaction commit.
         """
 
+    def set_data(self, object, data):
+        """Hold data on behalf of an object
+
+        For objects such as data managers or their subobjects that
+        work with multiple transactions, it's convenient to store
+        transaction-specific data on the transaction itself.  The
+        transaction knows nothing about the data, but simply holds it
+        on behalf of the object.
+
+        The object passed should be the object that needs the data, as
+        opposed to simple object like a string. (Internally, the id of
+        the object is used as the key.)
+        """
+
+    def data(self, object):
+        """Retrieve data held on behalf of an object.
+
+        See set_data.
+        """
+
 class ITransactionDeprecated(Interface):
     """Deprecated parts of the transaction API."""
 
