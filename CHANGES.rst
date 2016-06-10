@@ -1,7 +1,7 @@
 Changes
 =======
 
-1.6.1 (unreleased)
+1.6.1 (2016-06-10)
 ------------------
 
 - Fixed: Synchonizers that registered with transaction managers when
