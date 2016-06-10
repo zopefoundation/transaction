@@ -11,13 +11,12 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-version = '1.6.0'
+version = '1.6.1.dev0'
 
 import os
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
-
 
 def _read_file(filename):
     with open(os.path.join(here, filename)) as f:
@@ -25,6 +24,8 @@ def _read_file(filename):
 
 
 README = _read_file('README.rst') + '\n\n' + _read_file('CHANGES.rst')
+
+tests_require = ['mock']
 
 setup(name='transaction',
       version=version,
@@ -58,15 +59,14 @@ setup(name='transaction',
       include_package_data=True,
       zip_safe=False,
       test_suite="transaction.tests",
-      tests_require = [
-        'zope.interface',
-        ],
+      tests_require = tests_require,
       install_requires=[
         'zope.interface',
         ],
       extras_require = {
         'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
-        'testing': ['nose', 'coverage'],
+        'test': tests_require,
+        'testing': ['nose', 'coverage'] + tests_require,
       },
       entry_points = """\
       """
