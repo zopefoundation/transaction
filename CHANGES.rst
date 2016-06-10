@@ -1,6 +1,13 @@
 Changes
 =======
 
+1.6.1 (unreleased)
+------------------
+
+- Fixed: Synchonizers that registered with transaction managers when
+  transactions were in progress didn't have their newTransaction
+  methods called to let them know of the in-progress transactions.
+
 1.6.0 (2016-05-21)
 ------------------
 

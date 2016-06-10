@@ -442,6 +442,27 @@ class TransactionManagerTests(unittest.TestCase):
 
         assert nosub1._p_jar.ctpc_abort == 1
 
+    def test_notify_transaction_late_comers(self):
+        # If a datamanager registers for synchonization after a
+        # transaction has started, we should call newTransaction so it
+        # can do necessry setup.
+        import mock
+        from .. import TransactionManager
+        manager = TransactionManager()
+        sync1 = mock.MagicMock()
+        manager.registerSynch(sync1)
+        sync1.newTransaction.assert_not_called()
+        t = manager.begin()
+        sync1.newTransaction.assert_called_with(t)
+        sync2 = mock.MagicMock()
+        manager.registerSynch(sync2)
+        sync2.newTransaction.assert_called_with(t)
+
+        # for, um, completeness
+        t.commit()
+        for s in sync1, sync2:
+            s.beforeCompletion.assert_called_with(t)
+            s.afterCompletion.assert_called_with(t)
 
 class AttemptTests(unittest.TestCase):
 

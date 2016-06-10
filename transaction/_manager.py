@@ -89,6 +89,8 @@ class TransactionManager(object):
         """ See ITransactionManager.
         """
         self._synchs.add(synch)
+        if self._txn is not None:
+            synch.newTransaction(self._txn)
 
     def unregisterSynch(self, synch):
         """ See ITransactionManager.
