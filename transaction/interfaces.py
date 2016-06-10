@@ -65,6 +65,10 @@ class ITransactionManager(Interface):
 
         Synchronizers are notified about some major events in a transaction's
         life.  See ISynchronizer for details.
+
+        If a synchronizer registers while there is an active
+        transaction, its newTransaction method will be called with the
+        active transaction.
         """
 
     def unregisterSynch(synch):
