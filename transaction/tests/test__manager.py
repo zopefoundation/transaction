@@ -246,6 +246,12 @@ class TransactionManagerTests(unittest.TestCase):
             self.assertTrue(attempt.manager is tm)
         self.assertTrue(found[-1] is tm)
 
+    def test_attempts_succes_breaks(self):
+        tm = self._makeOne()
+        for runs, attempt in enumerate(tm.attempts()):
+            attempt.success = True
+        self.assertEqual(runs, 0)
+
     def test__retryable_w_transient_error(self):
         from transaction.interfaces import TransientError
         tm = self._makeOne()

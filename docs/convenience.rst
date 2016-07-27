@@ -125,6 +125,8 @@ Of course, other errors are propagated directly:
     >>> for attempt in transaction.manager.attempts():
     ...     with attempt:
     ...         ntry += 1
+    ...         if ntry % 3:
+    ...             raise Retry(ntry)
     ...         if ntry == 3:
     ...             raise ValueError(ntry)
     Traceback (most recent call last):
