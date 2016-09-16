@@ -48,6 +48,16 @@ class TransactionTests(unittest.TestCase):
     def _makeOne(self, synchronizers=None, manager=None):
         return self._getTargetClass()(synchronizers, manager)
 
+    def test_verifyImplements_ITransaction(self):
+        from zope.interface.verify import verifyClass
+        from transaction.interfaces import ITransaction
+        verifyClass(ITransaction, self._getTargetClass())
+
+    def test_verifyProvides_ITransaction(self):
+        from zope.interface.verify import verifyObject
+        from transaction.interfaces import ITransaction
+        verifyObject(ITransaction, self._makeOne())
+
     def test_ctor_defaults(self):
         from transaction.weakset import WeakSet
         from transaction.tests.common import DummyLogger

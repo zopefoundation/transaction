@@ -1,6 +1,12 @@
 Changes
 =======
 
+Unreleased
+----------
+
+- Corrected ITransaction by removing beforeCommitHook (which is no longer
+  implemented) and removing 'self' from two methods.
+
 1.6.1 (2016-06-10)
 ------------------
 

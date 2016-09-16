@@ -200,34 +200,6 @@ class ITransaction(Interface):
         raise an exception, or remove `<name, value>` pairs).
         """
 
-    # deprecated38
-    def beforeCommitHook(__hook, *args, **kws):
-        """Register a hook to call before the transaction is committed.
-
-        THIS IS DEPRECATED IN ZODB 3.6.  Use addBeforeCommitHook() instead.
-
-        The specified hook function will be called after the transaction's
-        commit method has been called, but before the commit process has been
-        started.  The hook will be passed the specified positional and keyword
-        arguments.
-
-        Multiple hooks can be registered and will be called in the order they
-        were registered (first registered, first called).  This method can
-        also be called from a hook:  an executing hook can register more
-        hooks.  Applications should take care to avoid creating infinite loops
-        by recursively registering hooks.
-
-        Hooks are called only for a top-level commit.  A savepoint
-        does not call any hooks.  If the transaction is aborted, hooks
-        are not called, and are discarded.  Calling a hook "consumes" its
-        registration too:  hook registrations do not persist across
-        transactions.  If it's desired to call the same hook on every
-        transaction commit, then beforeCommitHook() must be called with that
-        hook during every transaction; in such a case consider registering a
-        synchronizer object via a TransactionManager's registerSynch() method
-        instead.
-        """
-
     def addBeforeCommitHook(hook, args=(), kws=None):
         """Register a hook to call before the transaction is committed.
 
@@ -302,7 +274,7 @@ class ITransaction(Interface):
         by a top-level transaction commit.
         """
 
-    def set_data(self, object, data):
+    def set_data(ob, data):
         """Hold data on behalf of an object
 
         For objects such as data managers or their subobjects that
@@ -316,7 +288,7 @@ class ITransaction(Interface):
         the object is used as the key.)
         """
 
-    def data(self, object):
+    def data(ob):
         """Retrieve data held on behalf of an object.
 
         See set_data.
