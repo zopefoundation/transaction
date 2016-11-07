@@ -50,9 +50,7 @@ Retries
 
 Commits can fail for transient reasons, especially conflicts.
 Applications will often retry transactions some number of times to
-overcome transient failures.  This typically looks something like:
-
-.. doctest::
+overcome transient failures.  This typically looks something like::
 
     for i in range(3):
         try:
@@ -63,119 +61,63 @@ overcome transient failures.  This typically looks something like:
         else:
            break
 
-This is rather ugly.
+This is rather ugly and easy to get wrong.
 
-Transaction managers provide a helper for this case. To show this,
-we'll use a contrived example:
+Transaction managers provide two helpers for this case.
 
-.. doctest::
+Running and retrying functions as transactions
+______________________________________________
 
-    >>> ntry = 0
-    >>> with transaction.manager:
-    ...      dm['ntry'] = 0
+The first helper runs a function as a transaction::
 
-    >>> import transaction.interfaces
-    >>> class Retry(transaction.interfaces.TransientError):
-    ...     pass
+    def do_somthing():
+        "Do something"
+        ... some something ...
 
-    >>> for attempt in transaction.manager.attempts():
-    ...     with attempt as t:
-    ...         t.note('test')
-    ...         print("%s %s" % (dm['ntry'], ntry))
-    ...         ntry += 1
-    ...         dm['ntry'] = ntry
-    ...         if ntry % 3:
-    ...             raise Retry(ntry)
-    0 0
-    0 1
-    0 2
+    transaction.manager.run(do_somthing)
 
-The raising of a subclass of TransientError is critical here. It's
-what signals that the transaction should be retried.  It is generally
-up to the data manager to signal that a transaction should try again
-by raising a subclass of TransientError (or TransientError itself, of
-course).
+Of course you can run this as a decorator::
 
-You shouldn't make any assumptions about the object returned by the
-iterator.  (It isn't a transaction or transaction manager, as far as
-you know. :)  If you use the ``as`` keyword in the ``with`` statement,
-a transaction object will be assigned to the variable named.
+    @transaction.manager.run
+    def do_somthing():
+        "Do something"
+        ... some something ...
 
-By default, it tries 3 times. We can tell it how many times to try:
+Some people find this easier to read, even though the result isn't a
+decorated function, but rather the result of calling it in a
+transaction.
 
-.. doctest::
+The run method returns the successful result of calling the function.
 
-    >>> for attempt in transaction.manager.attempts(2):
-    ...     with attempt:
-    ...         ntry += 1
-    ...         if ntry % 3:
-    ...             raise Retry(ntry)
-    Traceback (most recent call last):
-    ...
-    Retry: 5
+The function name and docstring, if any, are added to the transaction
+description.
 
-It it doesn't succeed in that many times, the exception will be
-propagated.
+You can pass an integer number of times to try to the ``run`` method::
 
-Of course, other errors are propagated directly:
+    transaction.manager.run(do_somthing, 9)
 
-.. doctest::
+    @transaction.manager.run(9)
+    def do_somthing():
+        "Do something"
+        ... some something ...
 
-    >>> ntry = 0
-    >>> for attempt in transaction.manager.attempts():
-    ...     with attempt:
-    ...         ntry += 1
-    ...         if ntry % 3:
-    ...             raise ValueError(ntry)
-    Traceback (most recent call last):
-    ...
-    ValueError: 3
+The default number of times to try is 3.
 
-We can use the default transaction manager:
 
-.. doctest::
+Retrying code blocks using a attempt iterator
+_____________________________________________
 
-    >>> ntry = 0
-    >>> for attempt in transaction.attempts():
-    ...     with attempt as t:
-    ...         t.note('test')
-    ...         print("%s %s" % (dm['ntry'], ntry))
-    ...         ntry += 1
-    ...         dm['ntry'] = ntry
-    ...         if ntry % 3:
-    ...             raise Retry(ntry)
-    3 0
-    3 1
-    3 2
+An older helper for running transactions uses an iterator of attempts::
 
-Sometimes, a data manager doesn't raise exceptions directly, but
-wraps other other systems that raise exceptions outside of it's
-control.  Data  managers can provide a should_retry method that takes
-an exception instance and returns True if the transaction should be
-attempted again.
+  for attempt in transaction.manager.attempts():
+      with attempt as t:
+          ... some something ...
 
-.. doctest::
 
-    >>> class DM(transaction.tests.savepointsample.SampleSavepointDataManager):
-    ...     def should_retry(self, e):
-    ...         if 'should retry' in str(e):
-    ...             return True
+This runs the code block until it runs without a transient error or
+until the number of attempts is exceeded.  By default, it tries 3
+times, but you can pass a number of attempts::
 
-    >>> ntry = 0
-    >>> dm2 = DM()
-    >>> with transaction.manager:
-    ...     dm2['ntry'] = 0
-    >>> for attempt in transaction.manager.attempts():
-    ...     with attempt:
-    ...         print("%s %s" % (dm['ntry'], ntry))
-    ...         ntry += 1
-    ...         dm['ntry'] = ntry
-    ...         dm2['ntry'] = ntry
-    ...         if ntry % 3:
-    ...             raise ValueError('we really should retry this')
-    3 0
-    3 1
-    3 2
-
-    >>> dm2['ntry']
-    3
+  for attempt in transaction.manager.attempts(9):
+      with attempt as t:
+          ... some something ...
