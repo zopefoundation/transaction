@@ -160,6 +160,42 @@ class TransactionManager(object):
             if (should_retry is not None) and should_retry(error):
                 return True
 
+    run_no_func_types = int, type(None)
+    def run(self, func=None, tries=3):
+        if isinstance(func, self.run_no_func_types):
+            if func is not None:
+                tries = func
+            return lambda func: self.run(func, tries)
+
+        if tries <= 0:
+            raise ValueError("tries must be positive")
+
+        name = func.__name__
+        doc = func.__doc__
+        if name != '_':
+            if doc:
+                doc = name + '\n\n' + doc
+            else:
+                doc = name
+
+        for i in range(1, tries + 1):
+            txn = self.begin()
+            if doc:
+                txn.note(doc)
+
+            try:
+                result = func()
+                txn.commit()
+            except Exception as v:
+                if i == tries:
+                    raise # that was our last chance
+                retry = self._retryable(v.__class__, v)
+                txn.abort()
+                if not retry:
+                    raise
+            else:
+                return result
+
 
 class ThreadTransactionManager(TransactionManager, threading.local):
     """Thread-aware transaction manager.

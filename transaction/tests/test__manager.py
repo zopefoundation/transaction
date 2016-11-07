@@ -319,6 +319,121 @@ class TransactionManagerTests(unittest.TestCase):
             self.assertTrue(attempt.manager is tm)
         self.assertTrue(found[-1] is tm)
 
+    def test_run(self):
+        import transaction.interfaces
+        class Retry(transaction.interfaces.TransientError):
+            pass
+
+        tm = self._makeOne()
+        i = [0, None]
+
+        @tm.run()
+        def meaning():
+            "Nice doc"
+            i[0] += 1
+            i[1] = tm.get()
+            if i[0] < 3:
+                raise Retry
+            return 42
+
+        self.assertEqual(i[0], 3)
+        self.assertEqual(meaning, 42)
+        self.assertEqual(i[1].description, "meaning\n\nNice doc")
+
+    def test_run_no_name_explicit_tries(self):
+        import transaction.interfaces
+        class Retry(transaction.interfaces.TransientError):
+            pass
+
+        tm = self._makeOne()
+        i = [0, None]
+
+        @tm.run(4)
+        def _():
+            "Nice doc"
+            i[0] += 1
+            i[1] = tm.get()
+            if i[0] < 4:
+                raise Retry
+
+        self.assertEqual(i[0], 4)
+        self.assertEqual(i[1].description, "Nice doc")
+
+    def test_run_pos_tries(self):
+        tm = self._makeOne()
+
+        with self.assertRaises(ValueError):
+            tm.run(0)(lambda : None)
+        with self.assertRaises(ValueError):
+            @tm.run(-1)
+            def _():
+                pass
+
+    def test_run_stop_on_success(self):
+        import transaction.interfaces
+        class Retry(transaction.interfaces.TransientError):
+            pass
+
+        tm = self._makeOne()
+        i = [0, None]
+
+        @tm.run()
+        def meaning():
+            i[0] += 1
+            i[1] = tm.get()
+            return 43
+
+        self.assertEqual(i[0], 1)
+        self.assertEqual(meaning, 43)
+        self.assertEqual(i[1].description, "meaning")
+
+    def test_run_retries_but_gives_up(self):
+        import transaction.interfaces
+        class Retry(transaction.interfaces.TransientError):
+            pass
+
+        tm = self._makeOne()
+        i = [0]
+
+        with self.assertRaises(Retry):
+            @tm.run()
+            def _():
+                i[0] += 1
+                raise Retry
+
+        self.assertEqual(i[0], 3)
+
+    def test_run_propigates_errors(self):
+        tm = self._makeOne()
+        with self.assertRaises(ValueError):
+            @tm.run
+            def _():
+                raise ValueError
+
+    def test_run_defer_to_dm(self):
+        import transaction.tests.savepointsample
+
+        class DM(transaction.tests.savepointsample.SampleSavepointDataManager):
+            def should_retry(self, e):
+                if 'should retry' in str(e):
+                    return True
+
+        ntry = [0]
+        dm = transaction.tests.savepointsample.SampleSavepointDataManager()
+        dm2 = DM()
+        with transaction.manager:
+            dm2['ntry'] = 0
+
+        @transaction.manager.run
+        def _():
+            ntry[0] += 1
+            dm['ntry'] = ntry[0]
+            dm2['ntry'] = ntry[0]
+            if ntry[0] % 3:
+                raise ValueError('we really should retry this')
+
+        self.assertEqual(ntry[0], 3)
+
     def test__retryable_w_transient_error(self):
         from transaction.interfaces import TransientError
         tm = self._makeOne()
