@@ -79,25 +79,26 @@ The first helper runs a function as a transaction::
 Of course you can run this as a decorator::
 
     @transaction.manager.run
-    def do_somthing():
+    def _():
         "Do something"
         ... some something ...
 
 Some people find this easier to read, even though the result isn't a
 decorated function, but rather the result of calling it in a
-transaction.
+transaction.  The function name, ``_`` is used here to emphasize that
+the fuction is essentially being used as an anonymous function.
 
 The run method returns the successful result of calling the function.
 
-The function name and docstring, if any, are added to the transaction
-description.
+The function name (if it isn't ``'_'``) and docstring, if any, are
+added to the transaction description.
 
 You can pass an integer number of times to try to the ``run`` method::
 
     transaction.manager.run(do_somthing, 9)
 
     @transaction.manager.run(9)
-    def do_somthing():
+    def _():
         "Do something"
         ... some something ...
 
