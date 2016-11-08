@@ -1,7 +1,10 @@
 Changes
 =======
 
-- Added a transaction-manager ``run`` for running a function as a
+1.7.0 (2016-11-08)
+------------------
+
+- Added a transaction-manager ``run`` method for running a function as a
   transaction, retrying as necessary on transient errors.
 
 - Fixed the transaction manager ``attempts`` method. It didn't stop
