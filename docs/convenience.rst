@@ -76,19 +76,18 @@ The first helper runs a function as a transaction::
 
     transaction.manager.run(do_somthing)
 
-Of course you can run this as a decorator::
+You can also use this as a decorator, which executes the decorated
+function immediately [#decorator-executes]_::
 
     @transaction.manager.run
     def _():
         "Do something"
         ... some something ...
 
-Some people find this easier to read, even though the result isn't a
-decorated function, but rather the result of calling it in a
-transaction.  The function name, ``_`` is used here to emphasize that
-the fuction is essentially being used as an anonymous function.
-
-The run method returns the successful result of calling the function.
+The transaction manager ``run`` method will run the function and
+return the results. If the function raises a ``TransientError``, the
+function will be retried a configurable number of times, 3 by
+default. Any other exceptions will be raised.
 
 The function name (if it isn't ``'_'``) and docstring, if any, are
 added to the transaction description.
@@ -103,7 +102,6 @@ You can pass an integer number of times to try to the ``run`` method::
         ... some something ...
 
 The default number of times to try is 3.
-
 
 Retrying code blocks using a attempt iterator
 _____________________________________________
@@ -122,3 +120,9 @@ times, but you can pass a number of attempts::
   for attempt in transaction.manager.attempts(9):
       with attempt as t:
           ... some something ...
+
+.. [#decorator-executes] Some people find this easier to read, even
+   though the result isn't a decorated function, but rather the result of
+   calling it in a transaction.  The function name ``_`` is used here to
+   emphasize that the function is essentially being used as an anonymous
+   function.
