@@ -146,7 +146,7 @@ class TransactionManager(object):
             if number:
                 attempt = Attempt(self)
                 yield attempt
-                if attempt.sucess:
+                if attempt.success:
                     break
             else:
                 yield self
@@ -170,7 +170,7 @@ class ThreadTransactionManager(TransactionManager, threading.local):
 
 class Attempt(object):
 
-    sucess = False
+    success = False
 
     def __init__(self, manager):
         self.manager = manager
@@ -192,6 +192,6 @@ class Attempt(object):
             except:
                 return self._retry_or_raise(*sys.exc_info())
             else:
-                self.sucess = True
+                self.success = True
         else:
             return self._retry_or_raise(t, v, tb)
