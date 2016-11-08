@@ -4,6 +4,9 @@ Changes
 Unreleased
 ----------
 
+- Fixed the transaction manager ``attempts`` method. It didn't stop
+  repeating when there wasn't an error.
+
 - Corrected ITransaction by removing beforeCommitHook (which is no longer
   implemented) and removing 'self' from two methods.
 

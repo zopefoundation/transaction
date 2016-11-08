@@ -236,6 +236,16 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertEqual(len(found), 1)
         self.assertTrue(found[0] is tm)
 
+    def test_attempts_stop_on_success(self):
+        tm = self._makeOne()
+
+        i = 0
+        for attempt in tm.attempts():
+            with attempt:
+                i += 1
+
+        self.assertEqual(i, 1)
+
     def test_attempts_w_default_count(self):
         from transaction._manager import Attempt
         tm = self._makeOne()

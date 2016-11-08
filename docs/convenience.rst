@@ -125,7 +125,7 @@ Of course, other errors are propagated directly:
     >>> for attempt in transaction.manager.attempts():
     ...     with attempt:
     ...         ntry += 1
-    ...         if ntry == 3:
+    ...         if ntry % 3:
     ...             raise ValueError(ntry)
     Traceback (most recent call last):
     ...
@@ -135,6 +135,7 @@ We can use the default transaction manager:
 
 .. doctest::
 
+    >>> ntry = 0
     >>> for attempt in transaction.attempts():
     ...     with attempt as t:
     ...         t.note('test')
@@ -143,9 +144,9 @@ We can use the default transaction manager:
     ...         dm['ntry'] = ntry
     ...         if ntry % 3:
     ...             raise Retry(ntry)
-    3 3
-    3 4
-    3 5
+    3 0
+    3 1
+    3 2
 
 Sometimes, a data manager doesn't raise exceptions directly, but
 wraps other other systems that raise exceptions outside of it's
@@ -172,9 +173,9 @@ attempted again.
     ...         dm2['ntry'] = ntry
     ...         if ntry % 3:
     ...             raise ValueError('we really should retry this')
-    6 0
-    6 1
-    6 2
+    3 0
+    3 1
+    3 2
 
     >>> dm2['ntry']
     3
