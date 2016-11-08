@@ -22,6 +22,10 @@ Interfaces
    :members:
    :member-order: bysource
 
+.. autointerface:: IRetryDataManager
+   :members:
+   :member-order: bysource
+
 .. autointerface:: IDataManagerSavepoint
    :members:
    :member-order: bysource

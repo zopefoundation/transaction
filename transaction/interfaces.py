@@ -428,6 +428,17 @@ class ISavepointDataManager(IDataManager):
         """Return a data-manager savepoint (IDataManagerSavepoint).
         """
 
+class IRetryDataManager(IDataManager):
+
+    def should_retry(exception):
+        """Return whether a given exception instance should be retried.
+
+        A data manager can provide this method to indicate that a a
+        transaction that raised the given error should be retried.
+        This method may be called by an ITransactionManager when
+        considering whether to retry a failed transaction.
+        """
+
 class IDataManagerSavepoint(Interface):
     """Savepoint for data-manager changes for use in transaction savepoints.
 
