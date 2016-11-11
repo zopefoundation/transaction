@@ -9,7 +9,7 @@ python:
     - pypy3
 install:
     - pip install zc.buildout
-    - buildlout
+    - buildout
 script:
     - bin/test
     - cd doc; make SPHINXBUILD=../bin/sphinx-build doctest
