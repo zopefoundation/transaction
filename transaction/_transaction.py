@@ -76,10 +76,10 @@ class Transaction(object):
     # savepoint to its index (see above).
     _savepoint2index = None
 
-    # Meta data.  ._extension is also metadata, but is initialized to an
+    # Meta data. extended_info is also metadata, but is initialized to an
     # emtpy dict in __init__.
-    user = ""
-    description = ""
+    user = u""
+    description = u""
 
     def __init__(self, synchronizers=None, manager=None):
         self.status = Status.ACTIVE
@@ -100,9 +100,9 @@ class Transaction(object):
         # manager as a key, because we can't guess whether the actual
         # resource managers will be safe to use as dict keys.
 
-        # The user, description, and _extension attributes are accessed
+        # The user, description, and extended_info attributes are accessed
         # directly by storages, leading underscore notwithstanding.
-        self._extension = {}
+        self.extended_info = {}
 
         self.log = _makeLogger()
         self.log.debug("new transaction")
@@ -117,6 +117,10 @@ class Transaction(object):
 
         # List of (hook, args, kws) tuples added by addAfterCommitHook().
         self._after_commit = []
+
+    @property
+    def _extension(self):
+        return self.extended_info
 
     def isDoomed(self):
         """ See ITransaction.
@@ -504,19 +508,19 @@ class Transaction(object):
         """
         text = text.strip()
         if self.description:
-            self.description += "\n" + text
+            self.description += u"\n" + text
         else:
             self.description = text
 
     def setUser(self, user_name, path="/"):
         """ See ITransaction.
         """
-        self.user = "%s %s" % (path, user_name)
+        self.user = u"%s %s" % (path, user_name)
 
     def setExtendedInfo(self, name, value):
         """ See ITransaction.
         """
-        self._extension[name] = value
+        self.extended_info[name + u''] = value
 
 
 # TODO: We need a better name for the adapters.

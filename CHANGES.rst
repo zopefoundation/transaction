@@ -1,6 +1,17 @@
 Changes
 =======
 
+- The transaction ``user`` and ``description`` attributes are now
+  defined to be text (unicode) as apposed to Python the ``str`` type.
+
+- Added the ``extended_info`` transaction attribute which contains
+  transaction meta data.  (The ``_extension`` attribute is retained as
+  an alias for backward compatibility.)
+
+  The transaction interface, ``ITransaction``, now requires
+  ``extended_info`` keys to be text (unicode) and values to be
+  JSON-serializable.
+
 1.7.0 (2016-11-08)
 ------------------
 
