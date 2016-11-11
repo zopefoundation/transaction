@@ -69,14 +69,15 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(isinstance(txn._synchronizers, WeakSet))
         self.assertEqual(len(txn._synchronizers), 0)
         self.assertTrue(txn._manager is None)
-        self.assertEqual(txn.user, "")
-        self.assertEqual(txn.description, "")
+        self.assertEqual(txn.user, u"")
+        self.assertEqual(txn.description, u"")
         self.assertTrue(txn._savepoint2index is None)
         self.assertEqual(txn._savepoint_index, 0)
         self.assertEqual(txn._resources, [])
         self.assertEqual(txn._adapters, {})
         self.assertEqual(txn._voted, {})
-        self.assertEqual(txn._extension, {})
+        self.assertEqual(txn.extended_info, {})
+        self.assertTrue(txn._extension is txn.extended_info) # legacy
         self.assertTrue(txn.log is logger)
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'debug')
@@ -983,33 +984,45 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         try:
             txn.note('This is a note.')
-            self.assertEqual(txn.description, 'This is a note.')
+            self.assertEqual(txn.description, u'This is a note.')
             txn.note('Another.')
-            self.assertEqual(txn.description, 'This is a note.\nAnother.')
+            self.assertEqual(txn.description, u'This is a note.\nAnother.')
         finally:
             txn.abort()
+
+    def test_description_nonascii_bytes(self):
+        txn = self._makeOne()
+        with self.assertRaises((UnicodeDecodeError, TypeError)):
+            txn.description = b'\xc2\x80'
 
     def test_setUser_default_path(self):
         txn = self._makeOne()
         txn.setUser('phreddy')
-        self.assertEqual(txn.user, '/ phreddy')
+        self.assertEqual(txn.user, u'/ phreddy')
 
     def test_setUser_explicit_path(self):
         txn = self._makeOne()
         txn.setUser('phreddy', '/bedrock')
-        self.assertEqual(txn.user, '/bedrock phreddy')
+        self.assertEqual(txn.user, u'/bedrock phreddy')
+
+    def test_user_nonascii_bytes(self):
+        txn = self._makeOne()
+        with self.assertRaises((UnicodeDecodeError, TypeError)):
+            txn.user = b'\xc2\x80'
 
     def test_setExtendedInfo_single(self):
         txn = self._makeOne()
         txn.setExtendedInfo('frob', 'qux')
-        self.assertEqual(txn._extension, {'frob': 'qux'})
+        self.assertEqual(txn.extended_info, {u'frob': 'qux'})
+        self.assertTrue(txn._extension is txn._extension) # legacy
 
     def test_setExtendedInfo_multiple(self):
         txn = self._makeOne()
         txn.setExtendedInfo('frob', 'qux')
         txn.setExtendedInfo('baz', 'spam')
         txn.setExtendedInfo('frob', 'quxxxx')
-        self.assertEqual(txn._extension, {'frob': 'quxxxx', 'baz': 'spam'})
+        self.assertEqual(txn._extension, {u'frob': 'quxxxx', u'baz': 'spam'})
+        self.assertTrue(txn._extension is txn._extension) # legacy
 
     def test_data(self):
         txn = self._makeOne()

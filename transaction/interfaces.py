@@ -105,7 +105,7 @@ class ITransaction(Interface):
         """A user name associated with the transaction.
 
         The format of the user name is defined by the application.  The value
-        is of Python type str.  Storages record the user value, as meta-data,
+        is text (unicode).  Storages record the user value, as meta-data,
         when a transaction commits.
 
         A storage may impose a limit on the size of the value; behavior is
@@ -116,13 +116,20 @@ class ITransaction(Interface):
     description = Attribute(
         """A textual description of the transaction.
 
-        The value is of Python type str.  Method note() is the intended
+        The value is text (unicode).  Method note() is the intended
         way to set the value.  Storages record the description, as meta-data,
         when a transaction commits.
 
         A storage may impose a limit on the size of the description; behavior
         is undefined if such a limit is exceeded (for example, a storage may
         raise an exception, or truncate the value).
+        """)
+
+    extended_info = Attribute(
+        """A dictionary containing application-defined metadata.
+
+        Keys must be text (unicode).  Values must be simple values
+        serializable with json or pickle (not instances).
         """)
 
     def commit():
@@ -167,7 +174,7 @@ class ITransaction(Interface):
         """
 
     def note(text):
-        """Add text to the transaction description.
+        """Add text (unicode) to the transaction description.
 
         This modifies the `.description` attribute; see its docs for more
         detail.  First surrounding whitespace is stripped from `text`.  If
@@ -176,21 +183,17 @@ class ITransaction(Interface):
         appended to `.description`.
         """
 
-    def setUser(user_name, path="/"):
-        """Set the user name.
-
-        path should be provided if needed to further qualify the
-        identified user.  This is a convenience method used by Zope.
-        It sets the .user attribute to str(path) + " " + str(user_name).
-        This sets the `.user` attribute; see its docs for more detail.
-        """
-
     def setExtendedInfo(name, value):
         """Add extension data to the transaction.
 
-        name is the name of the extension property to set, of Python type
-        str; value must be picklable.  Multiple calls may be made to set
-        multiple extension properties, provided the names are distinct.
+        name
+          is the text (unicode) name of the extension property to set
+
+        value
+          must be picklable and json serializable (not an instance).
+
+        Multiple calls may be made to set multiple extension
+        properties, provided the names are distinct.
 
         Storages record the extension data, as meta-data, when a transaction
         commits.
