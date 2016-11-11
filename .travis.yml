@@ -9,7 +9,12 @@ python:
     - pypy3
 install:
     - pip install zc.buildout
-    - buildout
+    - if [[ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]];
+      then
+        buildout;
+      else
+        buildout parts=test;
+      fi
 script:
     - bin/test
     - if [[ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]];
