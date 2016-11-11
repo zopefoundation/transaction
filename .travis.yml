@@ -8,8 +8,10 @@ python:
     - pypy
     - pypy3
 install:
-    - pip install .
+    - pip install zc.buildout
+    - buildlout
 script:
-    - python setup.py -q test -q
+    - bin/test
+    - cd doc; make SPHINXBUILD=../bin/sphinx-build doctest
 notifications:
     email: false
