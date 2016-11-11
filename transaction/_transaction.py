@@ -78,8 +78,8 @@ class Transaction(object):
 
     # Meta data. extended_info is also metadata, but is initialized to an
     # emtpy dict in __init__.
-    user = u""
-    description = u""
+    _user = u""
+    _description = u""
 
     def __init__(self, synchronizers=None, manager=None):
         self.status = Status.ACTIVE
@@ -120,7 +120,25 @@ class Transaction(object):
 
     @property
     def _extension(self):
+        # for backward compatibility, since most clients used this
+        # absent any formal API.
         return self.extended_info
+
+    @property
+    def user(self):
+        return self._user
+
+    @user.setter
+    def user(self, v):
+        self._user = v + u'' # + u'' to make sure it's unicode
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, v):
+        self._description = v + u'' # + u'' to make sure it's unicode
 
     def isDoomed(self):
         """ See ITransaction.
@@ -520,7 +538,7 @@ class Transaction(object):
     def setExtendedInfo(self, name, value):
         """ See ITransaction.
         """
-        self.extended_info[name + u''] = value
+        self.extended_info[name + u''] = value # + u'' to make sure it's unicode
 
 
 # TODO: We need a better name for the adapters.

@@ -990,6 +990,11 @@ class TransactionTests(unittest.TestCase):
         finally:
             txn.abort()
 
+    def test_description_nonascii_bytes(self):
+        txn = self._makeOne()
+        with self.assertRaises((UnicodeDecodeError, TypeError)):
+            txn.description = b'\xc2\x80'
+
     def test_setUser_default_path(self):
         txn = self._makeOne()
         txn.setUser('phreddy')
@@ -999,6 +1004,11 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn.setUser('phreddy', '/bedrock')
         self.assertEqual(txn.user, u'/bedrock phreddy')
+
+    def test_user_nonascii_bytes(self):
+        txn = self._makeOne()
+        with self.assertRaises((UnicodeDecodeError, TypeError)):
+            txn.user = b'\xc2\x80'
 
     def test_setExtendedInfo_single(self):
         txn = self._makeOne()
