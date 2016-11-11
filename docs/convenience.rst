@@ -29,7 +29,7 @@ We can use it with a manager:
     3
 
     >>> dm.last_note == u'test 3'
-    Truehahaha
+    True
 
     >>> with transaction.manager: #doctest ELLIPSIS
     ...     dm['z'] = 4
