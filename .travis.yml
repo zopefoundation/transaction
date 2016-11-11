@@ -12,6 +12,6 @@ install:
     - buildout
 script:
     - bin/test
-    - cd doc; make SPHINXBUILD=../bin/sphinx-build doctest
+    - cd docs; make SPHINXBUILD=../bin/sphinx-build doctest
 notifications:
     email: false
