@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.0.0 (unreleased)
+2.0.0 (2016-11-11)
 ------------------
 
 - The transaction ``user`` and ``description`` attributes are now
