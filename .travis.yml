@@ -12,6 +12,10 @@ install:
     - buildout
 script:
     - bin/test
-    - cd docs; make SPHINXBUILD=../bin/sphinx-build doctest
+    - if [[ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]]
+      then
+        cd docs
+        make SPHINXBUILD=../bin/sphinx-build doctest
+      fi
 notifications:
     email: false
