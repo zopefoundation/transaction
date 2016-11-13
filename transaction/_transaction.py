@@ -124,6 +124,10 @@ class Transaction(object):
         # absent any formal API.
         return self.extended_info
 
+    @_extension.setter
+    def _extension(self, v):
+        self.extended_info = v
+
     @property
     def user(self):
         return self._user

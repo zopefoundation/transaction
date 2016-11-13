@@ -1,6 +1,9 @@
 Changes
 =======
 
+- Fixed: Some legacy applications expect the transaction _extension
+  attribute to be settable and it wasn't.
+
 2.0.1 (2016-11-11)
 ------------------
 

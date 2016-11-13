@@ -1024,6 +1024,13 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._extension, {u'frob': 'quxxxx', u'baz': 'spam'})
         self.assertTrue(txn._extension is txn._extension) # legacy
 
+    def test__extension_settable(self):
+        # Because ZEO sets it. I'll fix ZEO, but maybe something else will break
+        txn = self._makeOne()
+        txn._extension = dict(baz='spam')
+        txn.setExtendedInfo('frob', 'qux')
+        self.assertEqual(txn.extended_info, {u'frob': 'qux', 'baz': 'spam'})
+
     def test_data(self):
         txn = self._makeOne()
 
