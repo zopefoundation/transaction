@@ -8,8 +8,22 @@ python:
     - pypy
     - pypy3
 install:
-    - pip install .
+    - pip install zc.buildout
+    - if [[ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]];
+      then
+        buildout;
+      else
+        buildout parts=test;
+      fi
 script:
-    - python setup.py -q test -q
+    - bin/test
+    - if [[ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]];
+      then
+        cd docs;
+        make SPHINXBUILD=../bin/sphinx-build doctest;
+      fi
 notifications:
     email: false
+cache:
+  directories:
+    - eggs
