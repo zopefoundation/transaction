@@ -136,7 +136,7 @@ class Transaction(object):
     @user.setter
     def user(self, v):
         if not isinstance(v, text_type):
-            raise TypeError("User must be text (unicodd)")
+            raise TypeError("User must be text (unicode)")
         self._user = v
 
     @property
@@ -146,7 +146,7 @@ class Transaction(object):
     @description.setter
     def description(self, v):
         if not isinstance(v, text_type):
-            raise TypeError("Description must be text (unicodd)")
+            raise TypeError("Description must be text (unicode)")
         self._description = v
 
     def isDoomed(self):
@@ -534,7 +534,7 @@ class Transaction(object):
         """ See ITransaction.
         """
         if not isinstance(text, text_type):
-            raise TypeError("Note must be text (unicodd)")
+            raise TypeError("Note must be text (unicode)")
 
         text = text.strip()
         if self.description:
@@ -546,9 +546,9 @@ class Transaction(object):
         """ See ITransaction.
         """
         if not isinstance(user_name, text_type):
-            raise TypeError("User name must be text (unicodd)")
+            raise TypeError("User name must be text (unicode)")
         if not isinstance(path, text_type):
-            raise TypeError("User name must be text (unicodd)")
+            raise TypeError("User name must be text (unicode)")
         self.user = u"%s %s" % (path, user_name)
 
     def setExtendedInfo(self, name, value):
