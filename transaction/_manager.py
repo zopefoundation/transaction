@@ -25,6 +25,7 @@ from transaction.interfaces import ITransactionManager
 from transaction.interfaces import TransientError
 from transaction.weakset import WeakSet
 from transaction._compat import reraise
+from transaction._compat import text_type
 from transaction._transaction import Transaction
 
 
@@ -174,13 +175,15 @@ class TransactionManager(object):
         doc = func.__doc__
         if name != '_':
             if doc:
-                doc = name + '\n\n' + doc
+                doc = name + u'\n\n' + doc
             else:
                 doc = name
 
         for i in range(1, tries + 1):
             txn = self.begin()
             if doc:
+                if not isinstance(doc, text_type):
+                    doc = doc.decode('ascii')
                 txn.note(doc)
 
             try:

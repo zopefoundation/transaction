@@ -27,6 +27,7 @@ from transaction._compat import get_thread_ident
 from transaction._compat import native_
 from transaction._compat import bytes_
 from transaction._compat import StringIO
+from transaction._compat import text_type
 
 _marker = object()
 
@@ -134,7 +135,9 @@ class Transaction(object):
 
     @user.setter
     def user(self, v):
-        self._user = v + u'' # + u'' to make sure it's unicode
+        if not isinstance(v, text_type):
+            raise TypeError("User must be text (unicodd)")
+        self._user = v
 
     @property
     def description(self):
@@ -142,7 +145,9 @@ class Transaction(object):
 
     @description.setter
     def description(self, v):
-        self._description = v + u'' # + u'' to make sure it's unicode
+        if not isinstance(v, text_type):
+            raise TypeError("Description must be text (unicodd)")
+        self._description = v
 
     def isDoomed(self):
         """ See ITransaction.
@@ -528,15 +533,22 @@ class Transaction(object):
     def note(self, text):
         """ See ITransaction.
         """
+        if not isinstance(text, text_type):
+            raise TypeError("Note must be text (unicodd)")
+
         text = text.strip()
         if self.description:
             self.description += u"\n" + text
         else:
             self.description = text
 
-    def setUser(self, user_name, path="/"):
+    def setUser(self, user_name, path=u"/"):
         """ See ITransaction.
         """
+        if not isinstance(user_name, text_type):
+            raise TypeError("User name must be text (unicodd)")
+        if not isinstance(path, text_type):
+            raise TypeError("User name must be text (unicodd)")
         self.user = u"%s %s" % (path, user_name)
 
     def setExtendedInfo(self, name, value):
