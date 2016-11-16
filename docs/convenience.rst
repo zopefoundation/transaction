@@ -23,7 +23,7 @@ We can use it with a manager:
 
     >>> with transaction.manager as t:
     ...     dm['z'] = 3
-    ...     t.note('test 3')
+    ...     t.note(u'test 3')
 
     >>> dm['z']
     3
