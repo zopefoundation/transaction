@@ -175,15 +175,16 @@ class TransactionManager(object):
         doc = func.__doc__
         if name != '_':
             if doc:
-                doc = name + u'\n\n' + doc
+                doc = name + '\n\n' + doc
             else:
                 doc = name
+
+        if doc and not isinstance(doc, text_type):
+            doc = doc.decode('utf-8')
 
         for i in range(1, tries + 1):
             txn = self.begin()
             if doc:
-                if not isinstance(doc, text_type):
-                    doc = doc.decode('ascii')
                 txn.note(doc)
 
             try:

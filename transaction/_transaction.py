@@ -548,7 +548,7 @@ class Transaction(object):
         if not isinstance(user_name, text_type):
             raise TypeError("User name must be text (unicode)")
         if not isinstance(path, text_type):
-            raise TypeError("User name must be text (unicode)")
+            raise TypeError("Path must be text (unicode)")
         self.user = u"%s %s" % (path, user_name)
 
     def setExtendedInfo(self, name, value):

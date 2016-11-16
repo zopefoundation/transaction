@@ -992,7 +992,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_description_bytes(self):
         txn = self._makeOne()
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
+        with self.assertRaises(TypeError):
             txn.description = b'haha'
 
     def test_setUser_default_path(self):
@@ -1007,13 +1007,13 @@ class TransactionTests(unittest.TestCase):
 
     def test_user_bytes(self):
         txn = self._makeOne()
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
+        with self.assertRaises(TypeError):
             txn.user = b'phreddy'
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
+        with self.assertRaises(TypeError):
             txn.setUser(b'phreddy', u'/bedrock')
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
+        with self.assertRaises(TypeError):
             txn.setUser(u'phreddy', b'/bedrock')
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
+        with self.assertRaises(TypeError):
             txn.setUser(b'phreddy')
 
     def test_setExtendedInfo_single(self):
