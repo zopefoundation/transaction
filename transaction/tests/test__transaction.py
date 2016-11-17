@@ -990,6 +990,11 @@ class TransactionTests(unittest.TestCase):
         finally:
             txn.abort()
 
+    def test_note_bytes(self):
+        txn = self._makeOne()
+        with self.assertRaises(TypeError):
+            txn.note(b'haha')
+
     def test_description_bytes(self):
         txn = self._makeOne()
         with self.assertRaises(TypeError):
