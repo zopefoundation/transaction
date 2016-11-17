@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.0.3 (unreleased)
+2.0.3 (2016-11-17)
 ------------------
 
 - The user and description fields must now be set with text (unicode)
