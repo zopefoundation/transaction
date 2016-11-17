@@ -9,6 +9,9 @@ Changes
   ASCII.  It was decided that this would lead to bugs that were hard
   to test for.
 
+  Also, the transaction meta-data field, ``extended_info`` has been
+  renamed to ``extension``.
+
 2.0.2 (2016-11-13)
 ------------------
 

@@ -101,9 +101,9 @@ class Transaction(object):
         # manager as a key, because we can't guess whether the actual
         # resource managers will be safe to use as dict keys.
 
-        # The user, description, and extended_info attributes are accessed
+        # The user, description, and extension attributes are accessed
         # directly by storages, leading underscore notwithstanding.
-        self.extended_info = {}
+        self.extension = {}
 
         self.log = _makeLogger()
         self.log.debug("new transaction")
@@ -123,11 +123,11 @@ class Transaction(object):
     def _extension(self):
         # for backward compatibility, since most clients used this
         # absent any formal API.
-        return self.extended_info
+        return self.extension
 
     @_extension.setter
     def _extension(self, v):
-        self.extended_info = v
+        self.extension = v
 
     @property
     def user(self):
@@ -554,7 +554,7 @@ class Transaction(object):
     def setExtendedInfo(self, name, value):
         """ See ITransaction.
         """
-        self.extended_info[name + u''] = value # + u'' to make sure it's unicode
+        self.extension[name] = value
 
 
 # TODO: We need a better name for the adapters.

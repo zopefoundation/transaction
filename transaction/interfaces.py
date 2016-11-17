@@ -125,12 +125,8 @@ class ITransaction(Interface):
         raise an exception, or truncate the value).
         """)
 
-    extended_info = Attribute(
-        """A dictionary containing application-defined metadata.
-
-        Keys must be text (unicode).  Values must be simple values
-        serializable with json or pickle (not instances).
-        """)
+    extension = Attribute(
+        "A dictionary containing application-defined metadata.")
 
     def commit():
         """Finalize the transaction.
