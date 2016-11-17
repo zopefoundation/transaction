@@ -76,8 +76,8 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._resources, [])
         self.assertEqual(txn._adapters, {})
         self.assertEqual(txn._voted, {})
-        self.assertEqual(txn.extended_info, {})
-        self.assertTrue(txn._extension is txn.extended_info) # legacy
+        self.assertEqual(txn.extension, {})
+        self.assertTrue(txn._extension is txn.extension) # legacy
         self.assertTrue(txn.log is logger)
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'debug')
@@ -1019,7 +1019,7 @@ class TransactionTests(unittest.TestCase):
     def test_setExtendedInfo_single(self):
         txn = self._makeOne()
         txn.setExtendedInfo('frob', 'qux')
-        self.assertEqual(txn.extended_info, {u'frob': 'qux'})
+        self.assertEqual(txn.extension, {u'frob': 'qux'})
         self.assertTrue(txn._extension is txn._extension) # legacy
 
     def test_setExtendedInfo_multiple(self):
@@ -1035,7 +1035,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn._extension = dict(baz='spam')
         txn.setExtendedInfo('frob', 'qux')
-        self.assertEqual(txn.extended_info, {u'frob': 'qux', 'baz': 'spam'})
+        self.assertEqual(txn.extension, {u'frob': 'qux', 'baz': 'spam'})
 
     def test_data(self):
         txn = self._makeOne()
