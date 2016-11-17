@@ -983,32 +983,38 @@ class TransactionTests(unittest.TestCase):
     def test_note(self):
         txn = self._makeOne()
         try:
-            txn.note('This is a note.')
+            txn.note(u'This is a note.')
             self.assertEqual(txn.description, u'This is a note.')
-            txn.note('Another.')
+            txn.note(u'Another.')
             self.assertEqual(txn.description, u'This is a note.\nAnother.')
         finally:
             txn.abort()
 
-    def test_description_nonascii_bytes(self):
+    def test_description_bytes(self):
         txn = self._makeOne()
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
-            txn.description = b'\xc2\x80'
+        with self.assertRaises(TypeError):
+            txn.description = b'haha'
 
     def test_setUser_default_path(self):
         txn = self._makeOne()
-        txn.setUser('phreddy')
+        txn.setUser(u'phreddy')
         self.assertEqual(txn.user, u'/ phreddy')
 
     def test_setUser_explicit_path(self):
         txn = self._makeOne()
-        txn.setUser('phreddy', '/bedrock')
+        txn.setUser(u'phreddy', u'/bedrock')
         self.assertEqual(txn.user, u'/bedrock phreddy')
 
-    def test_user_nonascii_bytes(self):
+    def test_user_bytes(self):
         txn = self._makeOne()
-        with self.assertRaises((UnicodeDecodeError, TypeError)):
-            txn.user = b'\xc2\x80'
+        with self.assertRaises(TypeError):
+            txn.user = b'phreddy'
+        with self.assertRaises(TypeError):
+            txn.setUser(b'phreddy', u'/bedrock')
+        with self.assertRaises(TypeError):
+            txn.setUser(u'phreddy', b'/bedrock')
+        with self.assertRaises(TypeError):
+            txn.setUser(b'phreddy')
 
     def test_setExtendedInfo_single(self):
         txn = self._makeOne()

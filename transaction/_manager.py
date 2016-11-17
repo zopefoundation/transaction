@@ -25,6 +25,7 @@ from transaction.interfaces import ITransactionManager
 from transaction.interfaces import TransientError
 from transaction.weakset import WeakSet
 from transaction._compat import reraise
+from transaction._compat import text_type
 from transaction._transaction import Transaction
 
 
@@ -177,6 +178,9 @@ class TransactionManager(object):
                 doc = name + '\n\n' + doc
             else:
                 doc = name
+
+        if doc and not isinstance(doc, text_type):
+            doc = doc.decode('utf-8')
 
         for i in range(1, tries + 1):
             txn = self.begin()

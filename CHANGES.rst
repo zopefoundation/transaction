@@ -1,6 +1,14 @@
 Changes
 =======
 
+2.0.3 (unreleased)
+------------------
+
+- The user and description fields must now be set with text (unicode)
+  data.  Previously, if bytes were provided, they'd be decoded as
+  ASCII.  It was decided that this would lead to bugs that were hard
+  to test for.
+
 2.0.2 (2016-11-13)
 ------------------
 
