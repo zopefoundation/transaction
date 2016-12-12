@@ -167,6 +167,7 @@ class TransactionManager(object):
             should_retry = getattr(dm, 'should_retry', None)
             if (should_retry is not None) and should_retry(error):
                 return True
+        return False
 
     run_no_func_types = int, type(None)
     def run(self, func=None, tries=3):

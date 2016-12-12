@@ -127,7 +127,7 @@ class ITransactionManager(Interface):
     def registeredSynchs():
         """Determine if any ISynchronizers are registered.
 
-        Return true is any are registered, and return False otherwise.
+        Return true if any are registered, and return False otherwise.
 
         This exists to support test cleanup/initialization
         """
@@ -331,6 +331,15 @@ class ITransaction(Interface):
         """Retrieve data held on behalf of an object.
 
         See set_data.
+        """
+
+    def isRetryableError(error):
+        """Determine if the error is retryable.
+
+        Return true if any joined IRetryDataManager considers the error
+        transient. Such errors may occur due to concurrency issues in the
+        underlying storage engine.
+
         """
 
 class ITransactionDeprecated(Interface):

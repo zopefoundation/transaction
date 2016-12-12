@@ -550,6 +550,9 @@ class Transaction(object):
         """
         self.extension[name] = value
 
+    def isRetryableError(self, error):
+        return self._manager._retryable(type(error), error)
+
 
 # TODO: We need a better name for the adapters.
 
