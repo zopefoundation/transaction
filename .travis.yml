@@ -9,19 +9,10 @@ python:
     - pypy3
 install:
     - pip install zc.buildout
-    - if [[ "$TRAVIS_PYTHON_VERSION" != "0" ]];
-      then
-        buildout;
-      else
-        buildout parts=test;
-      fi
+    - buildout
 script:
     - bin/test
-    - if [[ "$TRAVIS_PYTHON_VERSION" != "0" ]];
-      then
-        cd docs;
-        make SPHINXBUILD=../bin/sphinx-build doctest;
-      fi
+    - cd docs; make SPHINXBUILD=../bin/sphinx-build doctest
 notifications:
     email: false
 cache:
