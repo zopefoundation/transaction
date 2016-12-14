@@ -17,7 +17,7 @@ install:
       fi
 script:
     - bin/test
-    - if [[ "$TRAVIS_PYTHON_VERSION" != "pypy3" ]];
+    - if [[ "$TRAVIS_PYTHON_VERSION" != "0" ]];
       then
         cd docs;
         make SPHINXBUILD=../bin/sphinx-build doctest;
