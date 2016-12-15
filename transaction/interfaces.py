@@ -22,12 +22,19 @@ class ITransactionManager(Interface):
     """
 
     def begin():
-        """Begin a new transaction.
+        """Explicitly begin a new transaction.
 
         If an existing transaction is in progress, it will be aborted.
 
-        The newTransaction() method of registered synchronizers is called,
+        The ``newTransaction`` method of registered synchronizers is called,
         passing the new transaction object.
+
+        Note that transactions may be started implicitly without
+        calling ``begin``. In that case, ``newTransaction`` isn't
+        called because the transaction manager doesn't know when to
+        call it.  The transaction is likely to have begin long before
+        the transaction manager is involved. (Conceivably 'commit' and
+        'abort' could call 'begin', but they don't.)
         """
 
     def get():
