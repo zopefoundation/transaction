@@ -182,7 +182,7 @@ class TransactionManager(object):
         if doc and not isinstance(doc, text_type):
             doc = doc.decode('utf-8')
 
-        for i in range(1, tries + 1):
+        for i in range(1, tries + 1):  # pragma: no branch
             txn = self.begin()
             if doc:
                 txn.note(doc)
