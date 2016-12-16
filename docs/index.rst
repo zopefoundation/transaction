@@ -97,6 +97,7 @@ Contents:
    hooks
    datamanager
    resourcemanager
+   integrations
    api
 
 
