@@ -33,8 +33,8 @@ class ITransactionManager(Interface):
         calling ``begin``. In that case, ``newTransaction`` isn't
         called because the transaction manager doesn't know when to
         call it.  The transaction is likely to have begun long before
-        the transaction manager is involved. (Conceivably 'commit' and
-        'abort' could call 'begin', but they don't.)
+        the transaction manager is involved. (Conceivably the ``commit`` and
+        ``abort`` methods could call ``begin``, but they don't.)
         """
 
     def get():
