@@ -57,7 +57,7 @@ overcome transient failures.  This typically looks something like::
            with transaction.manager:
                ... some something ...
         except SomeTransientException:
-           contine
+           continue
         else:
            break
 
