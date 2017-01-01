@@ -63,6 +63,9 @@ class TransactionManager(object):
         self._txn = None
         self._synchs = WeakSet()
 
+    def isActive(self):
+        return self._txn is not None
+
     def begin(self):
         """ See ITransactionManager.
         """

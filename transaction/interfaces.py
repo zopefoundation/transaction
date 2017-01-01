@@ -21,6 +21,10 @@ class ITransactionManager(Interface):
     Applications use transaction managers to establish transaction boundaries.
     """
 
+    def isActive():
+        """Return true if there is an active transaction.
+        """
+
     def begin():
         """Explicitly begin a new transaction.
 

@@ -36,6 +36,15 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(tm._txn is None)
         self.assertEqual(len(tm._synchs), 0)
 
+    def test_isActive_wo_existing_txn(self):
+        tm = self._makeOne()
+        self.assertFalse(tm.isActive())
+
+    def test_isActive_w_existing_txn(self):
+        tm = self._makeOne()
+        tm.begin()
+        self.assertTrue(tm.isActive())
+
     def test_begin_wo_existing_txn_wo_synchs(self):
         from transaction._transaction import Transaction
         tm = self._makeOne()
