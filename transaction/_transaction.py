@@ -27,7 +27,7 @@ from transaction._compat import get_thread_ident
 from transaction._compat import native_
 from transaction._compat import bytes_
 from transaction._compat import StringIO
-from transaction._compat import text_type
+from transaction._compat import binary_type
 
 _marker = object()
 
@@ -135,7 +135,7 @@ class Transaction(object):
 
     @user.setter
     def user(self, v):
-        if not isinstance(v, text_type):
+        if isinstance(v, binary_type):
             raise TypeError("User must be text (unicode)")
         self._user = v
 
@@ -145,7 +145,7 @@ class Transaction(object):
 
     @description.setter
     def description(self, v):
-        if not isinstance(v, text_type):
+        if isinstance(v, binary_type):
             raise TypeError("Description must be text (unicode)")
         self._description = v
 
@@ -533,7 +533,7 @@ class Transaction(object):
     def note(self, text):
         """ See ITransaction.
         """
-        if not isinstance(text, text_type):
+        if isinstance(text, binary_type):
             raise TypeError("Note must be text (unicode)")
 
         text = text.strip()
@@ -545,9 +545,9 @@ class Transaction(object):
     def setUser(self, user_name, path=u"/"):
         """ See ITransaction.
         """
-        if not isinstance(user_name, text_type):
+        if isinstance(user_name, binary_type):
             raise TypeError("User name must be text (unicode)")
-        if not isinstance(path, text_type):
+        if isinstance(path, binary_type):
             raise TypeError("Path must be text (unicode)")
         self.user = u"%s %s" % (path, user_name)
 
