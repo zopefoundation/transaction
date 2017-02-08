@@ -106,9 +106,9 @@ transaction managers provide an optional explicit mode.  Transaction
 managers have an ``explicit`` constructor keyword argument that, if
 True puts the transaction manager in explicit mode.  In explicit mode:
 
-- It is an error to call ``get()``, ``commit()`` or ``abort()``
-  without a preceding ``begin()`` call.  Doing so will raise a
-  ``NoTransaction`` exception.
+- It is an error to call ``get()``, ``commit()``, ``abort()``,
+  ``doom()``, or ``savepoint()`` without a preceding ``begin()`` call.
+  Doing so will raise a ``NoTransaction`` exception.
 
 - It is an error to call ``begin()`` after a previous ``begin()``
   without an intervening ``commit()`` or ``abort()`` call.  Doing so
