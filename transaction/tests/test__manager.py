@@ -711,6 +711,42 @@ class AttemptTests(unittest.TestCase):
         self.assertFalse(manager.committed)
         self.assertTrue(manager.aborted)
 
+    def test_explicit_mode(self):
+        from .. import TransactionManager
+        from ..interfaces import AlreadyInTransaction, NoTransaction
+
+        tm = TransactionManager()
+        self.assertFalse(tm.explicit)
+
+        tm = TransactionManager(explicit=True)
+        self.assertTrue(tm.explicit)
+        for name in 'get', 'commit', 'abort', 'doom', 'isDoomed', 'savepoint':
+            with self.assertRaises(NoTransaction):
+                getattr(tm, name)()
+
+        t = tm.begin()
+        with self.assertRaises(AlreadyInTransaction):
+            tm.begin()
+
+        self.assertTrue(t is tm.get())
+
+        self.assertFalse(tm.isDoomed())
+        tm.doom()
+        self.assertTrue(tm.isDoomed())
+        tm.abort()
+
+        for name in 'get', 'commit', 'abort', 'doom', 'isDoomed', 'savepoint':
+            with self.assertRaises(NoTransaction):
+                getattr(tm, name)()
+
+        t = tm.begin()
+        self.assertFalse(tm.isDoomed())
+        with self.assertRaises(AlreadyInTransaction):
+            tm.begin()
+        tm.savepoint()
+        tm.commit()
+
+
 
 class DummyManager(object):
     entered = False

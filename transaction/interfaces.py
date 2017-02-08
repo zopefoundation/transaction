@@ -21,40 +21,70 @@ class ITransactionManager(Interface):
     Applications use transaction managers to establish transaction boundaries.
     """
 
-    def begin():
-        """Explicitly begin a new transaction.
+    explicit = Attribute(
+        """Explicit mode indicator.
 
-        If an existing transaction is in progress, it will be aborted.
+        This is true if the transaction manager is in explicit mode.
+        In explicit mode, transactions must be begun explicitly, by
+        calling ``begin()`` and ended explicitly by calling
+        ``commit()`` or ``abort()``.
+        """)
+
+
+    def begin():
+        """Explicitly begin and return a new transaction.
+
+        If an existing transaction is in progress and the transaction
+        manager not in explicit mode, the previous transaction will be
+        aborted.  If an existing transaction is in progress and the
+        transaction manager is in explicit mode, an
+        ``AlreadyInTransaction`` exception will be raised..
 
         The ``newTransaction`` method of registered synchronizers is called,
         passing the new transaction object.
 
-        Note that transactions may be started implicitly without
-        calling ``begin``. In that case, ``newTransaction`` isn't
-        called because the transaction manager doesn't know when to
-        call it.  The transaction is likely to have begun long before
-        the transaction manager is involved. (Conceivably the ``commit`` and
-        ``abort`` methods could call ``begin``, but they don't.)
+        Note that when not in explicit mode, transactions may be
+        started implicitly without calling ``begin``. In that case,
+        ``newTransaction`` isn't called because the transaction
+        manager doesn't know when to call it.  The transaction is
+        likely to have begun long before the transaction manager is
+        involved. (Conceivably the ``commit`` and ``abort`` methods
+        could call ``begin``, but they don't.)
         """
 
     def get():
         """Get the current transaction.
+
+        In explicit mode, if a transaction hasn't begun, a
+        ``NoTransaction`` exception will be raised.
         """
 
     def commit():
         """Commit the current transaction.
+
+        In explicit mode, if a transaction hasn't begun, a
+        ``NoTransaction`` exception will be raised.
         """
 
     def abort():
         """Abort the current transaction.
+
+        In explicit mode, if a transaction hasn't begun, a
+        ``NoTransaction`` exception will be raised.
         """
 
     def doom():
         """Doom the current transaction.
+
+        In explicit mode, if a transaction hasn't begun, a
+        ``NoTransaction`` exception will be raised.
         """
 
     def isDoomed():
         """Returns True if the current transaction is doomed, otherwise False.
+
+        In explicit mode, if a transaction hasn't begun, a
+        ``NoTransaction`` exception will be raised.
         """
 
     def savepoint(optimistic=False):
@@ -65,6 +95,9 @@ class ITransactionManager(Interface):
         raised if the savepoint is rolled back.
 
         An ISavepoint object is returned.
+
+        In explicit mode, if a transaction hasn't begun, a
+        ``NoTransaction`` exception will be raised.
         """
 
     def registerSynch(synch):
@@ -524,4 +557,21 @@ class TransientError(TransactionError):
     """An error has occured when performing a transaction.
 
     It's possible that retrying the transaction will succeed.
+    """
+
+class NoTransaction(TransactionError):
+    """No transaction has been defined
+
+    An application called an operation on a transaction manager that
+    affects an exciting transaction, but no transaction was begun.
+    The transaction manager was in explicit mode, so a new transaction
+    was not explicitly created.
+    """
+
+class AlreadyInTransaction(TransactionError):
+    """Attempt to create a new transaction without ending a preceding one
+
+    An application called ``begin()`` on a transaction manager in
+    explicit mode, without committing or aborting the previous
+    transaction.
     """

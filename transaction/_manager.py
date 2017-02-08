@@ -21,7 +21,9 @@ import threading
 
 from zope.interface import implementer
 
+from transaction.interfaces import AlreadyInTransaction
 from transaction.interfaces import ITransactionManager
+from transaction.interfaces import NoTransaction
 from transaction.interfaces import TransientError
 from transaction.weakset import WeakSet
 from transaction._compat import reraise
@@ -59,7 +61,8 @@ def _new_transaction(txn, synchs):
 @implementer(ITransactionManager)
 class TransactionManager(object):
 
-    def __init__(self):
+    def __init__(self, explicit=False):
+        self.explicit = explicit
         self._txn = None
         self._synchs = WeakSet()
 
@@ -67,6 +70,8 @@ class TransactionManager(object):
         """ See ITransactionManager.
         """
         if self._txn is not None:
+            if self.explicit:
+                raise AlreadyInTransaction()
             self._txn.abort()
         txn = self._txn = Transaction(self._synchs, self)
         _new_transaction(txn, self._synchs)
@@ -78,6 +83,8 @@ class TransactionManager(object):
         """ See ITransactionManager.
         """
         if self._txn is None:
+            if self.explicit:
+                raise NoTransaction()
             self._txn = Transaction(self._synchs, self)
         return self._txn
 
