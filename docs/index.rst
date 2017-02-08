@@ -86,6 +86,44 @@ commit.  It calls afterCompletion() when a top-level transaction is
 committed or aborted.  The methods are passed the current Transaction
 as their only argument.
 
+Explicit vs implicit transactions
+---------------------------------
+
+By default, transactions are implicitly managed.  Calling ``begin()``
+on a transaction manager implicitly aborts the previous transaction
+and calling ``commit()`` or ``abort()`` implicitly begins a new
+one. This behavior can be convenient for interactive use, but invites
+subtle bugs:
+
+- Calling begin() without realizing that there are outstanding changes
+  that will be aborted.
+
+- Interacting with a database without controlling transactions, in
+  which case changes may be unexpectedly discarded.
+
+For applications, including frameworks that control transactions,
+transaction managers provide an optional explicit mode.  Transaction
+managers have an ``explicit`` constructor keyword argument that, if
+True puts the transaction manager in explicit mode.  In explicit mode:
+
+- It is an error to call ``get()``, ``commit()`` or ``abort()``
+  without a preceding ``begin()`` call.  Doing so will raise a
+  ``NoTransaction`` exception.
+
+- It is an error to call ``begin()`` after a previous ``begin()``
+  without an intervening ``commit()`` or ``abort()`` call.  Doing so
+  will raise an ``AlreadyInTransaction`` exception.
+
+In explicit mode, bugs like those mentioned above are much easier to
+avoid because they cause explicit exceptions that can typically be
+caught in development.
+
+An additional benefit of explicit mode is that it can allow data
+managers to manage resources more efficiently.
+
+Transaction managers have an explicit attribute that can be queried to
+determine if explicit mode is enabled.
+
 Contents:
 
 .. toctree::
