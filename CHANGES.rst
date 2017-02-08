@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.1.0 (unreleased)
+2.1.0 (2017-02-08)
 ------------------
 
 Added a transaction-manager explicit mode. Explicit mode makes some
