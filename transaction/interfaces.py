@@ -32,7 +32,7 @@ class ITransactionManager(Interface):
 
 
     def begin():
-        """Explicitly begin a new transaction.
+        """Explicitly begin and return a new transaction.
 
         If an existing transaction is in progress and the transaction
         manager not in explicit mode, the previous transaction will be
