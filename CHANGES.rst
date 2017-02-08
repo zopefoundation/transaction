@@ -1,6 +1,15 @@
 Changes
 =======
 
+2.1.0 (unreleased)
+------------------
+
+Added a transaction-manager explicit mode. Explicit mode makes some
+kinds of application bugs easier to detect and potentially allows data
+managers to manage resources more efficiently.
+
+(This addresses https://github.com/zopefoundation/transaction/issues/35.)
+
 2.0.3 (2016-11-17)
 ------------------
 
