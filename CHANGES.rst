@@ -4,7 +4,14 @@ Changes
 2.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- For backward compatibility, relax the requirements that transaction
+  meta data (user or description) be text:
+
+  - If None is assigned, the assignment is ignored.
+
+  - If a non-text value is assigned, a warning is issued and the value
+    is converted to text. If the value is a binary string, it will be
+    decoded with the UTF-8 encoding the ``replace`` error policy.
 
 
 2.1.0 (2017-02-08)
