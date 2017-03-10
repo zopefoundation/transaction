@@ -23,7 +23,6 @@ from zope.interface import implementer
 from transaction.weakset import WeakSet
 from transaction.interfaces import TransactionFailedError
 from transaction import interfaces
-from transaction._compat import binary_type
 from transaction._compat import reraise
 from transaction._compat import get_thread_ident
 from transaction._compat import native_
@@ -760,7 +759,7 @@ def text_or_warn(s):
         return s
 
     warnings.warn("Expected text", DeprecationWarning, stacklevel=3)
-    if isinstance(s, binary_type):
+    if isinstance(s, bytes):
         return s.decode('utf-8', 'replace')
     else:
         return text_type(s)
