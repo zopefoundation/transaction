@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-version = '2.1.2'
+version = '2.1.3.dev0'
 
 import os
 from setuptools import setup, find_packages
