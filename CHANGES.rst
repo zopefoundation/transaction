@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.1.1 (unreleased)
+2.1.1 (2017-03-11)
 ------------------
 
 - For backward compatibility, relax the requirements that transaction
