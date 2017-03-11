@@ -1014,16 +1014,21 @@ class TransactionTests(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             txn.note(42)
-            self.assertNonTextDeprecationWarning(w)
+            self.assertNonTextDeprecationWarning(w, '42')
             self.assertEqual(txn.description, u'42')
 
-    def assertNonTextDeprecationWarning(self, w):
+    def assertNonTextDeprecationWarning(self, w, expect=None):
         [w] = w
-        self.assertEqual(
-            (DeprecationWarning, "Expected text",
-             os.path.splitext(__file__)[0]),
-            (w.category, str(w.message), os.path.splitext(w.filename)[0]),
-            )
+        prefix = "Expected text, got "
+        str_message = str(w.message)
+        if expect:
+            self.assertEqual(prefix + expect, str_message)
+        else:
+            self.assertTrue(str_message.startswith(prefix))
+
+        self.assertEqual((DeprecationWarning, os.path.splitext(__file__)[0]),
+                         (w.category, os.path.splitext(w.filename)[0]),
+                         )
 
     def test_description_bytes(self):
         txn = self._makeOne()
@@ -1038,7 +1043,7 @@ class TransactionTests(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             txn.description = 42
-            self.assertNonTextDeprecationWarning(w)
+            self.assertNonTextDeprecationWarning(w, '42')
             self.assertEqual(txn.description, u'42')
 
     def test_description_None(self):
