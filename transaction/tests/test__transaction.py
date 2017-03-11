@@ -36,6 +36,8 @@ TODO
     add in tests for objects which are modified multiple times,
     for example an object that gets modified in multiple sub txns.
 """
+import os
+import warnings
 import unittest
 
 
@@ -992,13 +994,66 @@ class TransactionTests(unittest.TestCase):
 
     def test_note_bytes(self):
         txn = self._makeOne()
-        with self.assertRaises(TypeError):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             txn.note(b'haha')
+            self.assertNonTextDeprecationWarning(w)
+            self.assertEqual(txn.description, u'haha')
+
+    def test_note_None(self):
+        txn = self._makeOne()
+        self.assertEqual(u'', txn.description)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            txn.note(None)
+            self.assertFalse(w)
+        self.assertEqual(txn.description, u'')
+
+    def test_note_42(self):
+        txn = self._makeOne()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            txn.note(42)
+            self.assertNonTextDeprecationWarning(w, '42')
+            self.assertEqual(txn.description, u'42')
+
+    def assertNonTextDeprecationWarning(self, w, expect=None):
+        [w] = w
+        prefix = "Expected text, got "
+        str_message = str(w.message)
+        if expect:
+            self.assertEqual(prefix + expect, str_message)
+        else:
+            self.assertTrue(str_message.startswith(prefix))
+
+        self.assertEqual((DeprecationWarning, os.path.splitext(__file__)[0]),
+                         (w.category, os.path.splitext(w.filename)[0]),
+                         )
 
     def test_description_bytes(self):
         txn = self._makeOne()
-        with self.assertRaises(TypeError):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             txn.description = b'haha'
+            self.assertNonTextDeprecationWarning(w)
+            self.assertEqual(txn.description, u'haha')
+
+    def test_description_42(self):
+        txn = self._makeOne()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            txn.description = 42
+            self.assertNonTextDeprecationWarning(w, '42')
+            self.assertEqual(txn.description, u'42')
+
+    def test_description_None(self):
+        txn = self._makeOne()
+        self.assertEqual(u'', txn.description)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            txn.description = None
+            self.assertFalse(w)
+        self.assertEqual(txn.description, u'')
 
     def test_setUser_default_path(self):
         txn = self._makeOne()
@@ -1010,16 +1065,37 @@ class TransactionTests(unittest.TestCase):
         txn.setUser(u'phreddy', u'/bedrock')
         self.assertEqual(txn.user, u'/bedrock phreddy')
 
-    def test_user_bytes(self):
+    def _test_user_non_text(self, user, path, expect, both=False):
         txn = self._makeOne()
-        with self.assertRaises(TypeError):
-            txn.user = b'phreddy'
-        with self.assertRaises(TypeError):
-            txn.setUser(b'phreddy', u'/bedrock')
-        with self.assertRaises(TypeError):
-            txn.setUser(u'phreddy', b'/bedrock')
-        with self.assertRaises(TypeError):
-            txn.setUser(b'phreddy')
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            if path:
+                txn.setUser(user, path)
+            else:
+                if path is None:
+                    txn.setUser(user)
+                else:
+                    txn.user = user
+
+            if both:
+                self.assertNonTextDeprecationWarning(w[:1])
+                self.assertNonTextDeprecationWarning(w[1:])
+            else:
+                self.assertNonTextDeprecationWarning(w)
+
+        self.assertEqual(expect, txn.user)
+
+    def test_user_non_text(self, user=b'phreddy', path=b'/bedrock',
+                        expect=u"/bedrock phreddy", both=True):
+        self._test_user_non_text(b'phreddy', b'/bedrock',
+                                 u"/bedrock phreddy", True)
+        self._test_user_non_text(b'phreddy', None, u'/ phreddy')
+        self._test_user_non_text(b'phreddy', False, u'phreddy')
+        self._test_user_non_text(b'phreddy', u'/bedrock', u'/bedrock phreddy')
+        self._test_user_non_text(u'phreddy', b'/bedrock', u'/bedrock phreddy')
+        self._test_user_non_text(u'phreddy', 2, u'2 phreddy')
+        self._test_user_non_text(1, u'/bedrock', u'/bedrock 1')
+        self._test_user_non_text(1, 2, u'2 1', True)
 
     def test_setExtendedInfo_single(self):
         txn = self._makeOne()

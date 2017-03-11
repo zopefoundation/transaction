@@ -14,6 +14,7 @@
 import binascii
 import logging
 import sys
+import warnings
 import weakref
 import traceback
 
@@ -135,9 +136,8 @@ class Transaction(object):
 
     @user.setter
     def user(self, v):
-        if not isinstance(v, text_type):
-            raise TypeError("User must be text (unicode)")
-        self._user = v
+        if v is not None:
+            self._user = text_or_warn(v)
 
     @property
     def description(self):
@@ -145,9 +145,8 @@ class Transaction(object):
 
     @description.setter
     def description(self, v):
-        if not isinstance(v, text_type):
-            raise TypeError("Description must be text (unicode)")
-        self._description = v
+        if v is not None:
+            self._description = text_or_warn(v)
 
     def isDoomed(self):
         """ See ITransaction.
@@ -533,23 +532,17 @@ class Transaction(object):
     def note(self, text):
         """ See ITransaction.
         """
-        if not isinstance(text, text_type):
-            raise TypeError("Note must be text (unicode)")
-
-        text = text.strip()
-        if self.description:
-            self.description += u"\n" + text
-        else:
-            self.description = text
+        if text is not None:
+            text = text_or_warn(text).strip()
+            if self.description:
+                self.description += u"\n" + text
+            else:
+                self.description = text
 
     def setUser(self, user_name, path=u"/"):
         """ See ITransaction.
         """
-        if not isinstance(user_name, text_type):
-            raise TypeError("User name must be text (unicode)")
-        if not isinstance(path, text_type):
-            raise TypeError("Path must be text (unicode)")
-        self.user = u"%s %s" % (path, user_name)
+        self.user = u"%s %s" % (text_or_warn(path), text_or_warn(user_name))
 
     def setExtendedInfo(self, name, value):
         """ See ITransaction.
@@ -760,3 +753,13 @@ class NoRollbackSavepoint:
 
     def rollback(self):
         raise TypeError("Savepoints unsupported", self.datamanager)
+
+def text_or_warn(s):
+    if isinstance(s, text_type):
+        return s
+
+    warnings.warn("Expected text, got %r" % s, DeprecationWarning, stacklevel=3)
+    if isinstance(s, bytes):
+        return s.decode('utf-8', 'replace')
+    else:
+        return text_type(s)

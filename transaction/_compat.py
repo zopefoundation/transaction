@@ -9,14 +9,12 @@ if PY3: # pragma: no cover
     integer_types = int,
     class_types = type,
     text_type = str
-    binary_type = bytes
     long = int
 else:
     string_types = basestring,
     integer_types = (int, long)
     class_types = (type, types.ClassType)
     text_type = unicode
-    binary_type = str
     long = long
 
 def bytes_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
