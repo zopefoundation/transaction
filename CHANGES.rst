@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.1.2 (unreleased)
+2.1.2 (2017-03-11)
 ------------------
 
 - To avoid leaking memory, don't include unexpected value in warnings
