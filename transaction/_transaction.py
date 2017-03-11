@@ -758,7 +758,7 @@ def text_or_warn(s):
     if isinstance(s, text_type):
         return s
 
-    warnings.warn("Expected text, got %r" % s, DeprecationWarning, stacklevel=3)
+    warnings.warn("Expected text", DeprecationWarning, stacklevel=3)
     if isinstance(s, bytes):
         return s.decode('utf-8', 'replace')
     else:

@@ -4,7 +4,8 @@ Changes
 2.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- To avoid leaking memory, don't include unexpected value in warnings
+  about non-text transaction meta data.
 
 
 2.1.1 (2017-03-11)
