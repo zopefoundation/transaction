@@ -1060,6 +1060,12 @@ class TransactionTests(unittest.TestCase):
         txn.setUser(u'phreddy', u'/bedrock')
         self.assertEqual(txn.user, u'/bedrock phreddy')
 
+    def test_user_w_none(self):
+        txn = self._makeOne()
+        txn.user = b'phreddy'
+        txn.user = None  # resets to empty text
+        self.assertEqual(txn.user, u'')
+
     def _test_user_non_text(self, user, path, expect, both=False):
         txn = self._makeOne()
         with warnings.catch_warnings(record=True) as w:

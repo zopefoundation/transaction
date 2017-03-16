@@ -138,6 +138,8 @@ class Transaction(object):
     def user(self, v):
         if v is not None:
             self._user = text_or_warn(v)
+        else:
+            self._user = u""
 
     @property
     def description(self):
