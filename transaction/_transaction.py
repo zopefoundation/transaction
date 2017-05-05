@@ -136,8 +136,9 @@ class Transaction(object):
 
     @user.setter
     def user(self, v):
-        if v is not None:
-            self._user = text_or_warn(v)
+        if v is None:
+            raise ValueError("user must not be None")
+        self._user = text_or_warn(v)
 
     @property
     def description(self):
