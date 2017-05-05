@@ -1063,8 +1063,9 @@ class TransactionTests(unittest.TestCase):
     def test_user_w_none(self):
         txn = self._makeOne()
         txn.user = b'phreddy'
-        txn.user = None  # resets to empty text
-        self.assertEqual(txn.user, u'')
+        with self.assertRaises(ValueError):
+            txn.user = None  # resets to empty text
+        self.assertEqual(txn.user, b'phreddy')
 
     def _test_user_non_text(self, user, path, expect, both=False):
         txn = self._makeOne()
