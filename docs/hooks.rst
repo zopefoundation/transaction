@@ -1,6 +1,20 @@
 Hooking the Transaction Machinery
 =================================
 
+The :mod:`transaction` machinery allows application developers to register
+two different groups of callbacks to be called, one group before
+committing the transaction and one group after.
+
+These hooks are **not** designed to be used as replacements for the
+two-phase commit machinery defined by a resource manager (see
+:doc:`resourcemanager`).  In particular, hook functions **must not** raise
+or propagate exceptions.
+
+.. warning::
+
+   Hook functions which *do* raise or propagate exceptions will leave the
+   application in an undefined state.
+
 The :meth:`addBeforeCommitHook` Method
 --------------------------------------
 
