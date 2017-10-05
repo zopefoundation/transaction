@@ -2,7 +2,7 @@
 Transactions
 ============
 
-.. image:: https://travis-ci.org/zopefoundation/transaction.png?branch=master
+.. image:: https://travis-ci.org/zopefoundation/transaction.svg?branch=master
         :target: https://travis-ci.org/zopefoundation/transaction
 
 .. image:: https://readthedocs.org/projects/transaction/badge/?version=latest
