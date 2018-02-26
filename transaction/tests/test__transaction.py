@@ -1143,6 +1143,54 @@ class TransactionTests(unittest.TestCase):
             txn.data(self)
         self.assertEqual(c.exception.args, (self,))
 
+    def test_isRetryableError_w_transient_error(self):
+        from transaction.interfaces import TransientError
+        from transaction._manager import TransactionManager
+        txn = self._makeOne(manager=TransactionManager())
+        txn._manager._txn = txn
+        self.assertTrue(txn.isRetryableError(TransientError()))
+
+    def test_isRetryableError_w_transient_subclass(self):
+        from transaction.interfaces import TransientError
+        from transaction._manager import TransactionManager
+        class _Derived(TransientError):
+            pass
+        txn = self._makeOne(manager=TransactionManager())
+        txn._manager._txn = txn
+        self.assertTrue(txn.isRetryableError(_Derived()))
+
+    def test_isRetryableError_w_normal_exception_no_resources(self):
+        from transaction._manager import TransactionManager
+        txn = self._makeOne(manager=TransactionManager())
+        txn._manager._txn = txn
+        self.assertFalse(txn.isRetryableError(Exception()))
+
+    def test_isRetryableError_w_normal_exception_w_resource_voting_yes(self):
+        from transaction._manager import TransactionManager
+        class _Resource(object):
+            def should_retry(self, err):
+                return True
+        txn = self._makeOne(manager=TransactionManager())
+        txn._manager._txn = txn
+        txn._resources.append(_Resource())
+        self.assertTrue(txn.isRetryableError(Exception()))
+
+    def test_isRetryableError_w_multiple(self):
+        from transaction._manager import TransactionManager
+        class _Resource(object):
+            _should = True
+            def should_retry(self, err):
+                return self._should
+        txn = self._makeOne(manager=TransactionManager())
+        txn._manager._txn = txn
+        res1 = _Resource()
+        res1._should = False
+        res2 = _Resource()
+        txn._resources.append(res1)
+        txn._resources.append(res2)
+        self.assertTrue(txn.isRetryableError(Exception()))
+
+
 
 class MultiObjectResourceAdapterTests(unittest.TestCase):
 
