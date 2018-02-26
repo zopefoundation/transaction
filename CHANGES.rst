@@ -1,12 +1,22 @@
 Changes
 =======
 
-2.1.3 (unreleased)
+2.2.0 (unreleased)
 ------------------
 
 - Add support for Python 3.6.
 
 - Drop support for Python 3.3.
+
+- Add ``isRetryableError`` to the
+  ``transaction.interfaces.ITransaction`` interface to allow external
+  systems to query whether an exception is retryable (transient) by
+  any of the attached data managers. Any
+  ``transaction.interfaces.TransientError`` is considered retryable
+  but a data manager may also consider other exceptions on a
+  per-instance basis.
+
+  See https://github.com/zopefoundation/transaction/pull/38
 
 
 2.1.2 (2017-03-11)
