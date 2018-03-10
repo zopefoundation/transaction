@@ -1,135 +1,137 @@
 :mod:`transaction` Documentation
 ================================
 
-Transaction objects manage resources for an individual activity.
+A general transaction support library for Python.
 
-Compatibility issues
+The transaction package offers a two-phase commit protocol which allows
+multiple backends of any kind to participate in a transaction and
+commit their changes only if all of them can successfully do so. It also
+offers support for savepoints, so that part of a transaction can be rolled
+back without having to abort it completely.
+
+There are already transaction backends for SQLAlchemy, ZODB, email, filesystem,
+and others. in addition, there are packages like pyramid_tm, which allows all
+the code in a web request to run inside of a transaction, and aborts the
+transaction automatically if an error occurs. It's also not difficult to create your own backends if necessary.
+
+Getting the transaction package
+===============================
+
+To install the transaction package you can use pip::
+
+    $ pip instal transaction
+
+After this, the package can be imported in your Python code, but there are a
+few things that we need to explain before doing that.
+
+Using transactions
+==================
+
+At its simplest, the developer will use an existing transaction backend, and
+will at most require to commit  or abort a transaction now and then. For
+example:
+
+.. code-block:: python
+    :linenos:
+
+    import transaction
+
+    try:
+        # some code that uses one or more backends
+        .
+        .
+        .
+        transaction.commit()
+    except SomeError:
+        transaction.abort()
+
+
+Things you need to know about the transaction machinery
+=======================================================
+
+Transactions
+------------
+
+A transaction consists of one or more operations that we want to perform as a
+single action. It's an all or nothing proposition: either all the operations
+that are part of the transaction are completed successfully or none of them
+have any effect.
+
+In the transaction package, a transaction object represents a running
+transaction that can be committed or aborted in the end.
+
+Transaction managers
 --------------------
 
-The implementation of Transaction objects involves two layers of
-backwards compatibility, because this version of transaction supports
-both ZODB 3 and ZODB 4.  Zope is evolving towards the ZODB4
-interfaces.
+Applications interact with a transaction using a transaction manager, which is
+responsible for establishing the transaction boundaries. Basically this means
+that it creates the transactions and keeps track of the current one. Whenever
+an application wants to use the transaction machinery, it gets the current
+transaction from the transaction manager before starting any operations
 
-Transaction has two methods for a resource manager to call to
-participate in a transaction -- register() and join().  join() takes a
-resource manager and adds it to the list of resources.  register() is
-for backwards compatibility.  It takes a persistent object and
-registers its _p_jar attribute.  TODO: explain adapter
+The default transaction manager for the transaction package is thread aware.
+Each thread is associated with a unique transaction.
 
-Two-phase commit
-----------------
+Application developers will most likely never need to create their own
+transaction managers.
 
-A transaction commit involves an interaction between the transaction
-object and one or more resource managers.  The transaction manager
-calls the following four methods on each resource manager; it calls
-tpc_begin() on each resource manager before calling commit() on any of
-them.
+Data Managers
+-------------
 
-    1. tpc_begin(txn)
-    2. commit(txn)
-    3. tpc_vote(txn)
-    4. tpc_finish(txn)
+A data manager handles the interaction between the transaction manager and the
+data storage mechanism used by the application, which can be an object storage
+like the ZODB, a relational database, a file or any other storage mechanism
+that the application needs to control.
 
-Before-commit hook
-------------------
+The data manager provides a common interface for the transaction manager to use
+while a transaction is running. To be part of a specific transaction, a data
+manager has to 'join' it. Any number of data managers can join a transaction,
+which means that you could for example perform writing operations on a ZODB
+storage and a relational database as part of the same transaction. The
+transaction manager will make sure that both data managers can commit the
+transaction or none of them does.
 
-Sometimes, applications want to execute some code when a transaction is
-committed.  For example, one might want to delay object indexing until a
-transaction commits, rather than indexing every time an object is changed.
-Or someone might want to check invariants only after a set of operations.  A
-pre-commit hook is available for such use cases:  use addBeforeCommitHook(),
-passing it a callable and arguments.  The callable will be called with its
-arguments at the start of the commit (but not for substransaction commits).
+An application developer will need to write a data manager for each different
+type of storage that the application uses. There are also third party data
+managers that can be used instead.
 
-After-commit hook
-------------------
+The two phase commit protocol
+-----------------------------
 
-Sometimes, applications want to execute code after a transaction commit
-attempt succeeds or aborts. For example, one might want to launch non
-transactional code after a successful commit. Or still someone might
-want to launch asynchronous code after.  A post-commit hook is
-available for such use cases: use addAfterCommitHook(), passing it a
-callable and arguments.  The callable will be called with a Boolean
-value representing the status of the commit operation as first
-argument (true if successfull or false iff aborted) preceding its
-arguments at the start of the commit (but not for substransaction
-commits). Commit hooks are not called for transaction.abort().
+The transaction machinery uses a two phase commit protocol for coordinating all
+participating data managers in a transaction. The two phases work like follows:
 
-Error handling
---------------
+ 1. The commit process is started.
+ 2. Each associated data manager prepares the changes to be persistent.
+ 3. Each data manager verifies that no errors or other exceptional conditions
+    occurred during the attempt to persist the changes. If that happens, an
+    exception should be raised. This is called 'voting'. A data manager votes
+    'no' by raising an exception if something goes wrong; otherwise, its vote
+    is counted as a 'yes'.
+ 4. If any of the associated data managers votes 'no', the transaction is
+    aborted; otherwise, the changes are made permanent.
 
-When errors occur during two-phase commit, the transaction manager
-aborts all the resource managers.  The specific methods it calls
-depend on whether the error occurs before or after the call to
-tpc_vote() on that transaction manager.
+The two phase commit sequence requires that all the storages being used are
+capable of rolling back or aborting changes.
 
-If the resource manager has not voted, then the resource manager will
-have one or more uncommitted objects.  There are two cases that lead
-to this state; either the transaction manager has not called commit()
-for any objects on this resource manager or the call that failed was a
-commit() for one of the objects of this resource manager.  For each
-uncommitted object, including the object that failed in its commit(),
-call abort().
+Savepoints
+----------
 
-Once uncommitted objects are aborted, tpc_abort() or abort_sub() is
-called on each resource manager.
+A savepoint allows a data manager to save work to its storage without
+committing the full transaction. In other words, the transaction will go on,
+but if a rollback is needed we can get back to this point instead of starting
+all over.
 
-Synchronization
----------------
+Savepoints are also useful to free memory that would otherwise be used to keep
+the whole state of the transaction. This can be very important when a
+transaction attempts a large number of changes.
 
-You can register sychronization objects (synchronizers) with the
-tranasction manager.  The synchronizer must implement
-beforeCompletion() and afterCompletion() methods.  The transaction
-manager calls beforeCompletion() when it starts a top-level two-phase
-commit.  It calls afterCompletion() when a top-level transaction is
-committed or aborted.  The methods are passed the current Transaction
-as their only argument.
-
-Explicit vs implicit transactions
----------------------------------
-
-By default, transactions are implicitly managed.  Calling ``begin()``
-on a transaction manager implicitly aborts the previous transaction
-and calling ``commit()`` or ``abort()`` implicitly begins a new
-one. This behavior can be convenient for interactive use, but invites
-subtle bugs:
-
-- Calling begin() without realizing that there are outstanding changes
-  that will be aborted.
-
-- Interacting with a database without controlling transactions, in
-  which case changes may be unexpectedly discarded.
-
-For applications, including frameworks that control transactions,
-transaction managers provide an optional explicit mode.  Transaction
-managers have an ``explicit`` constructor keyword argument that, if
-True puts the transaction manager in explicit mode.  In explicit mode:
-
-- It is an error to call ``get()``, ``commit()``, ``abort()``,
-  ``doom()``, ``isDoomed``, or ``savepoint()`` without a preceding
-  ``begin()`` call.  Doing so will raise a ``NoTransaction``
-  exception.
-
-- It is an error to call ``begin()`` after a previous ``begin()``
-  without an intervening ``commit()`` or ``abort()`` call.  Doing so
-  will raise an ``AlreadyInTransaction`` exception.
-
-In explicit mode, bugs like those mentioned above are much easier to
-avoid because they cause explicit exceptions that can typically be
-caught in development.
-
-An additional benefit of explicit mode is that it can allow data
-managers to manage resources more efficiently.
-
-Transaction managers have an explicit attribute that can be queried to
-determine if explicit mode is enabled.
-
-Contents:
+Additional Documentation
+========================
 
 .. toctree::
-   :maxdepth: 2
 
+   sqlalchemy
    convenience
    doom
    savepoint
@@ -138,12 +140,4 @@ Contents:
    resourcemanager
    integrations
    api
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+   developer
