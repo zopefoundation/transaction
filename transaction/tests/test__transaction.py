@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 # Copyright (c) 2001, 2002, 2005 Zope Foundation and Contributors.
@@ -1648,6 +1649,18 @@ class MiscellaneousTests(unittest.TestCase):
 
         transaction.abort() # should do nothing
         self.assertEqual(list(dm.keys()), ['a'])
+
+    def test_gh5(self):
+        from transaction import _transaction
+        from transaction._compat import native_
+
+        buffer = _transaction._makeTracebackBuffer()
+
+        s = u'ąčę'
+        buffer.write(s)
+
+        buffer.seek(0)
+        self.assertEqual(buffer.read(), native_(s, 'utf-8'))
 
 class Resource(object):
     _b = _c = _v = _f = _a = _x = _after = False

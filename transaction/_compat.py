@@ -36,7 +36,13 @@ else:
 if PY3: #pragma NO COVER
     from io import StringIO
 else:
-    from io import BytesIO as StringIO
+    from io import BytesIO
+    # Prevent crashes in IPython when writing tracebacks if a commit fails
+    # ref: https://github.com/ipython/ipython/issues/9126#issuecomment-174966638
+    class StringIO(BytesIO):
+        def write(self, s):
+            s = native_(s, encoding='utf-8')
+            super(StringIO, self).write(s)
 
 if PY3: #pragma NO COVER
     from collections import MutableMapping
