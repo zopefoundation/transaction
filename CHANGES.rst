@@ -1,11 +1,14 @@
 Changes
 =======
 
-2.2.1 (2018-03-06)
+2.2.1 (unreleased)
 ------------------
 
 - Make documentation index more user friendly; move old docs to developer
   section.
+
+- Don't crash when printing tracebacks in IPython on Python 2.
+  (This addresses https://github.com/zopefoundation/transaction/issues/5.)
 
 
 2.2.0 (2018-02-27)
