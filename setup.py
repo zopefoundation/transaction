@@ -14,7 +14,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '2.2.1'
+version = '2.2.2.dev0'
 here = os.path.abspath(os.path.dirname(__file__))
 
 def _read_file(filename):
