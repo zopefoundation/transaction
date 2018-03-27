@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.2.1 (unreleased)
+2.2.1 (2018-03-27)
 ------------------
 
 - Make documentation index more user friendly; move old docs to developer
