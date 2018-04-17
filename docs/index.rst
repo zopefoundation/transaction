@@ -19,7 +19,7 @@ Getting the transaction package
 
 To install the transaction package you can use pip::
 
-    $ pip instal transaction
+    $ pip install transaction
 
 After this, the package can be imported in your Python code, but there are a
 few things that we need to explain before doing that.
