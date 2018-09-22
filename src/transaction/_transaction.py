@@ -54,11 +54,15 @@ class Status(object):
     COMMITTING = "Committing"
     COMMITTED = "Committed"
 
+    ABORTING     = "Aborting"
+    ABORTED      = "Aborted"
+
     DOOMED = "Doomed"
 
-    # commit() or commit(True) raised an exception.  All further attempts
-    # to commit or join this transaction will raise TransactionFailedError.
+    # commit() or commit(True) or abort() raised an exception.  All further attempts
+    # to commit or join or abort this transaction will raise TransactionFailedError.
     COMMITFAILED = "Commit failed"
+    ABORTFAILED  = "Abort failed"
 
 
 class _NoSynchronizers(object):
@@ -567,6 +571,7 @@ class Transaction(object):
             self.log.debug("abort")
 
             if tb is not None:
+                self.status = Status.ABORTFAILED
                 reraise(t, v, tb)
         finally:
             self._free()
