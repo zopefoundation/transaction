@@ -14,12 +14,11 @@ matrix:
           sudo: true
 install:
     - pip install zope.testrunner coverage coveralls
-    - pip install zc.buildout
+    - pip install Sphinx
     - pip install -U -e .[test]
-    - buildout
 script:
     - coverage run -m zope.testrunner --test-path=src -v
-    - cd docs; make SPHINXBUILD=../bin/sphinx-build doctest
+    - cd docs; make doctest
 notifications:
     email: false
 after_success:
