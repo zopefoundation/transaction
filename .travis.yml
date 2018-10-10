@@ -14,8 +14,7 @@ matrix:
           sudo: true
 install:
     - pip install zope.testrunner coverage coveralls
-    - pip install Sphinx
-    - pip install -U -e .[test]
+    - pip install -U -e .[test, docs]
 script:
     - coverage run -m zope.testrunner --test-path=src -v
     - cd docs; make doctest
