@@ -2,7 +2,7 @@ Writing a Data Manager
 ======================
 
 Simple Data Manager
-------------------
+-------------------
 
 .. doctest::
 
