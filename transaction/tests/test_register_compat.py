@@ -99,7 +99,7 @@ class CommitError(Object):
 class AbortError(Object):
 
     def abort(self):
-        raise RuntimeError("abort")
+        raise AssertionError("This should not actually be called")
 
 
 class BothError(CommitError, AbortError):
@@ -140,8 +140,3 @@ class TestConnection(object):
     def abort(self, obj, txn):
         obj.abort()
         self.aborted.append(obj)
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(BBBTests),
-    ))

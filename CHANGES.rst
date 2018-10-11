@@ -1,14 +1,20 @@
-Changes
-=======
+=========
+ Changes
+=========
 
-2.2.2 (unreleased)
-------------------
+2.3.0 (unreleased)
+==================
 
 - Add support for Python 3.7.
 
+- Reach 100% test coverage.
+
+- Fix ``transaction.manager.run`` formatting transaction notes when
+  given a mix of byte and text strings, such as can happen in Python 2
+  with ``unicode_literals``.
 
 2.2.1 (2018-03-27)
-------------------
+==================
 
 - Make documentation index more user friendly; move old docs to developer
   section.
@@ -18,7 +24,7 @@ Changes
 
 
 2.2.0 (2018-02-27)
-------------------
+==================
 
 - Add support for Python 3.6.
 
@@ -36,14 +42,14 @@ Changes
 
 
 2.1.2 (2017-03-11)
-------------------
+==================
 
 - To avoid leaking memory, don't include unexpected value in warnings
   about non-text transaction meta data.
 
 
 2.1.1 (2017-03-11)
-------------------
+==================
 
 - For backward compatibility, relax the requirements that transaction
   meta data (user or description) be text:
@@ -56,7 +62,7 @@ Changes
 
 
 2.1.0 (2017-02-08)
-------------------
+==================
 
 Added a transaction-manager explicit mode. Explicit mode makes some
 kinds of application bugs easier to detect and potentially allows data
@@ -65,7 +71,7 @@ managers to manage resources more efficiently.
 (This addresses https://github.com/zopefoundation/transaction/issues/35.)
 
 2.0.3 (2016-11-17)
-------------------
+==================
 
 - The user and description fields must now be set with text (unicode)
   data.  Previously, if bytes were provided, they'd be decoded as
@@ -76,13 +82,13 @@ managers to manage resources more efficiently.
   renamed to ``extension``.
 
 2.0.2 (2016-11-13)
-------------------
+==================
 
 - Fixed: Some legacy applications expect the transaction _extension
   attribute to be mutable and it wasn't.
 
 2.0.1 (2016-11-11)
-------------------
+==================
 
 - The transaction ``user`` and ``description`` attributes are now
   defined to be text (unicode) as opposed to Python the ``str`` type.
@@ -105,7 +111,7 @@ possible that these changes will be breaking, so we're also increasing
 the major version number.
 
 1.7.0 (2016-11-08)
-------------------
+==================
 
 - Added a transaction-manager ``run`` method for running a function as a
   transaction, retrying as necessary on transient errors.
@@ -117,14 +123,14 @@ the major version number.
   implemented) and removing 'self' from two methods.
 
 1.6.1 (2016-06-10)
-------------------
+==================
 
 - Fixed: Synchonizers that registered with transaction managers when
   transactions were in progress didn't have their newTransaction
   methods called to let them know of the in-progress transactions.
 
 1.6.0 (2016-05-21)
-------------------
+==================
 
 - New transaction API for storing data on behalf of objects, such as
   data managers.
@@ -133,7 +139,7 @@ the major version number.
   committed or aborted.
 
 1.5.0 (2016-05-05)
-------------------
+==================
 
 - Drop support for Python 2.6 and 3.2.
 
@@ -143,7 +149,7 @@ the major version number.
   client tests.
 
 1.4.4 (2015-05-19)
-------------------
+==================
 
 - Use the standard ``valuerefs()`` method rather than relying on
   implementation details of ``WeakValueDictionary`` in ``WeakSet``.
@@ -153,17 +159,17 @@ the major version number.
 - Require 100% branch coverage (in addition to 100% statement coverage).
 
 1.4.3 (2014-03-20)
-------------------
+==================
 
 - Add support for Python 3.4.
 
 1.4.2 (skipped)
----------------
+===============
 
 - Released in error as 1.4.3.
 
 1.4.1 (2013-02-20)
-------------------
+==================
 
 - Document that values returned by ``sortKey`` must be strings, in order
   to guarantee total ordering.
@@ -172,12 +178,12 @@ the major version number.
   in transaction.weakset on Python 3.
 
 1.4.0 (2013-01-03)
-------------------
+==================
 
 - Updated Trove classifiers.
 
 1.4.0b1 (2012-12-18)
---------------------
+====================
 
 - Converted existing doctests into Sphinx documentation (snippets are
   exercised via 'tox').
@@ -202,7 +208,7 @@ the major version number.
   would be swallowed inappropriately.
 
 1.3.0 (2012-05-16)
-------------------
+==================
 
 - Added Sphinx API docuementation.
 
@@ -228,7 +234,7 @@ the major version number.
   exception to be raised).
 
 1.2.0 (2011-12-05)
-------------------
+==================
 
 New Features:
 
@@ -238,7 +244,7 @@ New Features:
   "transaction" under these Python versions).
 
 1.1.1 (2010-09-16)
-------------------
+==================
 
 Bug Fixes:
 
@@ -250,7 +256,7 @@ Bug Fixes:
   and add test.
 
 1.1.0 (1010-05-12)
-------------------
+==================
 
 New Features:
 
@@ -287,7 +293,7 @@ Bugs fixed:
   https://bugs.launchpad.net/zodb/+bug/239086
 
 1.0.1 (2010-05-07)
-------------------
+==================
 
 - LP #142464:  remove double newline between log entries:  it makes doing
   smarter formatting harder.
@@ -295,7 +301,7 @@ Bugs fixed:
 - Updated tests to remove use of deprecated ``zope.testing.doctest``.
 
 1.0.0 (2009-07-24)
-------------------
+==================
 
 - Fix test that incorrectly relied on the order of a list that was generated
   from a dict.
@@ -303,7 +309,7 @@ Bugs fixed:
 - Remove crufty DEPENDENCIES.cfg left over from zpkg.
 
 1.0a1 (2007-12-18)
-------------------
+==================
 
 = Initial release, branched from ZODB trunk on 2007-11-08 (aka
   "3.9.0dev").

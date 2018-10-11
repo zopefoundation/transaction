@@ -62,10 +62,6 @@ class SampleDataManager(object):
         self._join() # join the current transaction, if we haven't already
         self.uncommitted[name] = value
 
-    def __delitem__(self, name):
-        self._join() # join the current transaction, if we haven't already
-        del self.uncommitted[name]
-
     def keys(self):
         return self.uncommitted.keys()
 
@@ -73,9 +69,6 @@ class SampleDataManager(object):
 
     def __contains__(self, k):
         return k in self.uncommitted
-
-    def __len__(self):
-        return len(self.keys())
 
     def __repr__(self):
         return repr(self.uncommitted)
@@ -138,10 +131,11 @@ class SampleDataManager(object):
         self._resetTransaction()
 
     def tpc_abort(self, transaction):
-        assert transaction is self.transaction, "Must not change transactions"
-        assert self.tpc_phase is not None, "Must be called inside of tpc"
-        self.uncommitted = self.committed.copy()
-        self._resetTransaction()
+        if self.transaction is not None: # pragma: no cover
+            # otherwise we're not actually joined.
+            assert self.tpc_phase is not None, "Must be called inside of tpc"
+            self.uncommitted = self.committed.copy()
+            self._resetTransaction()
 
     #
     #######################################################################

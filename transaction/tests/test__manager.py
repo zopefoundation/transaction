@@ -72,10 +72,10 @@ class TransactionManagerTests(unittest.TestCase):
         class Existing(object):
             _aborted = False
             def abort(self):
-                self._aborted = True
+                raise AssertionError("This is not actually called")
         tm = self._makeOne()
         tm._txn = txn = Existing()
-        self.assertTrue(tm.get() is txn)
+        self.assertIs(tm.get(), txn)
 
     def test_free_w_other_txn(self):
         from transaction._transaction import Transaction
@@ -88,11 +88,11 @@ class TransactionManagerTests(unittest.TestCase):
         class Existing(object):
             _aborted = False
             def abort(self):
-                self._aborted = True
+                raise AssertionError("This is not actually called")
         tm = self._makeOne()
         tm._txn = txn = Existing()
         tm.free(txn)
-        self.assertTrue(tm._txn is None)
+        self.assertIsNone(tm._txn)
 
     def test_registerSynch(self):
         tm = self._makeOne()
@@ -179,7 +179,7 @@ class TransactionManagerTests(unittest.TestCase):
             def commit(self):
                 self._committed = True
             def abort(self):
-                self._aborted = True
+                raise AssertionError("This should not be called")
         tm = self._makeOne()
         with tm:
             tm._txn = txn = _Test()
@@ -191,16 +191,16 @@ class TransactionManagerTests(unittest.TestCase):
             _committed = False
             _aborted = False
             def commit(self):
-                self._committed = True
+                raise AssertionError("This should not be called")
             def abort(self):
                 self._aborted = True
         tm = self._makeOne()
-        try:
+
+        with self.assertRaises(ZeroDivisionError):
             with tm:
                 tm._txn = txn = _Test()
-                1/0
-        except ZeroDivisionError:
-            pass
+                raise ZeroDivisionError()
+
         self.assertFalse(txn._committed)
         self.assertTrue(txn._aborted)
 
@@ -367,12 +367,10 @@ class TransactionManagerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             @tm.run(-1)
             def _():
-                pass
+                raise AssertionError("Never called")
 
     def test_run_stop_on_success(self):
         import transaction.interfaces
-        class Retry(transaction.interfaces.TransientError):
-            pass
 
         tm = self._makeOne()
         i = [0, None]
@@ -433,6 +431,20 @@ class TransactionManagerTests(unittest.TestCase):
                 raise ValueError('we really should retry this')
 
         self.assertEqual(ntry[0], 3)
+
+    def test_run_callable_with_bytes_doc(self):
+        import transaction
+        class Callable(object):
+
+            def __init__(self):
+                self.__doc__ = b'some bytes'
+                self.__name__ = b'more bytes'
+
+            def __call__(self):
+                return 42
+
+        result = transaction.manager.run(Callable())
+        self.assertEqual(result, 42)
 
     def test__retryable_w_transient_error(self):
         from transaction.interfaces import TransientError
@@ -795,7 +807,7 @@ class TestTxnException(Exception):
     pass
 
 
-class BasicJar:
+class BasicJar(object):
 
     def __init__(self, errors=(), tracing=0):
         if not isinstance(errors, tuple):
@@ -822,7 +834,7 @@ class BasicJar:
         return self.__class__.__name__
 
     def check(self, method):
-        if self.tracing:
+        if self.tracing: # pragma: no cover
             print('%s calling method %s'%(str(self.tracing),method))
 
         if method in self.errors:
@@ -868,14 +880,8 @@ def positive_id(obj):
     _ADDRESS_MASK = 256 ** struct.calcsize('P')
 
     result = id(obj)
-    if result < 0:
+    if result < 0: # pragma: no cover
+        # Happens...on old 32-bit systems?
         result += _ADDRESS_MASK
         assert result > 0
     return result
-
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(TransactionManagerTests),
-        unittest.makeSuite(AttemptTests),
-    ))

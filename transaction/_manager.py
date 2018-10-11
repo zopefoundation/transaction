@@ -27,7 +27,7 @@ from transaction.interfaces import NoTransaction
 from transaction.interfaces import TransientError
 from transaction.weakset import WeakSet
 from transaction._compat import reraise
-from transaction._compat import text_type
+from transaction._compat import text_
 from transaction._transaction import Transaction
 
 
@@ -179,16 +179,22 @@ class TransactionManager(object):
         if tries <= 0:
             raise ValueError("tries must be positive")
 
+        # These are ordinarily native strings, but that's
+        # not required. A callable class could override them
+        # to anything, and a Python 2.7 file could have
+        # imported `from __future__ import unicode_literals`
+        # which gets unicode docstrings.
         name = func.__name__
         doc = func.__doc__
-        if name != '_':
+
+        name = text_(name) if name else u''
+        doc = text_(doc) if doc else u''
+
+        if name != u'_':
             if doc:
-                doc = name + '\n\n' + doc
+                doc = name + u'\n\n' + doc
             else:
                 doc = name
-
-        if doc and not isinstance(doc, text_type):
-            doc = doc.decode('utf-8')
 
         for i in range(1, tries + 1):  # pragma: no branch
             txn = self.begin()

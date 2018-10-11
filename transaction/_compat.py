@@ -1,41 +1,39 @@
 import sys
-import types
+
 
 PY3 = sys.version_info[0] == 3
 JYTHON = sys.platform.startswith('java')
 
-if PY3: # pragma: no cover
-    string_types = str,
-    integer_types = int,
-    class_types = type,
+if PY3:
     text_type = str
-    long = int
-else:
-    string_types = basestring,
-    integer_types = (int, long)
-    class_types = (type, types.ClassType)
+else: # pragma: no cover
+    # py2
     text_type = unicode
-    long = long
 
-def bytes_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
+def bytes_(s, encoding='latin-1', errors='strict'):
     if isinstance(s, text_type):
-        return s.encode(encoding, errors)
+        s = s.encode(encoding, errors)
     return s
 
-if PY3: # pragma: no cover
-    def native_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
+def text_(s):
+    if not isinstance(s, text_type):
+        s = s.decode('utf-8')
+    return s
+
+if PY3:
+    def native_(s, encoding='latin-1', errors='strict'):
         if isinstance(s, text_type):
             return s
         return str(s, encoding, errors)
-else:
-    def native_(s, encoding='latin-1', errors='strict'): #pragma NO COVER
+else:  # pragma: no cover
+    def native_(s, encoding='latin-1', errors='strict'):
         if isinstance(s, text_type):
             return s.encode(encoding, errors)
         return str(s)
 
-if PY3: #pragma NO COVER
+if PY3:
     from io import StringIO
-else:
+else: # pragma: no cover
     from io import BytesIO
     # Prevent crashes in IPython when writing tracebacks if a commit fails
     # ref: https://github.com/ipython/ipython/issues/9126#issuecomment-174966638
@@ -44,23 +42,15 @@ else:
             s = native_(s, encoding='utf-8')
             super(StringIO, self).write(s)
 
-if PY3: #pragma NO COVER
-    from collections import MutableMapping
-else:
-    from UserDict import UserDict as MutableMapping
 
-if PY3: # pragma: no cover
-    import builtins
-    exec_ = getattr(builtins, "exec")
-
-
-    def reraise(tp, value, tb=None): #pragma NO COVER
-        if value.__traceback__ is not tb:
+if PY3:
+    def reraise(tp, value, tb=None):
+        if value.__traceback__ is not tb: # pragma: no cover
             raise value.with_traceback(tb)
         raise value
 
 else: # pragma: no cover
-    def exec_(code, globs=None, locs=None): #pragma NO COVER
+    def exec_(code, globs=None, locs=None):
         """Execute code in a namespace."""
         if globs is None:
             frame = sys._getframe(1)
@@ -77,18 +67,8 @@ else: # pragma: no cover
 """)
 
 
-if PY3: #pragma NO COVER
-    try:
-        from threading import get_ident as get_thread_ident
-    except ImportError:
-        from threading import _get_ident as get_thread_ident
-else:
+try:
+    from threading import get_ident as get_thread_ident
+except ImportError: # pragma: no cover
+    # py2
     from thread import get_ident as get_thread_ident
-
-
-if PY3:
-    def func_name(func): #pragma NO COVER
-        return func.__name__
-else:
-    def func_name(func): #pragma NO COVER
-        return func.func_name

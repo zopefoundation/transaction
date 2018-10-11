@@ -126,14 +126,14 @@ class TransactionTests(unittest.TestCase):
 
     def test__prior_operation_failed(self):
         from transaction.interfaces import TransactionFailedError
-        from transaction.tests.common import assertRaisesEx
         class _Traceback(object):
             def getvalue(self):
                 return 'TRACEBACK'
         txn = self._makeOne()
         txn._failure_traceback = _Traceback()
-        err = assertRaisesEx(TransactionFailedError,
-                             txn._prior_operation_failed)
+        with self.assertRaises(TransactionFailedError) as exc:
+            txn._prior_operation_failed()
+        err = exc.exception
         self.assertTrue(str(err).startswith('An operation previously failed'))
         self.assertTrue(str(err).endswith( "with traceback:\n\nTRACEBACK"))
 
@@ -176,7 +176,7 @@ class TransactionTests(unittest.TestCase):
                 self._savepoints = []
         class _DM(object):
             def prepare(self):
-                pass
+                raise AssertionError("Not called")
         txn = self._makeOne()
         tsp = _TSP()
         txn._savepoint2index = {tsp: object()}
@@ -278,7 +278,7 @@ class TransactionTests(unittest.TestCase):
                 self._index = index
             def __lt__(self, other):
                 return self._index < other._index
-            def __repr__(self):
+            def __repr__(self): # pragma: no cover
                 return '_SP: %d' % self._index
         holdme = []
         for i in range(10):
@@ -297,7 +297,7 @@ class TransactionTests(unittest.TestCase):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
-            def __repr__(self):
+            def __repr__(self): # pragma: no cover
                 return '_SP: %d' % self._index
         holdme = []
         for i in range(10):
@@ -397,7 +397,7 @@ class TransactionTests(unittest.TestCase):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
-            def __repr__(self):
+            def __repr__(self): # pragma: no cover
                 return '_SP: %d' % self._index
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -560,7 +560,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_addBeforeCommitHook(self):
         def _hook(*args, **kw):
-            pass
+            raise AssertionError("Not called")
         txn = self._makeOne()
         txn.addBeforeCommitHook(_hook, ('one',), dict(uno=1))
         self.assertEqual(list(txn.getBeforeCommitHooks()),
@@ -568,7 +568,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_addBeforeCommitHook_w_kws(self):
         def _hook(*args, **kw):
-            pass
+            raise AssertionError("Not called")
         txn = self._makeOne()
         txn.addBeforeCommitHook(_hook, ('one',))
         self.assertEqual(list(txn.getBeforeCommitHooks()),
@@ -580,7 +580,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_addAfterCommitHook(self):
         def _hook(*args, **kw):
-            pass
+            raise AssertionError("Not called")
         txn = self._makeOne()
         txn.addAfterCommitHook(_hook, ('one',), dict(uno=1))
         self.assertEqual(list(txn.getAfterCommitHooks()),
@@ -588,7 +588,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_addAfterCommitHook_wo_kws(self):
         def _hook(*args, **kw):
-            pass
+            raise AssertionError("Not called")
         txn = self._makeOne()
         txn.addAfterCommitHook(_hook, ('one',))
         self.assertEqual(list(txn.getAfterCommitHooks()),
@@ -822,7 +822,7 @@ class TransactionTests(unittest.TestCase):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
-            def __repr__(self):
+            def __repr__(self): # pragma: no cover
                 return '_SP: %d' % self._index
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -843,9 +843,9 @@ class TransactionTests(unittest.TestCase):
         from transaction import _transaction
         _hooked1, _hooked2 = [], []
         def _hook1(*args, **kw):
-            _hooked1.append((args, kw))
+            raise AssertionError("Not called")
         def _hook2(*args, **kw):
-            _hooked2.append((args, kw))
+            raise AssertionError("Not called")
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
@@ -889,9 +889,9 @@ class TransactionTests(unittest.TestCase):
         from transaction import _transaction
         _hooked1, _hooked2 = [], []
         def _hook1(*args, **kw):
-            _hooked1.append((args, kw))
+            raise AssertionError("Not called")
         def _hook2(*args, **kw):
-            _hooked2.append((args, kw))
+            raise AssertionError("Not called")
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
@@ -912,7 +912,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         class BrokenResource(object):
             def sortKey(self):
-                return 'zzz'
+                raise AssertionError("Not called")
             def abort(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
@@ -920,9 +920,9 @@ class TransactionTests(unittest.TestCase):
         broken2 = BrokenResource()
         _hooked1, _hooked2 = [], []
         def _hook1(*args, **kw):
-            _hooked1.append((args, kw))
+            raise AssertionError("Not called")
         def _hook2(*args, **kw):
-            _hooked2.append((args, kw))
+            raise AssertionError("Not called")
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
@@ -958,7 +958,7 @@ class TransactionTests(unittest.TestCase):
             ws.add(synch)
         class BrokenResource(object):
             def sortKey(self):
-                return 'zzz'
+                raise AssertionError("Should not be called")
             def abort(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
@@ -1219,7 +1219,7 @@ class MultiObjectResourceAdapterTests(unittest.TestCase):
             def __init__(self, kind, name):
                 self._kind = kind
                 self._name = name
-            def __repr__(self):
+            def __repr__(self): # pragma: no cover
                 return '<%s: %s>' % (self._kind, self._name)
         return _Dummy(kind, name)
 
@@ -1388,7 +1388,7 @@ class DataManagerAdapterTests(unittest.TestCase):
             def __init__(self, kind, name):
                 self._kind = kind
                 self._name = name
-            def __repr__(self):
+            def __repr__(self): # pragma: no cover
                 return '<%s: %s>' % (self._kind, self._name)
         return _Dummy(kind, name)
 
@@ -1609,16 +1609,16 @@ class MiscellaneousTests(unittest.TestCase):
         dm = SPS.SampleSavepointDataManager()
         self.assertEqual(list(dm.keys()), [])
 
-        class Sync:
-             def __init__(self, label):
-                 self.label = label
-                 self.log = []
-             def beforeCompletion(self, txn):
-                 self.log.append('%s %s' % (self.label, 'before'))
-             def afterCompletion(self, txn):
-                 self.log.append('%s %s' % (self.label, 'after'))
-             def newTransaction(self, txn):
-                 self.log.append('%s %s' % (self.label, 'new'))
+        class Sync(object):
+            def __init__(self, label):
+                self.label = label
+                self.log = []
+            def beforeCompletion(self, txn):
+                raise AssertionError("Not called")
+            def afterCompletion(self, txn):
+                raise AssertionError("Not called")
+            def newTransaction(self, txn):
+                self.log.append('%s %s' % (self.label, 'new'))
 
         def run_in_thread(f):
             txn = threading.Thread(target=f)
@@ -1689,30 +1689,13 @@ class Resource(object):
         self._f = True
     def abort(self, txn):
         if self._error == 'abort':
-            raise ValueError()
+            raise AssertionError("Not called in that state")
         self._a = True
     def tpc_abort(self, txn):
         if self._error == 'tpc_abort':
-            raise ValueError()
+            raise AssertionError("Not called in that state")
         self._x = True
     def afterCompletion(self, txn):
         if self._error == 'afterCompletion':
             raise ValueError()
         self._after = True
-
-def test_suite():
-    return unittest.TestSuite((
-        unittest.makeSuite(TransactionTests),
-        unittest.makeSuite(MultiObjectResourceAdapterTests),
-        unittest.makeSuite(Test_rm_key),
-        unittest.makeSuite(Test_object_hint),
-        unittest.makeSuite(Test_oid_repr),
-        unittest.makeSuite(DataManagerAdapterTests),
-        unittest.makeSuite(SavepointTests),
-        unittest.makeSuite(AbortSavepointTests),
-        unittest.makeSuite(NoRollbackSavepointTests),
-        unittest.makeSuite(MiscellaneousTests),
-        ))
-
-if __name__ == '__main__':
-    unittest.main()
