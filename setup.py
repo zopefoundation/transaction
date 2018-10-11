@@ -17,6 +17,7 @@ from setuptools import setup, find_packages
 version = '2.2.2.dev0'
 here = os.path.abspath(os.path.dirname(__file__))
 
+
 def _read_file(filename):
     with open(os.path.join(here, filename)) as f:
         return f.read()
@@ -45,6 +46,7 @@ setup(name='transaction',
           "Programming Language :: Python :: 3.4",
           "Programming Language :: Python :: 3.5",
           "Programming Language :: Python :: 3.6",
+          "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: Implementation :: CPython",
           "Programming Language :: Python :: Implementation :: PyPy",
           "Framework :: ZODB",
@@ -69,4 +71,4 @@ setup(name='transaction',
       },
       entry_points="""\
       """
-)
+      )

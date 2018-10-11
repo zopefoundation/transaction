@@ -7,14 +7,22 @@ python:
     - 3.6
     - pypy
     - pypy3
+matrix:
+    include:
+        - python: "3.7"
+          dist: xenial
+          sudo: true
 install:
-    - pip install zc.buildout
-    - buildout
+    - pip install zope.testrunner coverage coveralls
+    - pip install -U -e .[test,docs]
 script:
-    - bin/test
-    - cd docs; make SPHINXBUILD=../bin/sphinx-build doctest
+    - coverage run -m zope.testrunner --test-path=. -v
+    - coverage run -a -m sphinx.cmd.build -b doctest -d docs/_build/doctrees docs docs/_build/doctest
 notifications:
     email: false
+after_success:
+    - coveralls
 cache:
-  directories:
-    - eggs
+    - pip
+    - directories:
+        - eggs

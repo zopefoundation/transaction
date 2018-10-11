@@ -1,5 +1,5 @@
 :mod:`transaction` Developer Documentation
-================================
+==========================================
 
 Transaction objects manage resources for an individual activity.
 
