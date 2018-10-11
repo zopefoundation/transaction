@@ -13,7 +13,6 @@
 ############################################################################
 
 import weakref
-from ._compat import PY3
 
 # A simple implementation of weak sets, supplying just enough of Python's
 # sets.Set interface for our needs.
@@ -78,12 +77,9 @@ class WeakSet(object):
     # elements are actually trash.  By returning a list of weakrefs instead,
     # we avoid that, although the decision to use weakrefs is now very
     # visible to our clients.
-    if PY3: #pragma: no cover (coverage tests run under 2.7)
-        # Python 3: be sure to freeze the iterator, to avoid RuntimeError:
-        # dictionary changed size during iteration.
-        def as_weakref_list(self):
-            return list(self.data.valuerefs())
-    else:
-        # On Python2 we already get a list, no need to copy
-        def as_weakref_list(self):
-            return self.data.valuerefs()
+
+    def as_weakref_list(self):
+        # The docstring of WeakValueDictionary.valuerefs()
+        # guarantees to return an actual list on all supported versions
+        # of Python.
+        return self.data.valuerefs()

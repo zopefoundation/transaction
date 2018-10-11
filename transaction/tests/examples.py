@@ -66,7 +66,7 @@ class DataManager(object):
 
     def savepoint(self, transaction):
         if self.prepared:
-            raise TypeError("Can't get savepoint during two-phase commit")
+            raise AssertionError("Can't get savepoint during two-phase commit")
         self._checkTransaction(transaction)
         self.transaction = transaction
         self.sp += 1
@@ -150,14 +150,14 @@ class ResourceManager(object):
 
     def savepoint(self, transaction):
         if self.txn_state is not None:
-            raise TypeError("Can't get savepoint during two-phase commit")
+            raise AssertionError("Can't get savepoint during two-phase commit")
         self._checkTransaction(transaction)
         self.transaction = transaction
         self.sp += 1
         return SavePoint(self)
 
     def discard(self, transaction):
-        pass
+        "Does nothing"
 
 
 class SavePoint(object):
@@ -178,4 +178,4 @@ class SavePoint(object):
         self.rm.delta = self.delta
 
     def discard(self):
-        pass
+        "Does nothing."

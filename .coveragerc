@@ -3,6 +3,8 @@ source = transaction
 
 [report]
 exclude_lines =
-    # pragma: no cover
+    pragma: no cover
+    raise AssertionError
+    raise NotImplementedError
     class I[A-Z]\w+\((Interface|I[A-Z].*)\):
 show_missing = true

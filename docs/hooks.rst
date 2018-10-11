@@ -34,7 +34,6 @@ Now register the hook with a transaction.
 .. doctest::
 
     >>> from transaction import begin
-    >>> from transaction._compat import func_name
     >>> import transaction
     >>> t = begin()
     >>> t.addBeforeCommitHook(hook, '1')
@@ -43,7 +42,7 @@ We can see that the hook is indeed registered.
 
 .. doctest::
 
-    >>> [(func_name(hook), args, kws)
+    >>> [(hook.__name__, args, kws)
     ...  for hook, args, kws in t.getBeforeCommitHooks()]
     [('hook', ('1',), {})]
 
@@ -141,7 +140,7 @@ They are returned in the same order by getBeforeCommitHooks.
 
 .. doctest::
 
-    >>> [(func_name(hook), args, kws)  #doctest: +NORMALIZE_WHITESPACE
+    >>> [(hook.__name__, args, kws)  #doctest: +NORMALIZE_WHITESPACE
     ...  for hook, args, kws in t.getBeforeCommitHooks()]
     [('hook', ('4',), {'kw1': '4.1'}),
     ('hook', ('5',), {'kw2': '5.2'})]
@@ -201,7 +200,6 @@ Now register the hook with a transaction.
 .. doctest::
 
     >>> from transaction import begin
-    >>> from transaction._compat import func_name
     >>> t = begin()
     >>> t.addAfterCommitHook(hook, '1')
 
@@ -210,7 +208,7 @@ We can see that the hook is indeed registered.
 .. doctest::
 
 
-    >>> [(func_name(hook), args, kws)
+    >>> [(hook.__name__, args, kws)
     ...  for hook, args, kws in t.getAfterCommitHooks()]
     [('hook', ('1',), {})]
 
@@ -307,7 +305,7 @@ They are returned in the same order by getAfterCommitHooks.
 
 .. doctest::
 
-    >>> [(func_name(hook), args, kws)     #doctest: +NORMALIZE_WHITESPACE
+    >>> [(hook.__name__, args, kws)     #doctest: +NORMALIZE_WHITESPACE
     ...  for hook, args, kws in t.getAfterCommitHooks()]
     [('hook', ('4',), {'kw1': '4.1'}),
     ('hook', ('5',), {'kw2': '5.2'})]

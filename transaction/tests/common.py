@@ -27,11 +27,9 @@ class DummyLogger(object):
         self._clear()
     def _clear(self):
         self._log = []
-    def log(self, level, msg, *args, **kw):
+    def log(self, level, msg, *args, **kwargs):
         if args:
             self._log.append((level, msg % args))
-        elif kw:
-            self._log.append((level, msg % kw))
         else:
             self._log.append((level, msg))
     def debug(self, msg, *args, **kw):
@@ -46,7 +44,7 @@ class Monkey(object):
     # context-manager for replacing module names in the scope of a test.
     def __init__(self, module, **kw):
         self.module = module
-        self.to_restore = dict([(key, getattr(module, key)) for key in kw])
+        self.to_restore = {key: getattr(module, key) for key in kw}
         for key, value in kw.items():
             setattr(module, key, value)
 
@@ -58,6 +56,7 @@ class Monkey(object):
             setattr(self.module, key, value)
 
 def assertRaisesEx(e_type, checked, *args, **kw):
+    # Only used in doctests
     try:
         checked(*args, **kw)
     except e_type as e:
