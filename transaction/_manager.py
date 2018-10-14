@@ -215,17 +215,6 @@ class TransactionManager(object):
                 return result
 
 
-_local = threading.local()
-_lock = threading.Lock()
-def _thread_local_manager():
-    with _lock:
-        try:
-            return _local.manager
-        except AttributeError:
-            _local.manager = TransactionManager()
-            return _local.manager
-
-
 @implementer(ITransactionManager)
 class ThreadTransactionManager(threading.local):
     """
