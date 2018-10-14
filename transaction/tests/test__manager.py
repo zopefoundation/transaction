@@ -664,6 +664,36 @@ class TransactionManagerTests(unittest.TestCase):
             s.beforeCompletion.assert_called_with(t)
             s.afterCompletion.assert_called_with(t)
 
+    def test_unregisterSynch_on_transaction_manager_from_serparate_thread(self):
+        # We should be able to get the underlying manager of the thread manager
+        # cand call methods from other threads.
+
+        import threading, transaction
+
+        started = threading.Event()
+        stopped = threading.Event()
+
+        synchronizer = self
+
+        class Runner(threading.Thread):
+
+            def __init__(self):
+                threading.Thread.__init__(self)
+                self.manager = transaction.manager.manager
+                self.setDaemon(True)
+                self.start()
+
+            def run(self):
+                self.manager.registerSynch(synchronizer)
+                started.set()
+                stopped.wait()
+
+        runner = Runner()
+        started.wait()
+        runner.manager.unregisterSynch(synchronizer)
+        stopped.set()
+        runner.join(1)
+
 class AttemptTests(unittest.TestCase):
 
     def _makeOne(self, manager):

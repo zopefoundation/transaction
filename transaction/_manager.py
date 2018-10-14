@@ -215,12 +215,84 @@ class TransactionManager(object):
                 return result
 
 
-class ThreadTransactionManager(TransactionManager, threading.local):
-    """Thread-aware transaction manager.
+_local = threading.local()
+_lock = threading.Lock()
+def _thread_local_manager():
+    with _lock:
+        try:
+            return _local.manager
+        except AttributeError:
+            _local.manager = TransactionManager()
+            return _local.manager
 
-    Each thread is associated with a unique transaction.
+
+@implementer(ITransactionManager)
+class ThreadTransactionManager(threading.local):
+    """
+    Thread-local transaction manager.
+
+    A thread-local transaction manager can be used as a global
+    variable, but has a separate copy for each thread.
+
+    Advanced applications can use the `manager` attribute to get a
+    wrapped TransactionManager to allow cross-thread calls for
+    graceful shutdown of data managers.
     """
 
+    def __init__(self):
+        self.manager = TransactionManager()
+
+    @property
+    def explicit(self):
+        return self.manager.explicit
+
+    @explicit.setter
+    def explicit(self, v):
+        self.manager.explicit = v
+
+    def begin(self):
+        return self.manager.begin()
+
+    def get(self):
+        return self.manager.get()
+
+    __enter__ = get
+
+    def commit(self):
+        return self.manager.commit()
+
+    def abort(self):
+        return self.manager.abort()
+
+    def __exit__(self, t, v, tb):
+        return self.manager.__exit__(t, v, tb)
+
+    def doom(self):
+        return self.manager.doom()
+
+    def isDoomed(self):
+        return self.manager.isDoomed()
+
+    def savepoint(self, optimistic=False):
+        return self.manager.savepoint(optimistic)
+
+    def registerSynch(self, synch):
+        return self.manager.registerSynch(synch)
+
+    def unregisterSynch(self, synch):
+        return self.manager.unregisterSynch(synch)
+
+    def clearSynchs(self):
+        return self.manager.clearSynchs()
+
+    def registeredSynchs(self):
+        return self.manager.registeredSynchs()
+
+    def attempts(self, number=3):
+        return self.manager.attempts(number)
+
+    def run(self, func=None, tries=3):
+        return self.manager.run(func, tries)
 
 class Attempt(object):
 

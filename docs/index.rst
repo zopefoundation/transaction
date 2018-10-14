@@ -69,8 +69,9 @@ that it creates the transactions and keeps track of the current one. Whenever
 an application wants to use the transaction machinery, it gets the current
 transaction from the transaction manager before starting any operations
 
-The default transaction manager for the transaction package is thread aware.
-Each thread is associated with a unique transaction.
+The default transaction manager, `transaction.manager`, is thread
+local.  You use it as a global variable, but every thread has it's own
+copy. [#wrapped]_
 
 Application developers will most likely never need to create their own
 transaction managers.
@@ -141,3 +142,12 @@ Additional Documentation
    integrations
    api
    developer
+
+
+.. [#wrapped] The thread-local transaction manager,
+   `transaction.manager` wraps a regular transaction manager.  You can
+   get the wrapped transaction manager using the `manager` attribute.
+   Implementers of data managers can use this **advanced** feature to
+   allow graceful shutdown from a central/main thread, by having their
+   `close` methods call `unregisterSynch` on the wrapped transaction
+   manager they obtained when created or opened.
