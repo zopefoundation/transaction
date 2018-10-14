@@ -11,6 +11,7 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import mock
 import unittest
 
 
@@ -693,6 +694,54 @@ class TransactionManagerTests(unittest.TestCase):
         runner.manager.unregisterSynch(synchronizer)
         stopped.set()
         runner.join(1)
+
+
+class TestThreadTransactionManager(unittest.TestCase):
+
+    def test_sync_registration_thread_local_manager(self):
+        import transaction
+
+        sync = mock.MagicMock()
+        transaction.manager.registerSynch(sync)
+        t = transaction.begin()
+        sync.newTransaction.assert_called_with(t)
+        transaction.abort()
+        sync.beforeCompletion.assert_called_with(t)
+        sync.afterCompletion.assert_called_with(t)
+        transaction.manager.unregisterSynch(sync)
+        sync.reset_mock()
+        transaction.begin()
+        transaction.abort()
+        sync.newTransaction.assert_not_called()
+        sync.beforeCompletion.assert_not_called()
+        sync.afterCompletion.assert_not_called()
+
+        transaction.manager.registerSynch(sync)
+        t = transaction.begin()
+        sync.newTransaction.assert_called_with(t)
+        transaction.abort()
+        sync.beforeCompletion.assert_called_with(t)
+        sync.afterCompletion.assert_called_with(t)
+        transaction.manager.clearSynchs()
+        sync.reset_mock()
+        transaction.begin()
+        transaction.abort()
+        sync.newTransaction.assert_not_called()
+        sync.beforeCompletion.assert_not_called()
+        sync.afterCompletion.assert_not_called()
+
+    def test_explicit_thread_local_manager(self):
+        import transaction.interfaces
+
+        self.assertFalse(transaction.manager.explicit)
+        transaction.abort()
+        transaction.manager.explicit = True
+        self.assertTrue(transaction.manager.explicit)
+        with self.assertRaises(transaction.interfaces.NoTransaction):
+            transaction.abort()
+        transaction.manager.explicit = False
+        transaction.abort()
+
 
 class AttemptTests(unittest.TestCase):
 
