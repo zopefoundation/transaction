@@ -22,7 +22,4 @@ notifications:
     email: false
 after_success:
     - coveralls
-cache:
-    - pip
-    - directories:
-        - eggs
+cache: pip
