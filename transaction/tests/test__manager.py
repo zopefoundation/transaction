@@ -14,6 +14,10 @@
 import mock
 import unittest
 
+import zope.interface.verify
+
+from .. import interfaces
+
 
 class TransactionManagerTests(unittest.TestCase):
 
@@ -31,6 +35,10 @@ class TransactionManagerTests(unittest.TestCase):
         sub3 = DataObject(mgr)
         nosub1 = DataObject(mgr, nost=1)
         return mgr, sub1, sub2, sub3, nosub1
+
+    def test_interface(self):
+        zope.interface.verify.verifyObject(interfaces.ITransactionManager,
+                                           self._makeOne())
 
     def test_ctor(self):
         tm = self._makeOne()
@@ -697,6 +705,11 @@ class TransactionManagerTests(unittest.TestCase):
 
 
 class TestThreadTransactionManager(unittest.TestCase):
+
+    def test_interface(self):
+        import transaction
+        zope.interface.verify.verifyObject(interfaces.ITransactionManager,
+                                           transaction.manager)
 
     def test_sync_registration_thread_local_manager(self):
         import transaction
