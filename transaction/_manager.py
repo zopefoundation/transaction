@@ -245,7 +245,8 @@ class ThreadTransactionManager(threading.local):
     def get(self):
         return self.manager.get()
 
-    __enter__ = get
+    def __enter__(self):
+        return self.manager.__enter__()
 
     def commit(self):
         return self.manager.commit()
