@@ -2,10 +2,15 @@
  Changes
 =========
 
-2.3.1 (unreleased)
+2.4.0 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Changed the implementation of ThreadTransactionManager to be a
+  thread.local that wraps a TransactionManager rather than a
+  thread.local that inherits from TransactionManager. It now exposes a
+  manager attribute that allows access to the wrapped transaction
+  manager to allow cross thread calls. See `issue 68
+  <https://github.com/zopefoundation/transaction/pull/68>`_.
 
 
 2.3.0 (2018-10-19)
