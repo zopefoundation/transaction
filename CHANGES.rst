@@ -2,7 +2,7 @@
  Changes
 =========
 
-2.4.0 (unreleased)
+2.4.0 (2018-10-23)
 ==================
 
 - Changed the implementation of ThreadTransactionManager to be a
