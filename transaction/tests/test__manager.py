@@ -11,7 +11,12 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import mock
 import unittest
+
+import zope.interface.verify
+
+from .. import interfaces
 
 
 class TransactionManagerTests(unittest.TestCase):
@@ -30,6 +35,10 @@ class TransactionManagerTests(unittest.TestCase):
         sub3 = DataObject(mgr)
         nosub1 = DataObject(mgr, nost=1)
         return mgr, sub1, sub2, sub3, nosub1
+
+    def test_interface(self):
+        zope.interface.verify.verifyObject(interfaces.ITransactionManager,
+                                           self._makeOne())
 
     def test_ctor(self):
         tm = self._makeOne()
@@ -663,6 +672,101 @@ class TransactionManagerTests(unittest.TestCase):
         for s in sync1, sync2:
             s.beforeCompletion.assert_called_with(t)
             s.afterCompletion.assert_called_with(t)
+
+    def test_unregisterSynch_on_transaction_manager_from_serparate_thread(self):
+        # We should be able to get the underlying manager of the thread manager
+        # cand call methods from other threads.
+
+        import threading, transaction
+
+        started = threading.Event()
+        stopped = threading.Event()
+
+        synchronizer = self
+
+        class Runner(threading.Thread):
+
+            def __init__(self):
+                threading.Thread.__init__(self)
+                self.manager = transaction.manager.manager
+                self.setDaemon(True)
+                self.start()
+
+            def run(self):
+                self.manager.registerSynch(synchronizer)
+                started.set()
+                stopped.wait()
+
+        runner = Runner()
+        started.wait()
+        runner.manager.unregisterSynch(synchronizer)
+        stopped.set()
+        runner.join(1)
+
+
+class TestThreadTransactionManager(unittest.TestCase):
+
+    def test_interface(self):
+        import transaction
+        zope.interface.verify.verifyObject(interfaces.ITransactionManager,
+                                           transaction.manager)
+
+    def test_sync_registration_thread_local_manager(self):
+        import transaction
+
+        sync = mock.MagicMock()
+        sync2 = mock.MagicMock()
+        self.assertFalse(transaction.manager.registeredSynchs())
+        transaction.manager.registerSynch(sync)
+        self.assertTrue(transaction.manager.registeredSynchs())
+        transaction.manager.registerSynch(sync2)
+        self.assertTrue(transaction.manager.registeredSynchs())
+        t = transaction.begin()
+        sync.newTransaction.assert_called_with(t)
+        transaction.abort()
+        sync.beforeCompletion.assert_called_with(t)
+        sync.afterCompletion.assert_called_with(t)
+        transaction.manager.unregisterSynch(sync)
+        self.assertTrue(transaction.manager.registeredSynchs())
+        transaction.manager.unregisterSynch(sync2)
+        self.assertFalse(transaction.manager.registeredSynchs())
+        sync.reset_mock()
+        transaction.begin()
+        transaction.abort()
+        sync.newTransaction.assert_not_called()
+        sync.beforeCompletion.assert_not_called()
+        sync.afterCompletion.assert_not_called()
+
+        self.assertFalse(transaction.manager.registeredSynchs())
+        transaction.manager.registerSynch(sync)
+        transaction.manager.registerSynch(sync2)
+        t = transaction.begin()
+        sync.newTransaction.assert_called_with(t)
+        self.assertTrue(transaction.manager.registeredSynchs())
+        transaction.abort()
+        sync.beforeCompletion.assert_called_with(t)
+        sync.afterCompletion.assert_called_with(t)
+        transaction.manager.clearSynchs()
+        self.assertFalse(transaction.manager.registeredSynchs())
+        sync.reset_mock()
+        transaction.begin()
+        transaction.abort()
+        sync.newTransaction.assert_not_called()
+        sync.beforeCompletion.assert_not_called()
+        sync.afterCompletion.assert_not_called()
+
+    def test_explicit_thread_local_manager(self):
+        import transaction.interfaces
+
+        self.assertFalse(transaction.manager.explicit)
+        transaction.abort()
+        transaction.manager.explicit = True
+        self.assertTrue(transaction.manager.explicit)
+        with self.assertRaises(transaction.interfaces.NoTransaction):
+            transaction.abort()
+        transaction.manager.explicit = False
+        transaction.abort()
+
 
 class AttemptTests(unittest.TestCase):
 
