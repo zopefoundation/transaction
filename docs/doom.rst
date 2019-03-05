@@ -43,7 +43,7 @@ To see how it works we first need to create a stub data manager:
     ...             count += access_count
     ...         return count
     ...     def sortKey(self):
-    ...         return 1
+    ...         return '1'
 
 Start a new transaction:
 
