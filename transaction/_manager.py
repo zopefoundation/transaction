@@ -187,7 +187,7 @@ class TransactionManager(object):
         name = text_(name) if name else u''
         doc = text_(doc) if doc else u''
 
-        if name != u'_':
+        if name and name != u'_':
             if doc:
                 doc = name + u'\n\n' + doc
             else:
