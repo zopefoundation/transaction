@@ -9,6 +9,9 @@
 
 - Add support for Python 3.8.
 
+- Fix transaction manager run problems
+  (`#58 <https://github.com/zopefoundation/transaction/issues/58>`_)
+
 
 2.4.0 (2018-10-23)
 ==================

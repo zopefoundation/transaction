@@ -176,9 +176,6 @@ class TransactionManager(object):
                 tries = func
             return lambda func: self.run(func, tries)
 
-        if tries <= 0:
-            raise ValueError("tries must be positive")
-
         # These are ordinarily native strings, but that's
         # not required. A callable class could override them
         # to anything, and a Python 2.7 file could have
@@ -196,23 +193,11 @@ class TransactionManager(object):
             else:
                 doc = name
 
-        for i in range(1, tries + 1):  # pragma: no branch
-            txn = self.begin()
-            if doc:
-                txn.note(doc)
-
-            try:
-                result = func()
-                txn.commit()
-            except Exception as v:
-                if i == tries:
-                    raise # that was our last chance
-                retry = self._retryable(v.__class__, v)
-                txn.abort()
-                if not retry:
-                    raise
-            else:
-                return result
+        for attempt in self.attempts(tries):
+            with attempt:
+                if doc:
+                    self.get().note(doc)
+                return func()
 
 
 @implementer(ITransactionManager)

@@ -132,6 +132,37 @@ class ITransactionManager(Interface):
         This exists to support test cleanup/initialization
         """
 
+    def attempts(number=3):
+        """Generate up to *number* (transactional) context managers.
+
+        Each of the generated context managers sets up
+        a new transaction, executes the with block and
+        commits or aborts the transaction depending on whether
+        the with block execution was successful or resulted in
+        an exception. If the with block execution resulted in
+        a `TransientError` and the maximal number of attempts
+        is not yet reached, then the exception is swallowed
+        and the next context manager is generated.
+        In all other cases, the generation stops and a possible
+        exception is propagated.
+        """
+
+    def run(func=None, tries=3):
+        """Call (parameter less) *func*; retry in case of `TransientError`.
+
+        The call is tried up to *tries* times.
+
+        The call is performed in a new transaction. After
+        the call, the transaction is committed (no exception) or
+        aborted (exception).
+
+        `run` supports the alternative signature `run(tries=3)`.
+        If *func* is not given or passed as `None`, then
+        the call to `run` returns a function taking *func*
+        as argument and then calling `run(func, tries)`.
+        """
+
+
 class ITransaction(Interface):
     """Object representing a running transaction.
 
