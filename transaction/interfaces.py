@@ -135,16 +135,22 @@ class ITransactionManager(Interface):
     def attempts(number=3):
         """Generate up to *number* (transactional) context managers.
 
-        Each of the generated context managers sets up
-        a new transaction, executes the with block and
-        commits or aborts the transaction depending on whether
-        the with block execution was successful or resulted in
-        an exception. If the with block execution resulted in
-        a `TransientError` and the maximal number of attempts
-        is not yet reached, then the exception is swallowed
-        and the next context manager is generated.
-        In all other cases, the generation stops and a possible
-        exception is propagated.
+        This method is typically used as follows:
+
+           for attempt in self.attempts():
+               with attemp:
+                   *with block*
+
+        The `with attempt` starts a new transaction for the execution
+        of the *with block*. If the execution succeeds,
+        the transaction is commited and the `for` loop
+        terminates. If the execution raised an exception,
+        then the transaction is aborted.
+        If the exception was some kind
+        of `TransientError` and the maximal number of attempts
+        is not yet reached, then a next iteration of the `for` loop
+        starts. In all other cases, the `for` loop terminates
+        with the exception.
         """
 
     def run(func=None, tries=3):
