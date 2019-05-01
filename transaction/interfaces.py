@@ -137,8 +137,8 @@ class ITransactionManager(Interface):
 
         This method is typically used as follows:
 
-           for attempt in self.attempts():
-               with attemp:
+           for attempt in transaction_manager.attempts():
+               with attempt:
                    *with block*
 
         The `with attempt` starts a new transaction for the execution
@@ -154,7 +154,8 @@ class ITransactionManager(Interface):
         """
 
     def run(func=None, tries=3):
-        """Call (parameter less) *func*; retry in case of `TransientError`.
+        """Call (parameter less) *func* in its own transaction;
+        retry in case of some kind of `TransientError`.
 
         The call is tried up to *tries* times.
 
