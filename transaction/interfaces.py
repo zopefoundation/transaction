@@ -19,6 +19,11 @@ class ITransactionManager(Interface):
     """An object that manages a sequence of transactions.
 
     Applications use transaction managers to establish transaction boundaries.
+
+    A transaction manager supports the "context manager" protocol:
+    Its `__enter__` begins a new transaction; its `__exit__` commits
+    the current transaction if no exception has occured; otherwise,
+    it aborts it.
     """
 
     explicit = Attribute(
@@ -135,7 +140,7 @@ class ITransactionManager(Interface):
     def attempts(number=3):
         """Generate up to *number* (transactional) context managers.
 
-        This method is typically used as follows:
+        This method is typically used as follows::
 
            for attempt in transaction_manager.attempts():
                with attempt:
@@ -143,7 +148,7 @@ class ITransactionManager(Interface):
 
         The `with attempt` starts a new transaction for the execution
         of the *with block*. If the execution succeeds,
-        the transaction is commited and the `for` loop
+        the (then current) transaction is commited and the `for` loop
         terminates. If the execution raised an exception,
         then the transaction is aborted.
         If the exception was some kind
@@ -160,7 +165,7 @@ class ITransactionManager(Interface):
         The call is tried up to *tries* times.
 
         The call is performed in a new transaction. After
-        the call, the transaction is committed (no exception) or
+        the call, the (then current) transaction is committed (no exception) or
         aborted (exception).
 
         `run` supports the alternative signature `run(tries=3)`.

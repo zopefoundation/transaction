@@ -703,6 +703,13 @@ class TransactionManagerTests(unittest.TestCase):
         stopped.set()
         runner.join(1)
 
+    # the preceeding test (maybe others as well) registers `self` as
+    #   synchronizer; satisfy the `ISynchronizer` requirements
+    def newTransaction(self, transaction):
+        pass
+
+    beforeCompletion = afterCompletion = newTransaction
+
 
 class TestThreadTransactionManager(unittest.TestCase):
 
