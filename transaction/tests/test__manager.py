@@ -704,15 +704,17 @@ class TransactionManagerTests(unittest.TestCase):
         runner.join(1)
 
     # The lack of the method below caused a test failure in one run
-    #   -- maybe caused indirectly by the failure of another test
-    # Defining the methods below reduced the "test coverage". We
-    #   therefore remove them again
-    # the preceeding test (maybe others as well) registers `self` as
-    #   synchronizer; satisfy the `ISynchronizer` requirements
-##    def newTransaction(self, transaction):
-##        pass
-
-##    beforeCompletion = afterCompletion = newTransaction
+    #   -- caused indirectly by the failure of another test (this
+    #   indicates that the tests in this suite are not fully isolated).
+    #   However, defining the methods below reduced the "test coverage"
+    #   once the initial test failure has been fixed.
+    #   We therefore comment them out.
+    ##    # the preceeding test (maybe others as well) registers `self` as
+    ##    #   synchronizer; satisfy the `ISynchronizer` requirements
+    ##    def newTransaction(self, transaction):
+    ##        pass
+    ##
+    ##    beforeCompletion = afterCompletion = newTransaction
 
 
 class TestThreadTransactionManager(unittest.TestCase):
