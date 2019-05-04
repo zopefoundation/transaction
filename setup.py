@@ -14,7 +14,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '2.4.1.dev0'
+version = '3.0.0.dev0'
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -43,10 +43,10 @@ setup(name='transaction',
           "Programming Language :: Python :: 2",
           "Programming Language :: Python :: 2.7",
           "Programming Language :: Python :: 3",
-          "Programming Language :: Python :: 3.4",
           "Programming Language :: Python :: 3.5",
           "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
+          "Programming Language :: Python :: 3.8",
           "Programming Language :: Python :: Implementation :: CPython",
           "Programming Language :: Python :: Implementation :: PyPy",
           "Framework :: ZODB",
