@@ -1103,26 +1103,23 @@ class TransactionTests(unittest.TestCase):
         comm = []
         txn = self._makeOne()
         def bah():
-            comm.append("before")
+            comm.append("before")  # pragma: no cover
         def aah():
-            comm.append("after")
+            comm.append("after")  # pragma: no cover
         txn.addAfterAbortHook(aah)
         txn.addBeforeAbortHook(bah)
         txn.commit()
         self.assertEqual(comm, [])  # not called
         self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
         self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
-        # the calls below are to keep `coveralls` happy
-        bah()
-        aah()
         
     def test_commit_w_error_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
         def bah():
-            comm.append("before")
+            comm.append("before")  # pragma: no cover
         def aah():
-            comm.append("after")
+            comm.append("after")  # pragma: no cover
         txn.addAfterAbortHook(aah)
         txn.addBeforeAbortHook(bah)
         r = Resource("aaa", "tpc_vote")
@@ -1132,9 +1129,6 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(comm, [])  # not called
         self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
         self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
-        # the calls below are to keep `coveralls` happy
-        bah()
-        aah()
         
     def test_note(self):
         txn = self._makeOne()
