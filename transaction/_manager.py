@@ -18,6 +18,7 @@ are associated with the right transaction.
 """
 import sys
 import threading
+import itertools
 
 from zope.interface import implementer
 
@@ -177,7 +178,7 @@ class TransactionManager(object):
             return lambda func: self.run(func, tries)
 
         if tries <= 0:
-            raise ValueError("tries must be positive")
+            raise ValueError("tries must be > 0")
 
         # These are ordinarily native strings, but that's
         # not required. A callable class could override them
@@ -190,29 +191,30 @@ class TransactionManager(object):
         name = text_(name) if name else u''
         doc = text_(doc) if doc else u''
 
-        if name != u'_':
+        if name and name != u'_':
             if doc:
                 doc = name + u'\n\n' + doc
             else:
                 doc = name
-
-        for i in range(1, tries + 1):  # pragma: no branch
+        
+        for try_no in itertools.count(1):
             txn = self.begin()
             if doc:
                 txn.note(doc)
-
             try:
                 result = func()
-                txn.commit()
-            except Exception as v:
-                if i == tries:
-                    raise # that was our last chance
-                retry = self._retryable(v.__class__, v)
-                txn.abort()
-                if not retry:
-                    raise
-            else:
+                self.commit()
                 return result
+            except BaseException as exc:
+                # Note: `abort` must not be called before `_retryable`
+                retry = (isinstance(exc, Exception)
+                         and try_no < tries
+                         and self._retryable(exc.__class__, exc))
+                self.abort()
+                if retry:
+                    continue
+                else:
+                    raise
 
 
 @implementer(ITransactionManager)

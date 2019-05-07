@@ -19,6 +19,11 @@ class ITransactionManager(Interface):
     """An object that manages a sequence of transactions.
 
     Applications use transaction managers to establish transaction boundaries.
+
+    A transaction manager supports the "context manager" protocol:
+    Its `__enter__` begins a new transaction; its `__exit__` commits
+    the current transaction if no exception has occured; otherwise,
+    it aborts it.
     """
 
     explicit = Attribute(
@@ -131,6 +136,44 @@ class ITransactionManager(Interface):
 
         This exists to support test cleanup/initialization
         """
+
+    def attempts(number=3):
+        """Generate up to *number* (transactional) context managers.
+
+        This method is typically used as follows::
+
+           for attempt in transaction_manager.attempts():
+               with attempt:
+                   *with block*
+
+        The `with attempt` starts a new transaction for the execution
+        of the *with block*. If the execution succeeds,
+        the (then current) transaction is commited and the `for` loop
+        terminates. If the execution raised an exception,
+        then the transaction is aborted.
+        If the exception was some kind
+        of `TransientError` and the maximal number of attempts
+        is not yet reached, then a next iteration of the `for` loop
+        starts. In all other cases, the `for` loop terminates
+        with the exception.
+        """
+
+    def run(func=None, tries=3):
+        """Call (parameter less) *func* in its own transaction;
+        retry in case of some kind of `TransientError`.
+
+        The call is tried up to *tries* times.
+
+        The call is performed in a new transaction. After
+        the call, the (then current) transaction is committed (no exception) or
+        aborted (exception).
+
+        `run` supports the alternative signature `run(tries=3)`.
+        If *func* is not given or passed as `None`, then
+        the call to `run` returns a function taking *func*
+        as argument and then calling `run(func, tries)`.
+        """
+
 
 class ITransaction(Interface):
     """Object representing a running transaction.

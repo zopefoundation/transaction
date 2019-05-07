@@ -9,6 +9,15 @@
 
 - Add support for Python 3.8.
 
+- ``TransactionManager.run`` now commits/aborts the transaction
+  "active" after the execution of *func* (and no longer the initial
+  transaction which might already have been committed/aborted by *func*)
+  (`#58 <https://github.com/zopefoundation/transaction/issues/58>`_).
+
+  It aborts the transaction now for all exceptions raised by *func* - even
+  if it is only an instance of `BaseException` but not of `Exception`,
+  such as e.g. a ``SystemExit`` or ``KeyboardInterupt`` exception.
+
 
 2.4.0 (2018-10-23)
 ==================
