@@ -1066,6 +1066,25 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(logger._log[0][1].startswith(
                             "Error in after abort hook"))
 
+    def test_callAfterAbortHook_w_abort_error(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        _hooked2 = []
+        def _hook2(*args, **kw):
+            _hooked2.append((args, kw))
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        r = Resource("r", "abort")
+        txn.join(r)
+        txn.addAfterAbortHook(_hook2, ('two',), dict(dos=2))
+        txn._callAfterAbortHooks()
+        self.assertEqual(logger._log[0][0], 'error')
+        self.assertTrue(logger._log[0][1].startswith(
+                            "Error in abort() on manager"))
+
     def test_abort_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
@@ -1110,6 +1129,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(comm, [])  # not called
         self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
         self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
+        # the calls below are to keep `coveralls` happy
+        bah()
+        aah()
         
     def test_note(self):
         txn = self._makeOne()
