@@ -356,6 +356,74 @@ class ITransaction(Interface):
         by a top-level transaction commit.
         """
 
+    def addBeforeAbortHook(hook, args=(), kws=None):
+        """Register a hook to call before the transaction is abortted.
+
+        The specified hook function will be called after the transaction's
+        abort method has been called, but before the abort process has been
+        started.  The hook will be passed the specified positional (`args`)
+        and keyword (`kws`) arguments.  `args` is a sequence of positional
+        arguments to be passed, defaulting to an empty tuple (no positional
+        arguments are passed).  `kws` is a dictionary of keyword argument
+        names and values to be passed, or the default None (no keyword
+        arguments are passed).
+
+        Multiple hooks can be registered and will be called in the order they
+        were registered (first registered, first called).  This method can
+        also be called from a hook:  an executing hook can register more
+        hooks.  Applications should take care to avoid creating infinite loops
+        by recursively registering hooks.
+
+        Hooks are called only for a top-level abort. If the
+        transaction is committed, abort hooks are not called.
+        This is true even if the commit causes
+        internally an abort; in this case, the after commit hooks
+        are called with first argument `False`.
+        Calling a hook "consumes" its registration too:  hook registrations
+        do not persist across transactions.
+        """
+
+    def getBeforeAbortHooks():
+        """Return iterable producing the registered addBeforeAbort hooks.
+
+        A triple (hook, args, kws) is produced for each registered hook.
+        The hooks are produced in the order in which they would be invoked
+        by a top-level transaction abort.
+        """
+
+    def addAfterAbortHook(hook, args=(), kws=None):
+        """Register a hook to call after a transaction abort.
+
+        The specified hook function will be called after the transaction
+        abort  with positional arguments `args`  and `kws`
+        keyword arguments.  `args` is a sequence of
+        positional arguments to be passed, defaulting to an empty tuple
+        `kws` is a dictionary of keyword argument names and values to be
+        passed, or the default None (no keyword arguments are passed).
+        
+        Multiple hooks can be registered and will be called in the order they
+        were registered (first registered, first called).  This method can
+        also be called from a hook:  an executing hook can register more
+        hooks.  Applications should take care to avoid creating infinite loops
+        by recursively registering hooks.
+
+        Hooks are called only for a top-level abort. If the
+        transaction is committed, abort hooks are not called.
+        This is true even if the commit causes
+        internally an abort; in this case, the after commit hooks
+        are called with first argument `False`.
+        Calling a hook "consumes" its registration too:  hook registrations
+        do not persist across transactions.
+        """
+
+    def getAfterAbortHooks():
+        """Return iterable producing the registered addAfterAbort hooks.
+
+        A triple (hook, args, kws) is produced for each registered hook.
+        The hooks are produced in the order in which they would be invoked
+        by a top-level transaction abort.
+        """
+
     def set_data(ob, data):
         """Hold data on behalf of an object
 

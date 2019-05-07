@@ -983,6 +983,134 @@ class TransactionTests(unittest.TestCase):
         txn.abort()
         self.assertEqual(txn._resources, [])
 
+    def test_getBeforeAbortHooks_empty(self):
+        txn = self._makeOne()
+        self.assertEqual(list(txn.getBeforeAbortHooks()), [])
+
+    def test_addBeforeAbortHook(self):
+        def _hook(*args, **kw):
+            raise AssertionError("Not called")
+        txn = self._makeOne()
+        txn.addBeforeAbortHook(_hook, ('one',), dict(uno=1))
+        self.assertEqual(list(txn.getBeforeAbortHooks()),
+                         [(_hook, ('one',), {'uno': 1})])
+
+    def test_addBeforeAbortHook_w_kws(self):
+        def _hook(*args, **kw):
+            raise AssertionError("Not called")
+        txn = self._makeOne()
+        txn.addBeforeAbortHook(_hook, ('one',))
+        self.assertEqual(list(txn.getBeforeAbortHooks()),
+                         [(_hook, ('one',), {})])
+
+    def test_getAfterAbortHooks_empty(self):
+        txn = self._makeOne()
+        self.assertEqual(list(txn.getAfterAbortHooks()), [])
+
+    def test_addAfterAbortHook(self):
+        def _hook(*args, **kw):
+            raise AssertionError("Not called")
+        txn = self._makeOne()
+        txn.addAfterAbortHook(_hook, ('one',), dict(uno=1))
+        self.assertEqual(list(txn.getAfterAbortHooks()),
+                         [(_hook, ('one',), {'uno': 1})])
+
+    def test_addAfterAbortHook_wo_kws(self):
+        def _hook(*args, **kw):
+            raise AssertionError("Not called")
+        txn = self._makeOne()
+        txn.addAfterAbortHook(_hook, ('one',))
+        self.assertEqual(list(txn.getAfterAbortHooks()),
+                         [(_hook, ('one',), {})])
+
+    def test_callAfterAbortHook_w_error(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        _hooked2 = []
+        def _hook1(*args, **kw):
+            raise ValueError()
+        def _hook2(*args, **kw):
+            _hooked2.append((args, kw))
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn.addAfterAbortHook(_hook1, ('one',))
+        txn.addAfterAbortHook(_hook2, ('two',), dict(dos=2))
+        txn._callAfterAbortHooks()
+        # second hook gets called even if first raises
+        self.assertEqual(_hooked2, [(('two',), {'dos': 2})])
+        self.assertEqual(len(logger._log), 1)
+        self.assertEqual(logger._log[0][0], 'error')
+        self.assertTrue(logger._log[0][1].startswith(
+                            "Error in after abort hook"))
+
+    def test_callAfterAbortHook_w_abort(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        _hooked2 = []
+        def _hook1(*args, **kw):
+            raise ValueError()
+        def _hook2(*args, **kw):
+            _hooked2.append((args, kw))
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn.addAfterAbortHook(_hook1, ('one',))
+        txn.addAfterAbortHook(_hook2, ('two',), dict(dos=2))
+        txn._callAfterAbortHooks()
+        self.assertEqual(logger._log[0][0], 'error')
+        self.assertTrue(logger._log[0][1].startswith(
+                            "Error in after abort hook"))
+
+    def test_abort_w_abortHooks(self):
+        comm = []
+        txn = self._makeOne()
+        def bah():
+            comm.append("before")
+        def aah():
+            comm.append("after")
+        txn.addAfterAbortHook(aah)
+        txn.addBeforeAbortHook(bah)
+        txn.abort()
+        self.assertEqual(comm, ["before", "after"])
+        self.assertEqual(list(txn.getBeforeAbortHooks()), [])
+        self.assertEqual(list(txn.getAfterAbortHooks()), [])
+        
+    def test_commit_w_abortHooks(self):
+        comm = []
+        txn = self._makeOne()
+        def bah():
+            comm.append("before")
+        def aah():
+            comm.append("after")
+        txn.addAfterAbortHook(aah)
+        txn.addBeforeAbortHook(bah)
+        txn.commit()
+        self.assertEqual(comm, [])  # not called
+        self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
+        self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
+        
+    def test_commit_w_error_w_abortHooks(self):
+        comm = []
+        txn = self._makeOne()
+        def bah():
+            comm.append("before")
+        def aah():
+            comm.append("after")
+        txn.addAfterAbortHook(aah)
+        txn.addBeforeAbortHook(bah)
+        r = Resource("aaa", "tpc_vote")
+        txn.join(r)
+        with self.assertRaises(ValueError):
+            txn.commit()
+        self.assertEqual(comm, [])  # not called
+        self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
+        self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
+        
     def test_note(self):
         txn = self._makeOne()
         try:

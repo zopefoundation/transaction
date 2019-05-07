@@ -120,6 +120,13 @@ class Transaction(object):
         # List of (hook, args, kws) tuples added by addAfterCommitHook().
         self._after_commit = []
 
+
+        # List of (hook, args, kws) tuples added by addBeforeAbortHook().
+        self._before_abort = []
+
+        # List of (hook, args, kws) tuples added by addAfterAbortHook().
+        self._after_abort = []
+
     @property
     def _extension(self):
         # for backward compatibility, since most clients used this
@@ -409,6 +416,67 @@ class Transaction(object):
         self._after_commit = []
         self._before_commit = []
 
+    def getBeforeAbortHooks(self):
+        """ See ITransaction.
+        """
+        return iter(self._before_abort)
+
+    def addBeforeAbortHook(self, hook, args=(), kws=None):
+        """ See ITransaction.
+        """
+        if kws is None:
+            kws = {}
+        self._before_abort.append((hook, tuple(args), kws))
+
+    def _callBeforeAbortHooks(self):
+        # Call all hooks registered, allowing further registrations
+        # during processing.  Note that calls to addBeforeAbortHook() may
+        # add additional hooks while hooks are running, and iterating over a
+        # growing list is well-defined in Python.
+        for hook, args, kws in self._before_abort:
+            hook(*args, **kws)
+        self._before_abort = []
+
+    def getAfterAbortHooks(self):
+        """ See ITransaction.
+        """
+        return iter(self._after_abort)
+
+    def addAfterAbortHook(self, hook, args=(), kws=None):
+        """ See ITransaction.
+        """
+        if kws is None:
+            kws = {}
+        self._after_abort.append((hook, tuple(args), kws))
+
+    def _callAfterAbortHooks(self):
+        # Avoid to abort anything at the end if no hooks are registred.
+        if not self._after_abort:
+            return
+        # Call all hooks registered, allowing further registrations
+        # during processing.  Note that calls to addAterAbortHook() may
+        # add additional hooks while hooks are running, and iterating over a
+        # growing list is well-defined in Python.
+        for hook, args, kws in self._after_abort:
+            try:
+                hook(*args, **kws)
+            except:
+                # We need to catch the exceptions if we want all hooks
+                # to be called
+                self.log.error("Error in after abort hook exec in %s ",
+                               hook, exc_info=sys.exc_info())
+        # The transaction is already abortted. It must not have
+        # further effects after the abort.
+        for rm in self._resources:
+            try:
+                rm.abort(self)
+            except:
+                # XXX should we take further actions here ?
+                self.log.error("Error in abort() on manager %s",
+                               rm, exc_info=sys.exc_info())
+        self._after_abort = []
+        self._before_abort = []
+
     def _commitResources(self):
         # Execute the two-phase commit protocol.
 
@@ -499,6 +567,7 @@ class Transaction(object):
     def abort(self):
         """ See ITransaction.
         """
+        self._callBeforeAbortHooks()
         if self._savepoint2index:
             self._invalidate_all_savepoints()
 
@@ -519,6 +588,7 @@ class Transaction(object):
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
 
+            self._callAfterAbortHooks()
             self._free()
 
             self._synchronizers.map(lambda s: s.afterCompletion(self))
