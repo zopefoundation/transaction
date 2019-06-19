@@ -18,6 +18,12 @@
   if it is only an instance of `BaseException` but not of `Exception`,
   such as e.g. a ``SystemExit`` or ``KeyboardInterupt`` exception.
 
+- Support abort hooks (symmetrically to commit hooks)
+  (`#77 <https://github.com/zopefoundation/transaction/issues/77>`_).
+
+- Hooks are now cleared after successfull ``commit`` and ``abort`` to avoid
+  potential cyclic references.
+
 
 2.4.0 (2018-10-23)
 ==================

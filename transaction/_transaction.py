@@ -120,6 +120,12 @@ class Transaction(object):
         # List of (hook, args, kws) tuples added by addAfterCommitHook().
         self._after_commit = []
 
+        # List of (hook, args, kws) tuples added by addBeforeAbortHook().
+        self._before_abort = []
+
+        # List of (hook, args, kws) tuples added by addAfterAbortHook().
+        self._after_abort = []
+
     @property
     def _extension(self):
         # for backward compatibility, since most clients used this
@@ -312,9 +318,9 @@ class Transaction(object):
             finally:
                 del t, v, tb
         else:
-            self._free()
             self._synchronizers.map(lambda s: s.afterCompletion(self))
             self._callAfterCommitHooks(status=True)
+            self._free()
         self.log.debug("commit")
 
     def _saveAndGetCommitishError(self):
@@ -360,12 +366,8 @@ class Transaction(object):
 
     def _callBeforeCommitHooks(self):
         # Call all hooks registered, allowing further registrations
-        # during processing.  Note that calls to addBeforeCommitHook() may
-        # add additional hooks while hooks are running, and iterating over a
-        # growing list is well-defined in Python.
-        for hook, args, kws in self._before_commit:
-            hook(*args, **kws)
-        self._before_commit = []
+        # during processing.
+        self._call_hooks(self._before_commit)
 
     def getAfterCommitHooks(self):
         """ See ITransaction.
@@ -380,34 +382,85 @@ class Transaction(object):
         self._after_commit.append((hook, tuple(args), kws))
 
     def _callAfterCommitHooks(self, status=True):
+        self._call_hooks(self._after_commit,
+                         exc=False, clean=True, prefix_args=(status,))
+
+    def _call_hooks(self, hooks, exc=True, clean=False, prefix_args=()):
+        """call *hooks*.
+
+        If *exc* is true, fail on the first exception; otherwise
+        log the exception and continue.
+
+        If *clean* is true, abort all resources. This is to ensure
+        a clean state should a (after) hook has affected one
+        of the resources.
+
+        *prefix_args* defines additioan arguments prefixed
+        to the arguments provided by the hook definition.
+
+        ``_call_hooks`` supports that a hook adds new hooks.
+        """
         # Avoid to abort anything at the end if no hooks are registred.
-        if not self._after_commit:
+        if not hooks:
             return
+        try:
+            # Call all hooks registered, allowing further registrations
+            # during processing
+            for hook, args, kws in hooks:
+                try:
+                    hook(*(prefix_args + args), **kws)
+                except:
+                    if exc:
+                        raise
+                    # We should not fail
+                    self.log.error("Error in hook exec in %s ",
+                                   hook, exc_info=sys.exc_info())
+        finally:
+            del hooks[:]  # clear hooks
+            if not clean:
+                return
+            # The primary operation has already been performed.
+            # But the hooks execution might have left the resources
+            # in an unclean state. Clean up
+            for rm in self._resources:
+                try:
+                    rm.abort(self)
+                except:
+                    # XXX should we take further actions here ?
+                    self.log.error("Error in abort() on manager %s",
+                                   rm, exc_info=sys.exc_info())
+
+    def getBeforeAbortHooks(self):
+        """ See ITransaction.
+        """
+        return iter(self._before_abort)
+
+    def addBeforeAbortHook(self, hook, args=(), kws=None):
+        """ See ITransaction.
+        """
+        if kws is None:
+            kws = {}
+        self._before_abort.append((hook, tuple(args), kws))
+
+    def _callBeforeAbortHooks(self):
         # Call all hooks registered, allowing further registrations
-        # during processing.  Note that calls to addAterCommitHook() may
-        # add additional hooks while hooks are running, and iterating over a
-        # growing list is well-defined in Python.
-        for hook, args, kws in self._after_commit:
-            # The first argument passed to the hook is a Boolean value,
-            # true if the commit succeeded, or false if the commit aborted.
-            try:
-                hook(status, *args, **kws)
-            except:
-                # We need to catch the exceptions if we want all hooks
-                # to be called
-                self.log.error("Error in after commit hook exec in %s ",
-                               hook, exc_info=sys.exc_info())
-        # The transaction is already committed. It must not have
-        # further effects after the commit.
-        for rm in self._resources:
-            try:
-                rm.abort(self)
-            except:
-                # XXX should we take further actions here ?
-                self.log.error("Error in abort() on manager %s",
-                               rm, exc_info=sys.exc_info())
-        self._after_commit = []
-        self._before_commit = []
+        # during processing.
+        self._call_hooks(self._before_abort, exc=False)
+
+    def getAfterAbortHooks(self):
+        """ See ITransaction.
+        """
+        return iter(self._after_abort)
+
+    def addAfterAbortHook(self, hook, args=(), kws=None):
+        """ See ITransaction.
+        """
+        if kws is None:
+            kws = {}
+        self._after_abort.append((hook, tuple(args), kws))
+
+    def _callAfterAbortHooks(self):
+        self._call_hooks(self._after_abort, clean=True)
 
     def _commitResources(self):
         # Execute the two-phase commit protocol.
@@ -469,6 +522,7 @@ class Transaction(object):
         # to break references---this transaction object will not be returned
         # as the current transaction from its manager after this, and all
         # IDatamanager objects joined to it will forgotten
+        # All hooks are forgotten.
         if self._manager:
             self._manager.free(self)
 
@@ -476,6 +530,11 @@ class Transaction(object):
             delattr(self, '_data')
 
         del self._resources[:]
+
+        del self._before_commit[:]
+        del self._after_commit[:]
+        del self._before_abort[:]
+        del self._after_abort[:]
 
     def data(self, ob):
         try:
@@ -499,6 +558,7 @@ class Transaction(object):
     def abort(self):
         """ See ITransaction.
         """
+        self._callBeforeAbortHooks()
         if self._savepoint2index:
             self._invalidate_all_savepoints()
 
@@ -519,6 +579,7 @@ class Transaction(object):
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
 
+            self._callAfterAbortHooks()
             self._free()
 
             self._synchronizers.map(lambda s: s.afterCompletion(self))
