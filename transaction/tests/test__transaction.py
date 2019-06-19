@@ -1090,7 +1090,7 @@ class TransactionTests(unittest.TestCase):
         def _hook1(*args, **kw):
             raise ValueError()
         def _hook2(*args, **kw):
-            _hooked2.append((args, kw))
+            _hooked2.append((args, kw))  # pragma: no cover
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
