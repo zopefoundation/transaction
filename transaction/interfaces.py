@@ -374,13 +374,15 @@ class ITransaction(Interface):
         hooks.  Applications should take care to avoid creating infinite loops
         by recursively registering hooks.
 
-        Hooks are called only for a top-level abort. If the
+        Abort hooks are called only for a top-level abort. If the
         transaction is committed, abort hooks are not called.
-        This is true even if the commit causes
-        internally an abort; in this case, the after commit hooks
-        are called with first argument `False`.
-        Calling a hook "consumes" its registration too:  hook registrations
-        do not persist across transactions.
+        This is true even if the commit fails. In this case, however,
+        the transaction is in the ``COMMITFAILED`` state and is
+        virtually unusable; therefore, a top-level abort will typically
+        follow.
+
+        Calling a hook "consumes" its registration.
+        Hook registrations do not persist across transactions.
         """
 
     def getBeforeAbortHooks():
@@ -407,13 +409,15 @@ class ITransaction(Interface):
         hooks.  Applications should take care to avoid creating infinite loops
         by recursively registering hooks.
 
-        Hooks are called only for a top-level abort. If the
+        Abort hooks are called only for a top-level abort. If the
         transaction is committed, abort hooks are not called.
-        This is true even if the commit causes
-        internally an abort; in this case, the after commit hooks
-        are called with first argument `False`.
-        Calling a hook "consumes" its registration too:  hook registrations
-        do not persist across transactions.
+        This is true even if the commit fails. In this case, however,
+        the transaction is in the ``COMMITFAILED`` state and is
+        virtually unusable; therefore, a top-level abort will typically
+        follow.
+
+        Calling a hook "consumes" its registration.
+        Hook registrations do not persist across transactions.
         """
 
     def getAfterAbortHooks():

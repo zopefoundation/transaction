@@ -615,7 +615,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'error')
         self.assertTrue(logger._log[0][1].startswith(
-                            "Error in after commit hook"))
+                            "Error in hook"))
 
     def test_callAfterCommitHook_w_abort(self):
         from transaction.tests.common import DummyLogger
@@ -635,7 +635,7 @@ class TransactionTests(unittest.TestCase):
         txn._callAfterCommitHooks()
         self.assertEqual(logger._log[0][0], 'error')
         self.assertTrue(logger._log[0][1].startswith(
-                            "Error in after commit hook"))
+                            "Error in hook"))
 
     def test__commitResources_normal(self):
         from transaction.tests.common import DummyLogger
@@ -855,9 +855,8 @@ class TransactionTests(unittest.TestCase):
             txn.abort()
         self.assertEqual(_hooked1, [])
         self.assertEqual(_hooked2, [])
-        # Hooks are neither called nor cleared on abort
-        self.assertEqual(list(txn.getBeforeCommitHooks()),
-                         [(_hook1, ('one',), {'uno': 1}), (_hook2, (), {})])
+        # Hooks are not called but cleared on abort
+        self.assertEqual(list(txn.getBeforeCommitHooks()), [])
 
     def test_abort_w_synchronizers(self):
         from transaction.weakset import WeakSet
@@ -899,14 +898,13 @@ class TransactionTests(unittest.TestCase):
             txn._after_commit.append((_hook2, (), {}))
             logger._clear()
             txn.abort()
-        # Hooks are neither called nor cleared on abort
+        # Hooks are not called but cleared on abort
         self.assertEqual(_hooked1, [])
         self.assertEqual(_hooked2, [])
-        self.assertEqual(list(txn.getAfterCommitHooks()),
-                         [(_hook1, ('one',), {'uno': 1}), (_hook2, (), {})])
+        self.assertEqual(list(txn.getAfterCommitHooks()), [])
         self.assertEqual(txn._resources, [])
 
-    def test_abort_error_w_afterCompleteHooks(self):
+    def test_abort_error_w_afterCommitHooks(self):
         from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
@@ -933,11 +931,10 @@ class TransactionTests(unittest.TestCase):
             txn._resources.append(broken2)
             logger._clear()
             self.assertRaises(ValueError, txn.abort)
-        # Hooks are neither called nor cleared on abort
+        # Hooks are not called but cleared on abort
         self.assertEqual(_hooked1, [])
         self.assertEqual(_hooked2, [])
-        self.assertEqual(list(txn.getAfterCommitHooks()),
-                         [(_hook1, ('one',), {'uno': 1}), (_hook2, (), {})])
+        self.assertEqual(list(txn.getAfterCommitHooks()), [])
         self.assertTrue(aaa._a)
         self.assertFalse(aaa._x)
 
@@ -1023,7 +1020,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(list(txn.getAfterAbortHooks()),
                          [(_hook, ('one',), {})])
 
-    def test_callAfterAbortHook_w_error(self):
+    def test_callBeforeAbortHook_w_error(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
@@ -1036,17 +1033,17 @@ class TransactionTests(unittest.TestCase):
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
         logger._clear()
-        txn.addAfterAbortHook(_hook1, ('one',))
-        txn.addAfterAbortHook(_hook2, ('two',), dict(dos=2))
-        txn._callAfterAbortHooks()
+        txn.addBeforeAbortHook(_hook1, ('one',))
+        txn.addBeforeAbortHook(_hook2, ('two',), dict(dos=2))
+        txn._callBeforeAbortHooks()
         # second hook gets called even if first raises
         self.assertEqual(_hooked2, [(('two',), {'dos': 2})])
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'error')
         self.assertTrue(logger._log[0][1].startswith(
-                            "Error in after abort hook"))
+                            "Error in hook"))
 
-    def test_callAfterAbortHook_w_abort(self):
+    def test_callBeforeAbortHook_w_abort(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
@@ -1059,12 +1056,12 @@ class TransactionTests(unittest.TestCase):
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
         logger._clear()
-        txn.addAfterAbortHook(_hook1, ('one',))
-        txn.addAfterAbortHook(_hook2, ('two',), dict(dos=2))
-        txn._callAfterAbortHooks()
+        txn.addBeforeAbortHook(_hook1, ('one',))
+        txn.addBeforeAbortHook(_hook2, ('two',), dict(dos=2))
+        txn._callBeforeAbortHooks()
         self.assertEqual(logger._log[0][0], 'error')
         self.assertTrue(logger._log[0][1].startswith(
-                            "Error in after abort hook"))
+                            "Error in hook"))
 
     def test_callAfterAbortHook_w_abort_error(self):
         from transaction.tests.common import DummyLogger
@@ -1110,8 +1107,9 @@ class TransactionTests(unittest.TestCase):
         txn.addBeforeAbortHook(bah)
         txn.commit()
         self.assertEqual(comm, [])  # not called
-        self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
-        self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
+        # but cleared
+        self.assertEqual(list(txn.getBeforeAbortHooks()), [])
+        self.assertEqual(list(txn.getAfterAbortHooks()), [])
         
     def test_commit_w_error_w_abortHooks(self):
         comm = []
@@ -1127,6 +1125,7 @@ class TransactionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             txn.commit()
         self.assertEqual(comm, [])  # not called
+        # not cleared
         self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
         self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
         
