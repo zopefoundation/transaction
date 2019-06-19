@@ -120,7 +120,6 @@ class Transaction(object):
         # List of (hook, args, kws) tuples added by addAfterCommitHook().
         self._after_commit = []
 
-
         # List of (hook, args, kws) tuples added by addBeforeAbortHook().
         self._before_abort = []
 
