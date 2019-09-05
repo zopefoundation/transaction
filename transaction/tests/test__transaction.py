@@ -857,30 +857,63 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked2, [])
         # Hooks are not called but cleared on abort
         self.assertEqual(list(txn.getBeforeCommitHooks()), [])
+        self.assertIsNone(txn._manager)
 
     def test_abort_w_synchronizers(self):
-        from transaction.weakset import WeakSet
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+        test = self
         class _Synch(object):
-            _before = _after = False
+            _before = _after = None
             def beforeCompletion(self, txn):
                 self._before = txn
+                txn.set_data(self, 42)
+                test.assertIsNotNone(txn._manager)
             def afterCompletion(self, txn):
                 self._after = txn
-        synchs = [_Synch(), _Synch(), _Synch()]
-        ws = WeakSet()
-        for synch in synchs:
-            ws.add(synch)
+                # data is accessible afterCompletion,
+                # but the transaction is not current anymore.
+                test.assertEqual(42, txn.data(self))
+                test.assertIsNone(txn._manager)
+        class _BadSynch(_Synch):
+            def afterCompletion(self, txn):
+                _Synch.afterCompletion(self, txn)
+                raise SystemExit
+
+        # Ensure iteration order
+        class Synchs(object):
+            synchs = [_Synch(), _Synch(), _Synch(), _BadSynch()]
+            def map(self, func):
+                for s in self.synchs:
+                    func(s)
+
         logger = DummyLogger()
+        class Manager(object):
+            txn = None
+            def free(self, txn):
+                test.assertIs(txn, self.txn)
+                self.txn = None
+
+        manager = Manager()
+        synchs = Synchs()
+
         with Monkey(_transaction, _LOGGER=logger):
-            txn = self._makeOne(synchronizers=ws)
+            txn = self._makeOne(synchronizers=synchs, manager=manager)
+            manager.txn = txn
             logger._clear()
-            txn.abort()
-        for synch in synchs:
-            self.assertTrue(synch._before is txn)
-            self.assertTrue(synch._after is txn)
+            with self.assertRaises(SystemExit):
+                txn.abort()
+
+        for synch in synchs.synchs:
+            self.assertIs(synch._before, txn)
+            self.assertIs(synch._after, txn)
+
+        # And everything was cleaned up despite raising the bad
+        # exception
+        self.assertIsNone(txn._manager)
+        self.assertIsNot(txn._synchronizers, synchs)
+        self.assertIsNone(manager.txn)
 
     def test_abort_w_afterCommitHooks(self):
         from transaction.tests.common import DummyLogger
@@ -903,6 +936,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked2, [])
         self.assertEqual(list(txn.getAfterCommitHooks()), [])
         self.assertEqual(txn._resources, [])
+        self.assertIsNone(txn._manager)
 
     def test_abort_error_w_afterCommitHooks(self):
         from transaction import _transaction
@@ -937,6 +971,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(list(txn.getAfterCommitHooks()), [])
         self.assertTrue(aaa._a)
         self.assertFalse(aaa._x)
+        self.assertIsNone(txn._manager)
 
     def test_abort_error_w_synchronizers(self):
         from transaction.weakset import WeakSet
@@ -968,6 +1003,47 @@ class TransactionTests(unittest.TestCase):
         for synch in synchs:
             self.assertTrue(synch._before is t)
             self.assertTrue(synch._after is t) #called in _cleanup
+        self.assertIsNot(t._synchronizers, ws)
+
+    def test_abort_synchronizer_error_w_resources(self):
+        from transaction.weakset import WeakSet
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        class _Synch(object):
+            _before = _after = False
+            def beforeCompletion(self, txn):
+                self._before = txn
+            def afterCompletion(self, txn):
+                self._after = txn
+
+        class _BadSynch(_Synch):
+            def beforeCompletion(self, txn):
+                _Synch.beforeCompletion(self, txn)
+                raise SystemExit
+
+        # Ensure iteration order
+        class Synchs(object):
+            synchs = [_Synch(), _Synch(), _Synch(), _BadSynch()]
+            def map(self, func):
+                for s in self.synchs:
+                    func(s)
+
+        resource = Resource('a')
+        logger = DummyLogger()
+        synchs = Synchs()
+        with Monkey(_transaction, _LOGGER=logger):
+            t = self._makeOne(synchronizers=synchs)
+            logger._clear()
+            t._resources.append(resource)
+            with self.assertRaises(SystemExit):
+                t.abort()
+
+        for synch in synchs.synchs:
+            self.assertTrue(synch._before is t)
+            self.assertTrue(synch._after is t) # called in _cleanup
+        self.assertIsNot(t._synchronizers, synchs)
+        self.assertTrue(resource._a)
 
     def test_abort_clears_resources(self):
         class DM(object):
@@ -1118,7 +1194,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(comm, ["before", "after"])
         self.assertEqual(list(txn.getBeforeAbortHooks()), [])
         self.assertEqual(list(txn.getAfterAbortHooks()), [])
-        
+
     def test_commit_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
@@ -1133,7 +1209,7 @@ class TransactionTests(unittest.TestCase):
         # but cleared
         self.assertEqual(list(txn.getBeforeAbortHooks()), [])
         self.assertEqual(list(txn.getAfterAbortHooks()), [])
-        
+
     def test_commit_w_error_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
@@ -1151,7 +1227,7 @@ class TransactionTests(unittest.TestCase):
         # not cleared
         self.assertEqual(list(txn.getBeforeAbortHooks()), [(bah, (), {})])
         self.assertEqual(list(txn.getAfterAbortHooks()), [(aah, (), {})])
-        
+
     def test_note(self):
         txn = self._makeOne()
         try:

@@ -21,9 +21,17 @@
 - Support abort hooks (symmetrically to commit hooks)
   (`#77 <https://github.com/zopefoundation/transaction/issues/77>`_).
 
-- Hooks are now cleared after successfull ``commit`` and ``abort`` to avoid
-  potential cyclic references.
+- Make Transaction drop references to its hooks, manager,
+  synchronizers and data after a successful ``commit()`` and after
+  *any* ``abort()``. This helps avoid potential cyclic references. See
+  `issue 82 <https://github.com/zopefoundation/transaction/issues/82>`_.
 
+- Allow synchronizers to access ``Transaction.data()`` when their
+  ``afterCompletion`` method is called while aborting a transaction.
+
+- Make it safe to call ``Transaction.abort()`` more than once. The
+  second and subsequent calls are no-ops. Previously a
+  ``ValueError(Foreign transaction)`` would be raised.
 
 2.4.0 (2018-10-23)
 ==================

@@ -50,7 +50,7 @@ def _makeLogger(): #pragma NO COVER
 def myhasattr(obj, attr):
     return getattr(obj, attr, _marker) is not _marker
 
-class Status:
+class Status(object):
     # ACTIVE is the initial state.
     ACTIVE       = "Active"
 
@@ -62,6 +62,12 @@ class Status:
     # commit() or commit(True) raised an exception.  All further attempts
     # to commit or join this transaction will raise TransactionFailedError.
     COMMITFAILED = "Commit failed"
+
+class _NoSynchronizers(object):
+
+    @staticmethod
+    def map(_f):
+        "Does nothing"
 
 @implementer(interfaces.ITransaction,
              interfaces.ITransactionDeprecated)
@@ -516,15 +522,25 @@ class Transaction(object):
             except Exception:
                 self.log.error("Error in tpc_abort() on manager %s",
                                rm, exc_info=sys.exc_info())
+    def _free_manager(self):
+        try:
+            if self._manager:
+                self._manager.free(self)
+        finally:
+            # If we try to abort a transaction and fail, the manager
+            # may have begun a new transaction, and will raise a
+            # ValueError from free(); we don't want that to happen
+            # again in _free(), which abort() always calls, so be sure
+            # to clear out the manager.
+            self._manager = None
 
     def _free(self):
         # Called when the transaction has been committed or aborted
         # to break references---this transaction object will not be returned
         # as the current transaction from its manager after this, and all
         # IDatamanager objects joined to it will forgotten
-        # All hooks are forgotten.
-        if self._manager:
-            self._manager.free(self)
+        # All hooks and data are forgotten.
+        self._free_manager()
 
         if hasattr(self, '_data'):
             delattr(self, '_data')
@@ -535,6 +551,12 @@ class Transaction(object):
         del self._after_commit[:]
         del self._before_abort[:]
         del self._after_abort[:]
+
+        # self._synchronizers might be shared, we can't mutate it
+        self._synchronizers = _NoSynchronizers
+        self._adapters = None
+        self._voted = None
+        self.extension = None
 
     def data(self, ob):
         try:
@@ -558,17 +580,21 @@ class Transaction(object):
     def abort(self):
         """ See ITransaction.
         """
-        self._callBeforeAbortHooks()
-        if self._savepoint2index:
-            self._invalidate_all_savepoints()
-
-        self._synchronizers.map(lambda s: s.beforeCompletion(self))
-
         try:
-
             t = None
             v = None
             tb = None
+
+            self._callBeforeAbortHooks()
+            if self._savepoint2index:
+                self._invalidate_all_savepoints()
+
+            try:
+                self._synchronizers.map(lambda s: s.beforeCompletion(self))
+            except:
+                t, v, tb = sys.exc_info()
+                self.log.error("Failed to call synchronizers", exc_info=sys.exc_info())
+
 
             for rm in self._resources:
                 try:
@@ -579,8 +605,12 @@ class Transaction(object):
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
 
+
             self._callAfterAbortHooks()
-            self._free()
+            # Unlike in commit(), we are no longer the current transaction
+            # when we call afterCompletion(). But we can't be completely _free():
+            # the synchroninizer might want to access some data it set before.
+            self._free_manager()
 
             self._synchronizers.map(lambda s: s.afterCompletion(self))
 
@@ -589,6 +619,7 @@ class Transaction(object):
             if tb is not None:
                 reraise(t, v, tb)
         finally:
+            self._free()
             del t, v, tb
 
     def note(self, text):
