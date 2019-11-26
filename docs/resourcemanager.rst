@@ -127,7 +127,7 @@ If there was a preceeding savepoint, the transaction must match:
    >>> rollback = rm.savepoint(t1)
    >>> rm.tpc_begin(t2)
    Traceback (most recent call last):
-   ,,,
+   ...
    TypeError: ('Transaction missmatch', '2', '1')
 
    >>> rm.tpc_begin(t1)
