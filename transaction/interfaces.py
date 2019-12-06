@@ -33,6 +33,8 @@ class ITransactionManager(Interface):
         In explicit mode, transactions must be begun explicitly, by
         calling ``begin()`` and ended explicitly by calling
         ``commit()`` or ``abort()``.
+
+        .. versionadded:: 2.1.0
         """)
 
 
@@ -402,7 +404,7 @@ class ITransaction(Interface):
         positional arguments to be passed, defaulting to an empty tuple
         `kws` is a dictionary of keyword argument names and values to be
         passed, or the default None (no keyword arguments are passed).
-        
+
         Multiple hooks can be registered and will be called in the order they
         were registered (first registered, first called).  This method can
         also be called from a hook:  an executing hook can register more
@@ -690,6 +692,8 @@ class NoTransaction(TransactionError):
     affects an exciting transaction, but no transaction was begun.
     The transaction manager was in explicit mode, so a new transaction
     was not explicitly created.
+
+    .. versionadded:: 2.1.0
     """
 
 class AlreadyInTransaction(TransactionError):
@@ -698,4 +702,6 @@ class AlreadyInTransaction(TransactionError):
     An application called ``begin()`` on a transaction manager in
     explicit mode, without committing or aborting the previous
     transaction.
+
+    .. versionadded:: 2.1.0
     """

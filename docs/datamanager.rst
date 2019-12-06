@@ -142,7 +142,7 @@ If there was a preceeding savepoint, the transaction must match:
    >>> rollback = dm.savepoint(t1)
    >>> dm.prepare(t2)
    Traceback (most recent call last):
-   ,,,
+   ...
    TypeError: ('Transaction missmatch', '2', '1')
 
    >>> dm.prepare(t1)

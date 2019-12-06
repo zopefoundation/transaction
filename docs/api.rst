@@ -58,6 +58,9 @@ Interfaces
    :members:
    :member-order: bysource
 
+.. autoclass:: NoTransaction
+.. autoclass:: AlreadyInTransaction
+
 API Objects
 -----------
 
