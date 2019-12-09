@@ -377,11 +377,10 @@ after commit hooks are registered
 
 .. doctest::
 
-    >>> mgr = TransactionManager()
-    >>> do = DataObject(mgr)
-
     >>> t = begin()
-    >>> t._manager._txn is not None
+    >>> t._manager is not None
+    True
+    >>> t._manager._txn is t
     True
 
     >>> t.addAfterCommitHook(hook, ('-', 1))
@@ -390,7 +389,9 @@ after commit hooks are registered
     >>> log
     ["True arg '-' kw1 1 kw2 'no_kw2'"]
 
-    >>> t._manager._txn is not None
-    False
+    >>> t._manager is None
+    True
+    >>> mgr._txn is None
+    True
 
     >>> reset_log()
