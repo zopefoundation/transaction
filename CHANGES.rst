@@ -9,6 +9,11 @@
 
 - Add support for Python 3.8.
 
+- Drop support for legacy transaction APIs including
+  ``Transaction.register()`` and old ZODB3-style datamanagers. See
+  `issue 89
+  <https://github.com/zopefoundation/transaction/issues/89>`_.
+
 - ``TransactionManager.run`` now commits/aborts the transaction
   "active" after the execution of *func* (and no longer the initial
   transaction which might already have been committed/aborted by *func*)

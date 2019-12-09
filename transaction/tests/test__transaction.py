@@ -168,29 +168,6 @@ class TransactionTests(unittest.TestCase):
         txn.join(resource)
         self.assertEqual(txn._resources, [resource])
 
-    def test_join_ACTIVE_w_preparing_w_sp2index(self):
-        from transaction._transaction import AbortSavepoint
-        from transaction._transaction import DataManagerAdapter
-        class _TSP(object):
-            def __init__(self):
-                self._savepoints = []
-        class _DM(object):
-            def prepare(self):
-                raise AssertionError("Not called")
-        txn = self._makeOne()
-        tsp = _TSP()
-        txn._savepoint2index = {tsp: object()}
-        dm = _DM
-        txn.join(dm)
-        self.assertEqual(len(txn._resources), 1)
-        dma = txn._resources[0]
-        self.assertTrue(isinstance(dma, DataManagerAdapter))
-        self.assertTrue(txn._resources[0]._datamanager is dm)
-        self.assertEqual(len(tsp._savepoints), 1)
-        self.assertTrue(isinstance(tsp._savepoints[0], AbortSavepoint))
-        self.assertTrue(tsp._savepoints[0].datamanager is dma)
-        self.assertTrue(tsp._savepoints[0].transaction is txn)
-
     def test__unjoin_miss(self):
         txn = self._makeOne()
         txn._unjoin(object()) #no raise
@@ -307,46 +284,6 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(len(txn._savepoint2index), 10)
         txn._invalidate_all_savepoints()
         self.assertEqual(list(txn._savepoint2index), [])
-
-    def test_register_wo_jar(self):
-        class _Dummy(object):
-            _p_jar = None
-        txn = self._makeOne()
-        self.assertRaises(ValueError, txn.register, _Dummy())
-
-    def test_register_w_jar(self):
-        class _Manager(object):
-            pass
-        mgr = _Manager()
-        class _Dummy(object):
-            _p_jar = mgr
-        txn = self._makeOne()
-        dummy = _Dummy()
-        txn.register(dummy)
-        resources = list(txn._resources)
-        self.assertEqual(len(resources), 1)
-        adapter = resources[0]
-        self.assertTrue(adapter.manager is mgr)
-        self.assertTrue(dummy in adapter.objects)
-        items = list(txn._adapters.items())
-        self.assertEqual(len(items), 1)
-        self.assertTrue(items[0][0] is mgr)
-        self.assertTrue(items[0][1] is adapter)
-
-    def test_register_w_jar_already_adapted(self):
-        class _Adapter(object):
-            def __init__(self):
-                self.objects = []
-        class _Manager(object):
-            pass
-        mgr = _Manager()
-        class _Dummy(object):
-            _p_jar = mgr
-        txn = self._makeOne()
-        txn._adapters[mgr] = adapter = _Adapter()
-        dummy = _Dummy()
-        txn.register(dummy)
-        self.assertTrue(dummy in adapter.objects)
 
     def test_commit_DOOMED(self):
         from transaction.interfaces import DoomedTransaction
@@ -1006,7 +943,6 @@ class TransactionTests(unittest.TestCase):
         self.assertIsNot(t._synchronizers, ws)
 
     def test_abort_synchronizer_error_w_resources(self):
-        from transaction.weakset import WeakSet
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
@@ -1437,123 +1373,6 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(txn.isRetryableError(Exception()))
 
 
-
-class MultiObjectResourceAdapterTests(unittest.TestCase):
-
-    def _getTargetClass(self):
-        from transaction._transaction import MultiObjectResourceAdapter
-        return MultiObjectResourceAdapter
-
-    def _makeOne(self, jar):
-        return self._getTargetClass()(jar)
-
-    def _makeJar(self, key):
-        class _Resource(Resource):
-            def __init__(self, key):
-                super(_Resource, self).__init__(key)
-                self._c = []
-                self._a = []
-            def commit(self, obj, txn):
-                self._c.append((obj, txn))
-            def abort(self, obj, txn):
-                self._a.append((obj, txn))
-        return _Resource(key)
-
-    def _makeDummy(self, kind, name):
-        class _Dummy(object):
-            def __init__(self, kind, name):
-                self._kind = kind
-                self._name = name
-            def __repr__(self): # pragma: no cover
-                return '<%s: %s>' % (self._kind, self._name)
-        return _Dummy(kind, name)
-
-    def test_ctor(self):
-        jar = self._makeJar('aaa')
-        mora = self._makeOne(jar)
-        self.assertTrue(mora.manager is jar)
-        self.assertEqual(mora.objects, [])
-        self.assertEqual(mora.ncommitted, 0)
-
-    def test___repr__(self):
-        jar = self._makeJar('bbb')
-        mora = self._makeOne(jar)
-        self.assertEqual(repr(mora),
-                         '<MultiObjectResourceAdapter '
-                            'for Resource: bbb at %s>' % id(mora))
-
-    def test_sortKey(self):
-        jar = self._makeJar('ccc')
-        mora = self._makeOne(jar)
-        self.assertEqual(mora.sortKey(), 'ccc')
-
-    def test_tpc_begin(self):
-        jar = self._makeJar('ddd')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_begin(txn)
-        self.assertTrue(jar._b)
-
-    def test_commit(self):
-        jar = self._makeJar('eee')
-        objects = [self._makeDummy('obj', 'a'), self._makeDummy('obj', 'b')]
-        mora = self._makeOne(jar)
-        mora.objects.extend(objects)
-        txn = self._makeDummy('txn', 'c')
-        mora.commit(txn)
-        self.assertEqual(jar._c, [(objects[0], txn), (objects[1], txn)])
-
-    def test_tpc_vote(self):
-        jar = self._makeJar('fff')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_vote(txn)
-        self.assertTrue(jar._v)
-
-    def test_tpc_finish(self):
-        jar = self._makeJar('ggg')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_finish(txn)
-        self.assertTrue(jar._f)
-
-    def test_abort(self):
-        jar = self._makeJar('hhh')
-        objects = [self._makeDummy('obj', 'a'), self._makeDummy('obj', 'b')]
-        mora = self._makeOne(jar)
-        mora.objects.extend(objects)
-        txn = self._makeDummy('txn', 'c')
-        mora.abort(txn)
-        self.assertEqual(jar._a, [(objects[0], txn), (objects[1], txn)])
-
-    def test_abort_w_error(self):
-        from transaction.tests.common import DummyLogger
-        jar = self._makeJar('hhh')
-        objects = [self._makeDummy('obj', 'a'),
-                   self._makeDummy('obj', 'b'),
-                   self._makeDummy('obj', 'c'),
-                  ]
-        _old_abort = jar.abort
-        def _abort(obj, txn):
-            if obj._name in ('b', 'c'):
-                raise ValueError()
-            _old_abort(obj, txn)
-        jar.abort = _abort
-        mora = self._makeOne(jar)
-        mora.objects.extend(objects)
-        txn = self._makeDummy('txn', 'c')
-        txn.log = log = DummyLogger()
-        self.assertRaises(ValueError, mora.abort, txn)
-        self.assertEqual(jar._a, [(objects[0], txn)])
-
-    def test_tpc_abort(self):
-        jar = self._makeJar('iii')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_abort(txn)
-        self.assertTrue(jar._x)
-
-
 class Test_rm_key(unittest.TestCase):
 
     def _callFUT(self, oid):
@@ -1565,132 +1384,6 @@ class Test_rm_key(unittest.TestCase):
 
     def test_hit(self):
         self.assertEqual(self._callFUT(Resource('zzz')), 'zzz')
-
-
-class Test_object_hint(unittest.TestCase):
-
-    def _callFUT(self, oid):
-        from transaction._transaction import object_hint
-        return object_hint(oid)
-
-    def test_miss(self):
-        class _Test(object):
-            pass
-        test = _Test()
-        self.assertEqual(self._callFUT(test), "_Test oid=None")
-
-    def test_hit(self):
-        class _Test(object):
-            pass
-        test = _Test()
-        test._p_oid = 'OID'
-        self.assertEqual(self._callFUT(test), "_Test oid='OID'")
-
-
-class Test_oid_repr(unittest.TestCase):
-
-    def _callFUT(self, oid):
-        from transaction._transaction import oid_repr
-        return oid_repr(oid)
-
-    def test_as_nonstring(self):
-        self.assertEqual(self._callFUT(123), '123')
-
-    def test_as_string_not_8_chars(self):
-        self.assertEqual(self._callFUT('a'), "'a'")
-
-    def test_as_string_z64(self):
-        s = '\0'*8
-        self.assertEqual(self._callFUT(s), '0x00')
-
-    def test_as_string_all_Fs(self):
-        s = '\1'*8
-        self.assertEqual(self._callFUT(s), '0x0101010101010101')
-
-    def test_as_string_xxx(self):
-        s = '\20'*8
-        self.assertEqual(self._callFUT(s), '0x1010101010101010')
-
-
-class DataManagerAdapterTests(unittest.TestCase):
-
-    def _getTargetClass(self):
-        from transaction._transaction import DataManagerAdapter
-        return DataManagerAdapter
-
-    def _makeOne(self, jar):
-        return self._getTargetClass()(jar)
-
-    def _makeJar(self, key):
-        class _Resource(Resource):
-            _p = False
-            def prepare(self, txn):
-                self._p = True
-        return _Resource(key)
-
-    def _makeDummy(self, kind, name):
-        class _Dummy(object):
-            def __init__(self, kind, name):
-                self._kind = kind
-                self._name = name
-            def __repr__(self): # pragma: no cover
-                return '<%s: %s>' % (self._kind, self._name)
-        return _Dummy(kind, name)
-
-    def test_ctor(self):
-        jar = self._makeJar('aaa')
-        dma = self._makeOne(jar)
-        self.assertTrue(dma._datamanager is jar)
-
-    def test_commit(self):
-        jar = self._makeJar('bbb')
-        mora = self._makeOne(jar)
-        txn = self._makeDummy('txn', 'c')
-        mora.commit(txn)
-        self.assertFalse(jar._c) #no-op
-
-    def test_abort(self):
-        jar = self._makeJar('ccc')
-        mora = self._makeOne(jar)
-        txn = self._makeDummy('txn', 'c')
-        mora.abort(txn)
-        self.assertTrue(jar._a)
-
-    def test_tpc_begin(self):
-        jar = self._makeJar('ddd')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_begin(txn)
-        self.assertFalse(jar._b) #no-op
-
-    def test_tpc_abort(self):
-        jar = self._makeJar('eee')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_abort(txn)
-        self.assertFalse(jar._f)
-        self.assertTrue(jar._a)
-
-    def test_tpc_finish(self):
-        jar = self._makeJar('fff')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_finish(txn)
-        self.assertFalse(jar._f)
-        self.assertTrue(jar._c)
-
-    def test_tpc_vote(self):
-        jar = self._makeJar('ggg')
-        mora = self._makeOne(jar)
-        txn = object()
-        mora.tpc_vote(txn)
-        self.assertFalse(jar._v)
-        self.assertTrue(jar._p)
-
-    def test_sortKey(self):
-        jar = self._makeJar('hhh')
-        mora = self._makeOne(jar)
-        self.assertEqual(mora.sortKey(), 'hhh')
 
 
 class SavepointTests(unittest.TestCase):
@@ -1829,22 +1522,6 @@ class NoRollbackSavepointTests(unittest.TestCase):
 
 class MiscellaneousTests(unittest.TestCase):
 
-    def test_BBB_join(self):
-        # The join method is provided for "backward-compatability" with ZODB 4
-        # data managers.
-        from transaction import Transaction
-        from transaction.tests.examples import DataManager
-        from transaction._transaction import DataManagerAdapter
-        # The argument to join must be a zodb4 data manager,
-        # transaction.interfaces.IDataManager.
-        txn = Transaction()
-        dm = DataManager()
-        txn.join(dm)
-        # The end result is that a data manager adapter is one of the
-        # transaction's objects:
-        self.assertTrue(isinstance(txn._resources[0], DataManagerAdapter))
-        self.assertTrue(txn._resources[0]._datamanager is dm)
-
     def test_bug239086(self):
         # The original implementation of thread transaction manager made
         # invalid assumptions about thread ids.
@@ -1872,14 +1549,14 @@ class MiscellaneousTests(unittest.TestCase):
 
         sync = Sync(1)
         @run_in_thread
-        def first():
+        def _():
             transaction.manager.registerSynch(sync)
             transaction.manager.begin()
             dm['a'] = 1
         self.assertEqual(sync.log, ['1 new'])
 
         @run_in_thread
-        def second():
+        def _():
             transaction.abort() # should do nothing.
         self.assertEqual(sync.log, ['1 new'])
         self.assertEqual(list(dm.keys()), ['a'])
@@ -1888,7 +1565,7 @@ class MiscellaneousTests(unittest.TestCase):
         self.assertEqual(list(dm.keys()), [])
 
         @run_in_thread
-        def third():
+        def _():
             dm['a'] = 1
         self.assertEqual(sync.log, ['1 new'])
 

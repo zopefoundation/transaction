@@ -10,11 +10,6 @@ else: # pragma: no cover
     # py2
     text_type = unicode
 
-def bytes_(s, encoding='latin-1', errors='strict'):
-    if isinstance(s, text_type):  # pragma: no cover
-        s = s.encode(encoding, errors)
-    return s
-
 def text_(s):
     if not isinstance(s, text_type):  # pragma: no cover
         s = s.decode('utf-8')
