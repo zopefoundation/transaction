@@ -683,7 +683,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
-        class _Synchrnonizers(object):
+        class _Synchronizers(object):
             def __init__(self, res):
                 self._res = res
             def map(self, func):
@@ -691,7 +691,7 @@ class TransactionTests(unittest.TestCase):
                     func(res)
         resources = [Resource('bbb', 'tpc_begin'),
                      Resource('aaa', 'afterCompletion')]
-        sync = _Synchrnonizers(resources)
+        sync = _Synchronizers(resources)
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne(sync)

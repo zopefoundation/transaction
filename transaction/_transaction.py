@@ -85,7 +85,7 @@ class Transaction(object):
     _savepoint2index = None
 
     # Meta data. extended_info is also metadata, but is initialized to an
-    # emtpy dict in __init__.
+    # empty dict in __init__.
     _user = u""
     _description = u""
 
@@ -271,7 +271,7 @@ class Transaction(object):
         """
         # The old way of registering transaction participants.
         #
-        # register() is passed either a persisent object or a
+        # register() is passed either a persistent object or a
         # resource manager like the ones defined in ZODB.DB.
         # If it is passed a persistent object, that object should
         # be stored when the transaction commits.  For other
@@ -401,12 +401,12 @@ class Transaction(object):
         a clean state should a (after) hook has affected one
         of the resources.
 
-        *prefix_args* defines additioan arguments prefixed
+        *prefix_args* defines additional arguments prefixed
         to the arguments provided by the hook definition.
 
         ``_call_hooks`` supports that a hook adds new hooks.
         """
-        # Avoid to abort anything at the end if no hooks are registred.
+        # Avoid to abort anything at the end if no hooks are registered.
         if not hooks:
             return
         try:
@@ -609,7 +609,7 @@ class Transaction(object):
             self._callAfterAbortHooks()
             # Unlike in commit(), we are no longer the current transaction
             # when we call afterCompletion(). But we can't be completely _free():
-            # the synchroninizer might want to access some data it set before.
+            # the synchronizer might want to access some data it set before.
             self._free_manager()
 
             self._synchronizers.map(lambda s: s.afterCompletion(self))
