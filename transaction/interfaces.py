@@ -31,8 +31,8 @@ class ITransactionManager(Interface):
 
         This is true if the transaction manager is in explicit mode.
         In explicit mode, transactions must be begun explicitly, by
-        calling ``begin()`` and ended explicitly by calling
-        ``commit()`` or ``abort()``.
+        calling `begin` and ended explicitly by calling
+        `commit` or `abort`.
 
         .. versionadded:: 2.1.0
         """)
@@ -45,53 +45,53 @@ class ITransactionManager(Interface):
         manager not in explicit mode, the previous transaction will be
         aborted.  If an existing transaction is in progress and the
         transaction manager is in explicit mode, an
-        ``AlreadyInTransaction`` exception will be raised..
+        `AlreadyInTransaction` exception will be raised..
 
-        The ``newTransaction`` method of registered synchronizers is called,
+        The `~ISynchronizer.newTransaction` method of registered synchronizers is called,
         passing the new transaction object.
 
         Note that when not in explicit mode, transactions may be
-        started implicitly without calling ``begin``. In that case,
+        started implicitly without calling `begin`. In that case,
         ``newTransaction`` isn't called because the transaction
         manager doesn't know when to call it.  The transaction is
         likely to have begun long before the transaction manager is
-        involved. (Conceivably the ``commit`` and ``abort`` methods
-        could call ``begin``, but they don't.)
+        involved. (Conceivably the `commit` and `abort` methods
+        could call `begin`, but they don't.)
         """
 
     def get():
         """Get the current transaction.
 
         In explicit mode, if a transaction hasn't begun, a
-        ``NoTransaction`` exception will be raised.
+        `NoTransaction` exception will be raised.
         """
 
     def commit():
         """Commit the current transaction.
 
         In explicit mode, if a transaction hasn't begun, a
-        ``NoTransaction`` exception will be raised.
+        `NoTransaction` exception will be raised.
         """
 
     def abort():
         """Abort the current transaction.
 
         In explicit mode, if a transaction hasn't begun, a
-        ``NoTransaction`` exception will be raised.
+        `NoTransaction` exception will be raised.
         """
 
     def doom():
         """Doom the current transaction.
 
         In explicit mode, if a transaction hasn't begun, a
-        ``NoTransaction`` exception will be raised.
+        `NoTransaction` exception will be raised.
         """
 
     def isDoomed():
         """Returns True if the current transaction is doomed, otherwise False.
 
         In explicit mode, if a transaction hasn't begun, a
-        ``NoTransaction`` exception will be raised.
+        `NoTransaction` exception will be raised.
         """
 
     def savepoint(optimistic=False):
@@ -101,38 +101,38 @@ class ITransactionManager(Interface):
         don't support savepoints can be used, but an error will be
         raised if the savepoint is rolled back.
 
-        An ISavepoint object is returned.
+        An `ISavepoint` object is returned.
 
         In explicit mode, if a transaction hasn't begun, a
-        ``NoTransaction`` exception will be raised.
+        `NoTransaction` exception will be raised.
         """
 
     def registerSynch(synch):
-        """Register an ISynchronizer.
+        """Register an `ISynchronizer`.
 
         Synchronizers are notified about some major events in a transaction's
-        life.  See ISynchronizer for details.
+        life.  See `ISynchronizer` for details.
 
         If a synchronizer registers while there is an active
-        transaction, its newTransaction method will be called with the
+        transaction, its ``newTransaction`` method will be called with the
         active transaction.
         """
 
     def unregisterSynch(synch):
-        """Unregister an ISynchronizer.
+        """Unregister an `ISynchronizer`.
 
         Synchronizers are notified about some major events in a transaction's
-        life.  See ISynchronizer for details.
+        life.  See `ISynchronizer` for details.
         """
 
     def clearSynchs():
-        """Unregister all registered ISynchronizers.
+        """Unregister all registered `ISynchronizer` objects.
 
         This exists to support test cleanup/initialization
         """
 
     def registeredSynchs():
-        """Determine if any ISynchronizers are registered.
+        """Determine if any `ISynchronizers` are registered.
 
         Return true if any are registered, and return False otherwise.
 
@@ -144,53 +144,47 @@ class ITransactionManager(Interface):
 
         This method is typically used as follows::
 
-           for attempt in transaction_manager.attempts():
-               with attempt:
-                   *with block*
+            for attempt in transaction_manager.attempts():
+                with attempt:
+                    *with block*
 
-        The `with attempt` starts a new transaction for the execution
-        of the *with block*. If the execution succeeds,
-        the (then current) transaction is commited and the `for` loop
-        terminates. If the execution raised an exception,
-        then the transaction is aborted.
-        If the exception was some kind
-        of `TransientError` and the maximal number of attempts
-        is not yet reached, then a next iteration of the `for` loop
-        starts. In all other cases, the `for` loop terminates
-        with the exception.
+        The ``with attempt:`` starts a new transaction for the
+        execution of the *with block*. If the execution succeeds, the
+        (then current) transaction is commited and the ``for`` loop
+        terminates. If the execution raised an exception, then the
+        transaction is aborted. If the exception was some kind of
+        `retriable error <ITransaction.isRetryableError>` and the
+        maximal number of attempts is not yet reached, then a next
+        iteration of the ``for`` loop starts. In all other cases,
+        the ``for`` loop terminates with the exception.
         """
 
     def run(func=None, tries=3):
-        """Call (parameter less) *func* in its own transaction;
-        retry in case of some kind of `TransientError`.
+        """Call *func()*  in its own transaction; retry
+        in case of some kind of `retriable error <ITransaction.isRetryableError>`.
 
         The call is tried up to *tries* times.
 
-        The call is performed in a new transaction. After
-        the call, the (then current) transaction is committed (no exception) or
+        The call is performed in a new transaction. After the call,
+        the (then current) transaction is committed (no exception) or
         aborted (exception).
 
-        `run` supports the alternative signature `run(tries=3)`.
-        If *func* is not given or passed as `None`, then
-        the call to `run` returns a function taking *func*
-        as argument and then calling `run(func, tries)`.
+        `run` supports the alternative signature ``run(tries=3)``. If
+        *func* is not given or passed as `None`, then the call to
+        `run` returns a function taking *func* as argument and then
+        calling ``run(func, tries)``.
         """
 
 
 class ITransaction(Interface):
     """Object representing a running transaction.
-
-    Objects with this interface may represent different transactions
-    during their lifetime (.begin() can be called to start a new
-    transaction using the same instance, although that example is
-    deprecated and will go away in ZODB 3.6).
     """
 
     user = Attribute(
         """A user name associated with the transaction.
 
         The format of the user name is defined by the application.  The value
-        is text (unicode).  Storages record the user value, as meta-data,
+        is text (unicode). Storages record the user value, as meta-data,
         when a transaction commits.
 
         A storage may impose a limit on the size of the value; behavior is
@@ -201,8 +195,8 @@ class ITransaction(Interface):
     description = Attribute(
         """A textual description of the transaction.
 
-        The value is text (unicode).  Method note() is the intended
-        way to set the value.  Storages record the description, as meta-data,
+        The value is text (unicode).  Method `note` is the intended
+        way to set the value. Storages record the description, as meta-data,
         when a transaction commits.
 
         A storage may impose a limit on the size of the description; behavior
@@ -217,7 +211,7 @@ class ITransaction(Interface):
         """Finalize the transaction.
 
         This executes the two-phase commit algorithm for all
-        IDataManager objects associated with the transaction.
+        `IDataManager` objects associated with the transaction.
         """
 
     def abort():
@@ -231,7 +225,7 @@ class ITransaction(Interface):
         """Doom the transaction.
 
         Dooms the current transaction. This will cause
-        DoomedTransactionException to be raised on any attempt to commit the
+        `DoomedTransaction` to be raised on any attempt to commit the
         transaction.
 
         Otherwise the transaction will behave as if it was active.
@@ -240,38 +234,38 @@ class ITransaction(Interface):
     def savepoint(optimistic=False):
         """Create a savepoint.
 
-        If the optimistic argument is true, then data managers that don't
+        If the *optimistic* argument is true, then data managers that don't
         support savepoints can be used, but an error will be raised if the
         savepoint is rolled back.
 
-        An ISavepoint object is returned.
+        An `ISavepoint` object is returned.
         """
 
     def join(datamanager):
         """Add a data manager to the transaction.
 
-        `datamanager` must provide the transactions.interfaces.IDataManager
+        *datamanager* must provide the `IDataManager`
         interface.
         """
 
     def note(text):
         """Add text (unicode) to the transaction description.
 
-        This modifies the `.description` attribute; see its docs for more
-        detail.  First surrounding whitespace is stripped from `text`.  If
-        `.description` is currently an empty string, then the stripped text
+        This modifies the `description` attribute; see its docs for more
+        detail.  First surrounding whitespace is stripped from *text*.  If
+        `description` is currently an empty string, then the stripped text
         becomes its value, else two newlines and the stripped text are
-        appended to `.description`.
+        appended to `description`.
         """
 
     def setExtendedInfo(name, value):
         """Add extension data to the transaction.
 
-        name
+        :param text name:
           is the text (unicode) name of the extension property to set
 
-        value
-          must be picklable and json serializable (not an instance).
+        :param value:
+          must be picklable and json serializable
 
         Multiple calls may be made to set multiple extension
         properties, provided the names are distinct.
@@ -285,153 +279,131 @@ class ITransaction(Interface):
         """
 
     def addBeforeCommitHook(hook, args=(), kws=None):
-        """Register a hook to call before the transaction is committed.
+        """Register a hook to call before the transaction is
+        committed.
 
-        The specified hook function will be called after the transaction's
-        commit method has been called, but before the commit process has been
-        started.  The hook will be passed the specified positional (`args`)
-        and keyword (`kws`) arguments.  `args` is a sequence of positional
-        arguments to be passed, defaulting to an empty tuple (no positional
-        arguments are passed).  `kws` is a dictionary of keyword argument
-        names and values to be passed, or the default None (no keyword
-        arguments are passed).
+        The specified hook function will be called after the
+        transaction's commit method has been called, but before the
+        commit process has been started.
 
-        Multiple hooks can be registered and will be called in the order they
-        were registered (first registered, first called).  This method can
-        also be called from a hook:  an executing hook can register more
-        hooks.  Applications should take care to avoid creating infinite loops
-        by recursively registering hooks.
+        :param sequence args:
+            Additional positional arguments to be passed to the hook.
+            The default is to pass no positional arguments.
+        :param dict kws:
+            Keyword arguments to pass to the hook. The default
+            is to pass no keyword arguments.
 
-        Hooks are called only for a top-level commit.  A
-        savepoint creation does not call any hooks.  If the
-        transaction is aborted, hooks are not called, and are discarded.
-        Calling a hook "consumes" its registration too:  hook registrations
-        do not persist across transactions.  If it's desired to call the same
-        hook on every transaction commit, then addBeforeCommitHook() must be
-        called with that hook during every transaction; in such a case
-        consider registering a synchronizer object via a TransactionManager's
-        registerSynch() method instead.
+        Multiple hooks can be registered and will be called in the
+        order they were registered (first registered, first called).
+        This method can also be called from a hook: an executing hook
+        can register more hooks. Applications should take care to
+        avoid creating infinite loops by recursively registering
+        hooks.
+
+        Hooks are called only for a top-level commit. A savepoint
+        creation does not call any hooks. If the transaction is
+        aborted, hooks are not called, and are discarded. Calling a
+        hook "consumes" its registration too: hook registrations do
+        not persist across transactions. If it's desired to call the
+        same hook on every transaction commit, then
+        `addBeforeCommitHook` must be called with that hook during
+        every transaction; in such a case consider registering a
+        synchronizer object via `ITransactionManager.registerSynch`
+        instead.
         """
 
     def getBeforeCommitHooks():
-        """Return iterable producing the registered addBeforeCommit hooks.
+        """Return iterable producing the registered `addBeforeCommitHook` hooks.
 
-        A triple (hook, args, kws) is produced for each registered hook.
+        A triple ``(hook, args, kws)`` is produced for each registered hook.
         The hooks are produced in the order in which they would be invoked
         by a top-level transaction commit.
         """
 
     def addAfterCommitHook(hook, args=(), kws=None):
-         """Register a hook to call after a transaction commit attempt.
+         """Register a hook to call after a transaction commit
+         attempt.
 
-         The specified hook function will be called after the transaction
-         commit succeeds or aborts.  The first argument passed to the hook
-         is a Boolean value, true if the commit succeeded, or false if the
-         commit aborted.  `args` specifies additional positional, and `kws`
-         keyword, arguments to pass to the hook.  `args` is a sequence of
-         positional arguments to be passed, defaulting to an empty tuple
-         (only the true/false success argument is passed).  `kws` is a
-         dictionary of keyword argument names and values to be passed, or
-         the default None (no keyword arguments are passed).
+         The specified hook function will be called after the
+         transaction commit succeeds or aborts. The first argument
+         passed to the hook is a Boolean value, `True` if the commit
+         succeeded, or `False` if the commit aborted.
 
-         Multiple hooks can be registered and will be called in the order they
-         were registered (first registered, first called).  This method can
-         also be called from a hook:  an executing hook can register more
-         hooks.  Applications should take care to avoid creating infinite loops
-         by recursively registering hooks.
+         *args* and *kws* are interpreted as for `addBeforeCommitHook`
+         (with the exception that there is always one positional
+         argument, the commit status).
 
-         Hooks are called only for a top-level commit.  A
-         savepoint creation does not call any hooks.  Calling a
-         hook "consumes" its registration:  hook registrations do not
-         persist across transactions.  If it's desired to call the same
-         hook on every transaction commit, then addAfterCommitHook() must be
-         called with that hook during every transaction; in such a case
-         consider registering a synchronizer object via a TransactionManager's
-         registerSynch() method instead.
+         As with `addBeforeCommitHook`, multiple hooks can be
+         registered, savepoint creation doesn't call any hooks, and
+         calling a hook consumes its registration.
          """
 
     def getAfterCommitHooks():
-        """Return iterable producing the registered addAfterCommit hooks.
+        """Return iterable producing the registered `addAfterCommitHook`
+        hooks.
 
-        A triple (hook, args, kws) is produced for each registered hook.
-        The hooks are produced in the order in which they would be invoked
-        by a top-level transaction commit.
+        As with `getBeforeCommitHooks`, a triple ``(hook, args, kws)``
+        is produced for each registered hook. The hooks are produced
+        in the order in which they would be invoked by a top-level
+        transaction commit.
         """
 
     def addBeforeAbortHook(hook, args=(), kws=None):
-        """Register a hook to call before the transaction is abortted.
+        """Register a hook to call before the transaction is aborted.
 
-        The specified hook function will be called after the transaction's
-        abort method has been called, but before the abort process has been
-        started.  The hook will be passed the specified positional (`args`)
-        and keyword (`kws`) arguments.  `args` is a sequence of positional
-        arguments to be passed, defaulting to an empty tuple (no positional
-        arguments are passed).  `kws` is a dictionary of keyword argument
-        names and values to be passed, or the default None (no keyword
-        arguments are passed).
+        The specified hook function will be called after the
+        transaction's abort method has been called, but before the
+        abort process has been started.
 
-        Multiple hooks can be registered and will be called in the order they
-        were registered (first registered, first called).  This method can
-        also be called from a hook:  an executing hook can register more
-        hooks.  Applications should take care to avoid creating infinite loops
-        by recursively registering hooks.
+        *args* and *kws* are interpreted as for `addBeforeCommitHook`.
+        As with `addBeforeCommitHook`, multiple hooks can be
+        registered, savepoint creation doesn't call any hooks, and
+        calling a hook consumes its registration.
 
         Abort hooks are called only for a top-level abort. If the
-        transaction is committed, abort hooks are not called.
-        This is true even if the commit fails. In this case, however,
-        the transaction is in the ``COMMITFAILED`` state and is
-        virtually unusable; therefore, a top-level abort will typically
-        follow.
-
-        Calling a hook "consumes" its registration.
-        Hook registrations do not persist across transactions.
+        transaction is committed, abort hooks are not called. This is
+        true even if the commit fails. In this case, however, the
+        transaction is in the ``COMMITFAILED`` state and is virtually
+        unusable; therefore, a top-level abort will typically follow.
         """
 
     def getBeforeAbortHooks():
-        """Return iterable producing the registered addBeforeAbort hooks.
+        """Return iterable producing the registered `addBeforeAbortHook`
+        hooks.
 
-        A triple (hook, args, kws) is produced for each registered hook.
-        The hooks are produced in the order in which they would be invoked
-        by a top-level transaction abort.
+        As with `getBeforeCommitHooks`, a triple ``(hook, args, kws)``
+        is produced for each registered hook. The hooks are produced
+        in the order in which they would be invoked by a top-level
+        transaction abort.
         """
 
     def addAfterAbortHook(hook, args=(), kws=None):
         """Register a hook to call after a transaction abort.
 
-        The specified hook function will be called after the transaction
-        abort  with positional arguments `args`  and `kws`
-        keyword arguments.  `args` is a sequence of
-        positional arguments to be passed, defaulting to an empty tuple
-        `kws` is a dictionary of keyword argument names and values to be
-        passed, or the default None (no keyword arguments are passed).
+        The specified hook function will be called after the
+        transaction abort.
 
-        Multiple hooks can be registered and will be called in the order they
-        were registered (first registered, first called).  This method can
-        also be called from a hook:  an executing hook can register more
-        hooks.  Applications should take care to avoid creating infinite loops
-        by recursively registering hooks.
+        *args* and *kws* are interpreted as for `addBeforeCommitHook`.
+        As with `addBeforeCommitHook`, multiple hooks can be
+        registered, savepoint creation doesn't call any hooks, and
+        calling a hook consumes its registration.
 
-        Abort hooks are called only for a top-level abort. If the
-        transaction is committed, abort hooks are not called.
-        This is true even if the commit fails. In this case, however,
-        the transaction is in the ``COMMITFAILED`` state and is
-        virtually unusable; therefore, a top-level abort will typically
-        follow.
-
-        Calling a hook "consumes" its registration.
-        Hook registrations do not persist across transactions.
+        As with `addBeforeAbortHook`, these hooks are called only for
+        a top-level abort. See that method for more.
         """
 
     def getAfterAbortHooks():
-        """Return iterable producing the registered addAfterAbort hooks.
+        """Return iterable producing the registered `addAfterAbortHook`
+        hooks.
 
-        A triple (hook, args, kws) is produced for each registered hook.
-        The hooks are produced in the order in which they would be invoked
-        by a top-level transaction abort.
+        As with `getBeforeCommitHooks`, a triple ``(hook, args, kws)``
+        is produced for each registered hook. The hooks are produced
+        in the order in which they would be invoked by a top-level
+        transaction abort.
         """
 
     def set_data(ob, data):
-        """Hold data on behalf of an object
+        """Hold *data* on behalf of an object
 
         For objects such as data managers or their subobjects that
         work with multiple transactions, it's convenient to store
@@ -440,23 +412,23 @@ class ITransaction(Interface):
         on behalf of the object.
 
         The object passed should be the object that needs the data, as
-        opposed to simple object like a string. (Internally, the id of
+        opposed to a simple object like a string. (Internally, the id of
         the object is used as the key.)
         """
 
     def data(ob):
         """Retrieve data held on behalf of an object.
 
-        See set_data.
+        See `set_data`.
         """
 
     def isRetryableError(error):
         """Determine if the error is retryable.
 
-        Return true if any joined IRetryDataManager considers the error
-        transient. Such errors may occur due to concurrency issues in the
-        underlying storage engine.
-
+        Returns true if any joined `IRetryDataManager` considers the
+        error transient *or* if the error is an instance of
+        `TransientError`. Such errors may occur due to concurrency
+        issues in the underlying storage engine.
         """
 
 class ITransactionDeprecated(Interface):
@@ -479,18 +451,24 @@ class IDataManager(Interface):
 
     These objects may manage data for other objects, or they may manage
     non-object storages, such as relational databases.  For example,
-    a ZODB.Connection.
+    a `ZODB.Connection.Connection`.
 
     Note that when some data is modified, that data's data manager should
     join a transaction so that data can be committed when the user commits
     the transaction.
+
+    These objects implement the two-phase commit protocol in order to allow
+    multiple data managers to safely participate in a single transaction.
+    The methods `tpc_begin`, `commit`, `tpc_vote`, and then either
+    `tpc_finish` or `tpc_abort` are normally called in that order when
+    committing a transaction.
     """
 
     transaction_manager = Attribute(
         """The transaction manager (TM) used by this data manager.
 
         This is a public attribute, intended for read-only use.  The value
-        is an instance of ITransactionManager, typically set by the data
+        is an instance of `ITransactionManager`, typically set by the data
         manager's constructor.
         """)
 
@@ -509,28 +487,23 @@ class IDataManager(Interface):
         changes, the data manager must rejoin the transaction.
         """
 
-    # Two-phase commit protocol.  These methods are called by the ITransaction
-    # object associated with the transaction being committed.  The sequence
-    # of calls normally follows this regular expression:
-    #     tpc_begin commit tpc_vote (tpc_finish | tpc_abort)
-
     def tpc_begin(transaction):
         """Begin commit of a transaction, starting the two-phase commit.
 
-        transaction is the ITransaction instance associated with the
+        *transaction* is the `ITransaction` instance associated with the
         transaction being committed.
         """
 
     def commit(transaction):
         """Commit modifications to registered objects.
 
-        Save changes to be made persistent if the transaction commits (if
-        tpc_finish is called later).  If tpc_abort is called later, changes
-        must not persist.
+        Save changes to be made persistent if the transaction commits
+        (if `tpc_finish` is called later). If `tpc_abort` is called
+        later, changes must not persist.
 
-        This includes conflict detection and handling.  If no conflicts or
-        errors occur, the data manager should be prepared to make the
-        changes persist when tpc_finish is called.
+        This includes conflict detection and handling. If no conflicts
+        or errors occur, the data manager should be prepared to make
+        the changes persist when `tpc_finish` is called.
         """
 
     def tpc_vote(transaction):
@@ -539,7 +512,7 @@ class IDataManager(Interface):
         This is the last chance for a data manager to vote 'no'.  A
         data manager votes 'no' by raising an exception.
 
-        transaction is the ITransaction instance associated with the
+        *transaction* is the `ITransaction` instance associated with the
         transaction being committed.
         """
 
@@ -548,7 +521,7 @@ class IDataManager(Interface):
 
         Make all changes to objects modified by this transaction persist.
 
-        transaction is the ITransaction instance associated with the
+        *transaction* is the `ITransaction` instance associated with the
         transaction being committed.
 
         This should never fail.  If this raises an exception, the
@@ -563,21 +536,23 @@ class IDataManager(Interface):
         the data manager.  Abandon all changes to objects modified by this
         transaction.
 
-        transaction is the ITransaction instance associated with the
+        *transaction* is the `ITransaction` instance associated with the
         transaction being committed.
 
         This should never fail.
         """
 
     def sortKey():
-        """Return a key to use for ordering registered DataManagers.
+        """Return a key to use for ordering registered
+        `IDataManagers`.
 
-        In order to guarantee a total ordering, keys must be strings.
+        In order to guarantee a total ordering, keys **must** be
+        `strings <str>`.
 
-        ZODB uses a global sort order to prevent deadlock when it commits
-        transactions involving multiple resource managers.  The resource
-        manager must define a sortKey() method that provides a global ordering
-        for resource managers.
+        Transactions use a global sort order to prevent deadlock when
+        committing transactions involving multiple data managers.
+        The data managers **must** define a `sortKey` method that
+        provides a global ordering across all registered data managers.
         """
         # Alternate version:
         #"""Return a consistent sort key for this connection.
@@ -590,7 +565,7 @@ class IDataManager(Interface):
 class ISavepointDataManager(IDataManager):
 
     def savepoint():
-        """Return a data-manager savepoint (IDataManagerSavepoint).
+        """Return a data-manager savepoint (`IDataManagerSavepoint`).
         """
 
 class IRetryDataManager(IDataManager):
@@ -600,21 +575,23 @@ class IRetryDataManager(IDataManager):
 
         A data manager can provide this method to indicate that a a
         transaction that raised the given error should be retried.
-        This method may be called by an ITransactionManager when
+        This method may be called by an `ITransactionManager` when
         considering whether to retry a failed transaction.
         """
 
 class IDataManagerSavepoint(Interface):
-    """Savepoint for data-manager changes for use in transaction savepoints.
+    """Savepoint for data-manager changes for use in transaction
+    savepoints.
 
-    Datamanager savepoints are used by, and only by, transaction savepoints.
+    Datamanager savepoints are used by, and only by, transaction
+    savepoints.
 
     Note that data manager savepoints don't have any notion of, or
-    responsibility for, validity.  It isn't the responsibility of
-    data-manager savepoints to prevent multiple rollbacks or rollbacks after
-    transaction termination.  Preventing invalid savepoint rollback is the
-    responsibility of transaction rollbacks.  Application code should never
-    use data-manager savepoints.
+    responsibility for, validity. It isn't the responsibility of
+    data-manager savepoints to prevent multiple rollbacks or rollbacks
+    after transaction termination. Preventing invalid savepoint
+    rollback is the responsibility of transaction rollbacks.
+    Application code should never use data-manager savepoints.
     """
 
     def rollback():
@@ -628,7 +605,7 @@ class ISavepoint(Interface):
     def rollback():
         """Rollback any work done since the savepoint.
 
-        InvalidSavepointRollbackError is raised if the savepoint isn't valid.
+        `InvalidSavepointRollbackError` is raised if the savepoint isn't valid.
         """
 
     valid = Attribute(
@@ -660,20 +637,22 @@ class ISynchronizer(Interface):
         """Hook that is called at the start of a transaction.
 
         This hook is called when, and only when, a transaction manager's
-        begin() method is called explictly.
+        `~ITransactionManager.begin` method is called explicitly.
         """
 
 class TransactionError(Exception):
     """An error occurred due to normal transaction processing."""
 
 class TransactionFailedError(TransactionError):
-    """Cannot perform an operation on a transaction that previously failed.
+    """Cannot perform an operation on a transaction that previously
+    failed.
 
-    An attempt was made to commit a transaction, or to join a transaction,
-    but this transaction previously raised an exception during an attempt
-    to commit it.  The transaction must be explicitly aborted, either by
-    invoking abort() on the transaction, or begin() on its transaction
-    manager.
+    An attempt was made to commit a transaction, or to join a
+    transaction, but this transaction previously raised an exception
+    during an attempt to commit it. The transaction must be explicitly
+    aborted by invoking `ITransaction.abort`. (If the transaction manager
+    is not operating in explicit mode, then `ITransactionManager.begin`
+    can also be used to perform an implicit abort.)
     """
 
 class DoomedTransaction(TransactionError):
@@ -699,7 +678,7 @@ class NoTransaction(TransactionError):
 class AlreadyInTransaction(TransactionError):
     """Attempt to create a new transaction without ending a preceding one
 
-    An application called ``begin()`` on a transaction manager in
+    An application called `~ITransactionManager.begin` on a transaction manager in
     explicit mode, without committing or aborting the previous
     transaction.
 
