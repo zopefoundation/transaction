@@ -63,8 +63,9 @@ class _NoSynchronizers(object):
 
 @implementer(interfaces.ITransaction)
 class Transaction(object):
-
-
+    """
+    Default implementation of `~transaction.interfaces.ITransaction`.
+    """
 
     # Assign an index to each savepoint so we can invalidate later savepoints
     # on rollback.  The first index assigned is 1, and it goes up by 1 each
@@ -153,12 +154,12 @@ class Transaction(object):
             self._description = text_or_warn(v)
 
     def isDoomed(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return self.status is Status.DOOMED
 
     def doom(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is not Status.DOOMED:
             if self.status is not Status.ACTIVE:
@@ -177,7 +178,7 @@ class Transaction(object):
                 self._failure_traceback.getvalue())
 
     def join(self, resource):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return
@@ -214,7 +215,7 @@ class Transaction(object):
         self._resources = [r for r in self._resources if r is not resource]
 
     def savepoint(self, optimistic=False):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return, it raises
@@ -251,7 +252,7 @@ class Transaction(object):
         self._savepoint2index.clear()
 
     def commit(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is Status.DOOMED:
             raise interfaces.DoomedTransaction(
@@ -317,12 +318,12 @@ class Transaction(object):
             del t, v, tb
 
     def getBeforeCommitHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._before_commit)
 
     def addBeforeCommitHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -334,12 +335,12 @@ class Transaction(object):
         self._call_hooks(self._before_commit)
 
     def getAfterCommitHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._after_commit)
 
     def addAfterCommitHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -395,12 +396,12 @@ class Transaction(object):
                                    rm, exc_info=sys.exc_info())
 
     def getBeforeAbortHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._before_abort)
 
     def addBeforeAbortHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -412,12 +413,12 @@ class Transaction(object):
         self._call_hooks(self._before_abort, exc=False)
 
     def getAfterAbortHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._after_abort)
 
     def addAfterAbortHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -536,7 +537,7 @@ class Transaction(object):
         data[id(ob)] = ob_data
 
     def abort(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         try:
             t = None
@@ -581,7 +582,7 @@ class Transaction(object):
             del t, v, tb
 
     def note(self, text):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if text is not None:
             text = text_or_warn(text).strip()
@@ -591,12 +592,12 @@ class Transaction(object):
                 self.description = text
 
     def setUser(self, user_name, path=u"/"):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         self.user = u"%s %s" % (text_or_warn(path), text_or_warn(user_name))
 
     def setExtendedInfo(self, name, value):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         self.extension[name] = value
 
@@ -615,7 +616,7 @@ def rm_key(rm):
 
 @implementer(interfaces.ISavepoint)
 class Savepoint(object):
-    """Transaction savepoint.
+    """Implementation of `~transaction.interfaces.ISavepoint`, a transaction savepoint.
 
     Transaction savepoints coordinate savepoints for data managers
     participating in a transaction.
@@ -642,7 +643,7 @@ class Savepoint(object):
         return self.transaction is not None
 
     def rollback(self):
-        """ See ISavepoint.
+        """ See `~transaction.interfaces.ISavepoint`.
         """
         transaction = self.transaction
         if transaction is None:

@@ -358,7 +358,7 @@ Bugs fixed:
 1.0a1 (2007-12-18)
 ==================
 
-= Initial release, branched from ZODB trunk on 2007-11-08 (aka
+- Initial release, branched from ZODB trunk on 2007-11-08 (aka
   "3.9.0dev").
 
 - Remove (deprecated) support for beforeCommitHook alias to
