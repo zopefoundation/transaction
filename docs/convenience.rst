@@ -1,12 +1,9 @@
-Transaction convenience support
-===============================
-
-(We *really* need to write proper documentation for the transaction
- package, but I don't want to block the conveniences documented here
- for that.)
+=================================
+ Transaction convenience support
+=================================
 
 with support
-------------
+============
 
 We can now use the with statement to define transaction boundaries.
 
@@ -42,11 +39,11 @@ We can use it with a manager:
     3
 
 On Python 2, you can also abbreviate ``with transaction.manager:`` as ``with
-transaction:``.  This does not work on Python 3 (see see
+transaction:``.  This does not work on Python 3 (see
 http://bugs.python.org/issue12022).
 
 Retries
--------
+=======
 
 Commits can fail for transient reasons, especially conflicts.
 Applications will often retry transactions some number of times to
@@ -66,7 +63,7 @@ This is rather ugly and easy to get wrong.
 Transaction managers provide two helpers for this case.
 
 Running and retrying functions as transactions
-______________________________________________
+----------------------------------------------
 
 The first helper runs a function as a transaction::
 
@@ -104,7 +101,7 @@ You can pass an integer number of times to try to the ``run`` method::
 The default number of times to try is 3.
 
 Retrying code blocks using a attempt iterator
-_____________________________________________
+---------------------------------------------
 
 An older helper for running transactions uses an iterator of attempts::
 
