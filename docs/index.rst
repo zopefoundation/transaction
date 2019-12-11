@@ -26,7 +26,6 @@ transaction automatically if an error occurs. It's also not difficult to create 
    savepoint
    hooks
    datamanager
-   resourcemanager
    integrations
    sqlalchemy
    api
