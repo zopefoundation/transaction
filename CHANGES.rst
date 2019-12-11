@@ -9,6 +9,11 @@
 
 - Add support for Python 3.8.
 
+- Drop support for legacy transaction APIs including
+  ``Transaction.register()`` and old ZODB3-style datamanagers. See
+  `issue 89
+  <https://github.com/zopefoundation/transaction/issues/89>`_.
+
 - ``TransactionManager.run`` now commits/aborts the transaction
   "active" after the execution of *func* (and no longer the initial
   transaction which might already have been committed/aborted by *func*)
@@ -353,7 +358,7 @@ Bugs fixed:
 1.0a1 (2007-12-18)
 ==================
 
-= Initial release, branched from ZODB trunk on 2007-11-08 (aka
+- Initial release, branched from ZODB trunk on 2007-11-08 (aka
   "3.9.0dev").
 
 - Remove (deprecated) support for beforeCommitHook alias to

@@ -431,20 +431,6 @@ class ITransaction(Interface):
         issues in the underlying storage engine.
         """
 
-class ITransactionDeprecated(Interface):
-    """Deprecated parts of the transaction API."""
-
-    def begin(info=None):
-        """Begin a new transaction.
-
-        If the transaction is in progress, it is aborted and a new
-        transaction is started using the same transaction object.
-        """
-
-    # TODO: deprecate this for 3.6.
-    def register(object):
-        """Register the given object for transaction control."""
-
 
 class IDataManager(Interface):
     """Objects that manage transactional storage.

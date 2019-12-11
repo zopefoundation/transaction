@@ -61,6 +61,9 @@ def _new_transaction(txn, synchs):
 
 @implementer(ITransactionManager)
 class TransactionManager(object):
+    """
+    Single-thread implementation of `~transaction.interfaces.ITransactionManager`.
+    """
 
     def __init__(self, explicit=False):
         self.explicit = explicit
@@ -68,7 +71,7 @@ class TransactionManager(object):
         self._synchs = WeakSet()
 
     def begin(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         if self._txn is not None:
             if self.explicit:
@@ -81,7 +84,7 @@ class TransactionManager(object):
     __enter__ = lambda self: self.begin()
 
     def get(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         if self._txn is None:
             if self.explicit:
@@ -95,44 +98,44 @@ class TransactionManager(object):
         self._txn = None
 
     def registerSynch(self, synch):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         self._synchs.add(synch)
         if self._txn is not None:
             synch.newTransaction(self._txn)
 
     def unregisterSynch(self, synch):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         self._synchs.remove(synch)
 
     def clearSynchs(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         self._synchs.clear()
 
     def registeredSynchs(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         return bool(self._synchs)
 
     def isDoomed(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         return self.get().isDoomed()
 
     def doom(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         return self.get().doom()
 
     def commit(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         return self.get().commit()
 
     def abort(self):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         return self.get().abort()
 
@@ -143,7 +146,7 @@ class TransactionManager(object):
             self.abort()
 
     def savepoint(self, optimistic=False):
-        """ See ITransactionManager.
+        """ See `~transaction.interfaces.ITransactionManager`.
         """
         return self.get().savepoint(optimistic)
 
@@ -196,7 +199,7 @@ class TransactionManager(object):
                 doc = name + u'\n\n' + doc
             else:
                 doc = name
-        
+
         for try_no in itertools.count(1):
             txn = self.begin()
             if doc:
@@ -220,13 +223,13 @@ class TransactionManager(object):
 @implementer(ITransactionManager)
 class ThreadTransactionManager(threading.local):
     """
-    Thread-local transaction manager.
+    Thread-local `transaction manager <transaction.interfaces.ITransactionManager>`.
 
     A thread-local transaction manager can be used as a global
     variable, but has a separate copy for each thread.
 
     Advanced applications can use the `manager` attribute to get a
-    wrapped TransactionManager to allow cross-thread calls for
+    wrapped `TransactionManager` to allow cross-thread calls for
     graceful shutdown of data managers.
     """
 

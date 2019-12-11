@@ -1,5 +1,6 @@
-:mod:`transaction` Documentation
-================================
+==================================
+ ``transaction`` Documentation
+==================================
 
 A general transaction support library for Python.
 
@@ -14,6 +15,23 @@ and others. in addition, there are packages like pyramid_tm, which allows all
 the code in a web request to run inside of a transaction, and aborts the
 transaction automatically if an error occurs. It's also not difficult to create your own backends if necessary.
 
+.. rubric:: Additional Documentation
+
+.. toctree::
+   :maxdepth: 1
+
+   changes
+   convenience
+   doom
+   savepoint
+   hooks
+   datamanager
+   integrations
+   sqlalchemy
+   api
+   developer
+
+
 Getting the transaction package
 ===============================
 
@@ -23,6 +41,7 @@ To install the transaction package you can use pip::
 
 After this, the package can be imported in your Python code, but there are a
 few things that we need to explain before doing that.
+
 
 Using transactions
 ==================
@@ -46,28 +65,31 @@ example:
         transaction.abort()
 
 
+
 Things you need to know about the transaction machinery
 =======================================================
 
-Transactions
-------------
+.. rubric:: Transactions
 
-A transaction consists of one or more operations that we want to perform as a
+
+A consists of one or more operations that we want to perform as a
 single action. It's an all or nothing proposition: either all the operations
 that are part of the transaction are completed successfully or none of them
 have any effect.
 
-In the transaction package, a transaction object represents a running
-transaction that can be committed or aborted in the end.
+In the transaction package, a `transaction object <transaction.interfaces.ITransaction>`
+represents a running transaction that can be committed or aborted in
+the end.
 
-Transaction managers
---------------------
+.. rubric:: Transaction managers
 
-Applications interact with a transaction using a transaction manager, which is
-responsible for establishing the transaction boundaries. Basically this means
-that it creates the transactions and keeps track of the current one. Whenever
-an application wants to use the transaction machinery, it gets the current
-transaction from the transaction manager before starting any operations
+Applications interact with a transaction using a `transaction manager
+<transaction.interfaces.ITransactionManager>`, which is responsible for establishing the
+transaction boundaries. Basically this means that it creates the
+transactions and keeps track of the current one. Whenever an
+application wants to use the transaction machinery, it gets the
+current transaction from the transaction manager before starting any
+operations
 
 The default transaction manager, `transaction.manager`, is thread
 local.  You use it as a global variable, but every thread has it's own
@@ -76,28 +98,29 @@ copy. [#wrapped]_
 Application developers will most likely never need to create their own
 transaction managers.
 
-Data Managers
--------------
+.. rubric:: Data Managers
 
-A data manager handles the interaction between the transaction manager and the
-data storage mechanism used by the application, which can be an object storage
-like the ZODB, a relational database, a file or any other storage mechanism
+A `data manager <transaction.interfaces.IDataManager>` handles the
+interaction between the transaction manager and the data storage
+mechanism used by the application, which can be an object storage like
+the ZODB, a relational database, a file or any other storage mechanism
 that the application needs to control.
 
-The data manager provides a common interface for the transaction manager to use
-while a transaction is running. To be part of a specific transaction, a data
-manager has to 'join' it. Any number of data managers can join a transaction,
-which means that you could for example perform writing operations on a ZODB
-storage and a relational database as part of the same transaction. The
-transaction manager will make sure that both data managers can commit the
-transaction or none of them does.
+The data manager provides a common interface for the transaction
+manager to use while a transaction is running. To be part of a
+specific transaction, a data manager has to `join
+<transaction.interfaces.ITransaction.join>` it. Any number of data
+managers can join a transaction, which means that you could for
+example perform writing operations on a ZODB storage and a relational
+database as part of the same transaction. The transaction manager will
+make sure that both data managers can commit the transaction or none
+of them does.
 
 An application developer will need to write a data manager for each different
 type of storage that the application uses. There are also third party data
 managers that can be used instead.
 
-The two phase commit protocol
------------------------------
+.. rubric:: The two phase commit protocol
 
 The transaction machinery uses a two phase commit protocol for coordinating all
 participating data managers in a transaction. The two phases work like follows:
@@ -115,39 +138,24 @@ participating data managers in a transaction. The two phases work like follows:
 The two phase commit sequence requires that all the storages being used are
 capable of rolling back or aborting changes.
 
-Savepoints
-----------
+.. rubric:: Savepoints
 
-A savepoint allows a data manager to save work to its storage without
-committing the full transaction. In other words, the transaction will go on,
-but if a rollback is needed we can get back to this point instead of starting
-all over.
+A savepoint allows `supported data managers
+<transaction.interfaces.ISavepointDataManager>` to save work to their
+storage without committing the full transaction. In other words, the
+transaction will go on, but if a rollback is needed we can get back to
+this point instead of starting all over.
 
 Savepoints are also useful to free memory that would otherwise be used to keep
 the whole state of the transaction. This can be very important when a
 transaction attempts a large number of changes.
 
-Additional Documentation
-========================
-
-.. toctree::
-
-   sqlalchemy
-   convenience
-   doom
-   savepoint
-   hooks
-   datamanager
-   resourcemanager
-   integrations
-   api
-   developer
-
 
 .. [#wrapped] The thread-local transaction manager,
-   `transaction.manager` wraps a regular transaction manager.  You can
-   get the wrapped transaction manager using the `manager` attribute.
-   Implementers of data managers can use this **advanced** feature to
-   allow graceful shutdown from a central/main thread, by having their
-   `close` methods call `unregisterSynch` on the wrapped transaction
+   `transaction.manager` wraps a regular transaction manager. You can
+   get the wrapped transaction manager using the ``manager``
+   attribute. Implementers of data managers can use this **advanced**
+   feature to allow graceful shutdown from a central/main thread, by
+   having their ``close`` methods call
+   `~.ITransactionManager.unregisterSynch` on the wrapped transaction
    manager they obtained when created or opened.

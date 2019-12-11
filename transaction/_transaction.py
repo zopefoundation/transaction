@@ -11,7 +11,6 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ############################################################################
-import binascii
 import logging
 import sys
 import warnings
@@ -25,8 +24,6 @@ from transaction.interfaces import TransactionFailedError
 from transaction import interfaces
 from transaction._compat import reraise
 from transaction._compat import get_thread_ident
-from transaction._compat import native_
-from transaction._compat import bytes_
 from transaction._compat import StringIO
 from transaction._compat import text_type
 
@@ -44,11 +41,6 @@ def _makeLogger(): #pragma NO COVER
         return _LOGGER
     return logging.getLogger("txn.%d" % get_thread_ident())
 
-
-# The point of this is to avoid hiding exceptions (which the builtin
-# hasattr() does).
-def myhasattr(obj, attr):
-    return getattr(obj, attr, _marker) is not _marker
 
 class Status(object):
     # ACTIVE is the initial state.
@@ -69,11 +61,11 @@ class _NoSynchronizers(object):
     def map(_f):
         "Does nothing"
 
-@implementer(interfaces.ITransaction,
-             interfaces.ITransactionDeprecated)
+@implementer(interfaces.ITransaction)
 class Transaction(object):
-
-
+    """
+    Default implementation of `~transaction.interfaces.ITransaction`.
+    """
 
     # Assign an index to each savepoint so we can invalidate later savepoints
     # on rollback.  The first index assigned is 1, and it goes up by 1 each
@@ -162,12 +154,12 @@ class Transaction(object):
             self._description = text_or_warn(v)
 
     def isDoomed(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return self.status is Status.DOOMED
 
     def doom(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is not Status.DOOMED:
             if self.status is not Status.ACTIVE:
@@ -186,7 +178,7 @@ class Transaction(object):
                 self._failure_traceback.getvalue())
 
     def join(self, resource):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return
@@ -197,12 +189,6 @@ class Transaction(object):
             # I think some users want it.
             raise ValueError("expected txn status %r or %r, but it's %r" % (
                              Status.ACTIVE, Status.DOOMED, self.status))
-        # TODO: the prepare check is a bit of a hack, perhaps it would
-        # be better to use interfaces.  If this is a ZODB4-style
-        # resource manager, it needs to be adapted, too.
-        if myhasattr(resource, "prepare"):
-            # TODO: deprecate 3.6
-            resource = DataManagerAdapter(resource)
         self._resources.append(resource)
 
         if self._savepoint2index:
@@ -229,7 +215,7 @@ class Transaction(object):
         self._resources = [r for r in self._resources if r is not resource]
 
     def savepoint(self, optimistic=False):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is Status.COMMITFAILED:
             self._prior_operation_failed() # doesn't return, it raises
@@ -265,35 +251,8 @@ class Transaction(object):
             savepoint.transaction = None # invalidate
         self._savepoint2index.clear()
 
-
-    def register(self, obj):
-        """ See ITransaction.
-        """
-        # The old way of registering transaction participants.
-        #
-        # register() is passed either a persistent object or a
-        # resource manager like the ones defined in ZODB.DB.
-        # If it is passed a persistent object, that object should
-        # be stored when the transaction commits.  For other
-        # objects, the object implements the standard two-phase
-        # commit protocol.
-        manager = getattr(obj, "_p_jar", obj)
-        if manager is None:
-            raise ValueError("Register with no manager")
-        adapter = self._adapters.get(manager)
-        if adapter is None:
-            adapter = MultiObjectResourceAdapter(manager)
-            adapter.objects.append(obj)
-            self._adapters[manager] = adapter
-            self.join(adapter)
-        else:
-            # TODO: comment out this expensive assert later
-            # Use id() to guard against proxies.
-            assert id(obj) not in map(id, adapter.objects)
-            adapter.objects.append(obj)
-
     def commit(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if self.status is Status.DOOMED:
             raise interfaces.DoomedTransaction(
@@ -359,12 +318,12 @@ class Transaction(object):
             del t, v, tb
 
     def getBeforeCommitHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._before_commit)
 
     def addBeforeCommitHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -376,12 +335,12 @@ class Transaction(object):
         self._call_hooks(self._before_commit)
 
     def getAfterCommitHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._after_commit)
 
     def addAfterCommitHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -437,12 +396,12 @@ class Transaction(object):
                                    rm, exc_info=sys.exc_info())
 
     def getBeforeAbortHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._before_abort)
 
     def addBeforeAbortHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -454,12 +413,12 @@ class Transaction(object):
         self._call_hooks(self._before_abort, exc=False)
 
     def getAfterAbortHooks(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         return iter(self._after_abort)
 
     def addAfterAbortHook(self, hook, args=(), kws=None):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if kws is None:
             kws = {}
@@ -578,7 +537,7 @@ class Transaction(object):
         data[id(ob)] = ob_data
 
     def abort(self):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         try:
             t = None
@@ -623,7 +582,7 @@ class Transaction(object):
             del t, v, tb
 
     def note(self, text):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         if text is not None:
             text = text_or_warn(text).strip()
@@ -633,12 +592,12 @@ class Transaction(object):
                 self.description = text
 
     def setUser(self, user_name, path=u"/"):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         self.user = u"%s %s" % (text_or_warn(path), text_or_warn(user_name))
 
     def setExtendedInfo(self, name, value):
-        """ See ITransaction.
+        """ See `~transaction.interfaces.ITransaction`.
         """
         self.extension[name] = value
 
@@ -649,146 +608,15 @@ class Transaction(object):
 # TODO: We need a better name for the adapters.
 
 
-class MultiObjectResourceAdapter(object):
-    """Adapt the old-style register() call to the new-style join().
-
-    With join(), a resource manager like a Connection registers with
-    the transaction manager.  With register(), an individual object
-    is passed to register().
-    """
-    def __init__(self, jar):
-        self.manager = jar
-        self.objects = []
-        self.ncommitted = 0
-
-    def __repr__(self):
-        return "<%s for %s at %s>" % (self.__class__.__name__,
-                                      self.manager, id(self))
-
-    def sortKey(self):
-        return self.manager.sortKey()
-
-    def tpc_begin(self, txn):
-        self.manager.tpc_begin(txn)
-
-    def tpc_finish(self, txn):
-        self.manager.tpc_finish(txn)
-
-    def tpc_abort(self, txn):
-        self.manager.tpc_abort(txn)
-
-    def commit(self, txn):
-        for o in self.objects:
-            self.manager.commit(o, txn)
-            self.ncommitted += 1
-
-    def tpc_vote(self, txn):
-        self.manager.tpc_vote(txn)
-
-    def abort(self, txn):
-        t = None
-        v = None
-        tb = None
-        try:
-            for o in self.objects:
-                try:
-                    self.manager.abort(o, txn)
-                except:
-                    # Capture the first exception and re-raise it after
-                    # aborting all the other objects.
-                    if tb is None:
-                        t, v, tb = sys.exc_info()
-                    txn.log.error("Failed to abort object: %s",
-                                  object_hint(o), exc_info=sys.exc_info())
-
-            if tb is not None:
-                reraise(t, v, tb)
-        finally:
-            del t, v, tb
-
-
 def rm_key(rm):
     func = getattr(rm, 'sortKey', None)
     if func is not None:
         return func()
 
-def object_hint(o):
-    """Return a string describing the object.
-
-    This function does not raise an exception.
-    """
-    # We should always be able to get __class__.
-    klass = o.__class__.__name__
-    # oid would be great, but maybe this isn't a persistent object.
-    oid = getattr(o, "_p_oid", _marker)
-    if oid is not _marker:
-        oid = oid_repr(oid)
-    else:
-        oid = 'None'
-    return "%s oid=%s" % (klass, oid)
-
-def oid_repr(oid):
-    if isinstance(oid, str) and len(oid) == 8:
-        # Convert to hex and strip leading zeroes.
-        as_hex = native_(
-            binascii.hexlify(bytes_(oid, 'ascii')), 'ascii').lstrip('0')
-        # Ensure two characters per input byte.
-        if len(as_hex) & 1:
-            as_hex = '0' + as_hex
-        elif as_hex == '':
-            as_hex = '00'
-        return '0x' + as_hex
-    else:
-        return repr(oid)
-
-
-# TODO: deprecate for 3.6.
-class DataManagerAdapter(object):
-    """Adapt zodb 4-style data managers to zodb3 style
-
-    Adapt transaction.interfaces.IDataManager to
-    ZODB.interfaces.IPureDatamanager
-    """
-
-    # Note that it is pretty important that this does not have a _p_jar
-    # attribute. This object will be registered with a zodb3 TM, which
-    # will then try to get a _p_jar from it, using it as the default.
-    # (Objects without a _p_jar are their own data managers.)
-
-    def __init__(self, datamanager):
-        self._datamanager = datamanager
-
-    # TODO: I'm not sure why commit() doesn't do anything
-
-    def commit(self, transaction):
-        # We don't do anything here because ZODB4-style data managers
-        # didn't have a separate commit step
-        pass
-
-    def abort(self, transaction):
-        self._datamanager.abort(transaction)
-
-    def tpc_begin(self, transaction):
-        # We don't do anything here because ZODB4-style data managers
-        # didn't have a separate tpc_begin step
-        pass
-
-    def tpc_abort(self, transaction):
-        self._datamanager.abort(transaction)
-
-    def tpc_finish(self, transaction):
-        self._datamanager.commit(transaction)
-
-    def tpc_vote(self, transaction):
-        self._datamanager.prepare(transaction)
-
-    def sortKey(self):
-        return self._datamanager.sortKey()
-
 
 @implementer(interfaces.ISavepoint)
-class Savepoint:
-    """Transaction savepoint.
+class Savepoint(object):
+    """Implementation of `~transaction.interfaces.ISavepoint`, a transaction savepoint.
 
     Transaction savepoints coordinate savepoints for data managers
     participating in a transaction.
@@ -815,7 +643,7 @@ class Savepoint:
         return self.transaction is not None
 
     def rollback(self):
-        """ See ISavepoint.
+        """ See `~transaction.interfaces.ISavepoint`.
         """
         transaction = self.transaction
         if transaction is None:
@@ -831,7 +659,7 @@ class Savepoint:
             transaction._saveAndRaiseCommitishError() # reraises!
 
 
-class AbortSavepoint:
+class AbortSavepoint(object):
 
     def __init__(self, datamanager, transaction):
         self.datamanager = datamanager
@@ -842,7 +670,7 @@ class AbortSavepoint:
         self.transaction._unjoin(self.datamanager)
 
 
-class NoRollbackSavepoint:
+class NoRollbackSavepoint(object):
 
     def __init__(self, datamanager):
         self.datamanager = datamanager

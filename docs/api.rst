@@ -1,6 +1,6 @@
-==================================
- :mod:`transaction` API Reference
-==================================
+===============================
+ ``transaction`` API Reference
+===============================
 
 Interfaces
 ==========
@@ -43,13 +43,9 @@ Exceptions
 API Objects
 ===========
 
-.. module:: transaction._transaction
+.. automodule:: transaction
 
 .. autoclass:: Transaction
-
-.. autoclass:: Savepoint
-
-.. module:: transaction._manager
 
 .. autoclass:: TransactionManager
 
@@ -62,3 +58,5 @@ API Objects
       On error, aborts the current transaction.  Otherwise, commits.
 
 .. autoclass:: ThreadTransactionManager
+
+.. autoclass:: Savepoint

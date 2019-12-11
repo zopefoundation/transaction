@@ -15,9 +15,8 @@
 
 """
 
-
 class DataManager(object):
-    """Sample data manager
+    """ Sample data manager.
 
     Used by the 'datamanager' chapter in the Sphinx docs.
     """
@@ -26,82 +25,8 @@ class DataManager(object):
         self.sp = 0
         self.transaction = None
         self.delta = 0
-        self.prepared = False
-
-    def inc(self, n=1):
-        self.delta += n
-
-    def prepare(self, transaction):
-        if self.prepared:
-            raise TypeError('Already prepared')
-        self._checkTransaction(transaction)
-        self.prepared = True
-        self.transaction = transaction
-        self.state += self.delta
-
-    def _checkTransaction(self, transaction):
-        if (transaction is not self.transaction
-            and self.transaction is not None):
-            raise TypeError("Transaction missmatch",
-                            transaction, self.transaction)
-
-    def abort(self, transaction):
-        self._checkTransaction(transaction)
-        if self.transaction is not None:
-            self.transaction = None
-
-        if self.prepared:
-            self.state -= self.delta
-            self.prepared = False
-
-        self.delta = 0
-
-    def commit(self, transaction):
-        if not self.prepared:
-            raise TypeError('Not prepared to commit')
-        self._checkTransaction(transaction)
-        self.delta = 0
-        self.transaction = None
-        self.prepared = False
-
-    def savepoint(self, transaction):
-        if self.prepared:
-            raise AssertionError("Can't get savepoint during two-phase commit")
-        self._checkTransaction(transaction)
-        self.transaction = transaction
-        self.sp += 1
-        return Rollback(self)
-
-
-class Rollback(object):
-
-    def __init__(self, dm):
-        self.dm = dm
-        self.sp = dm.sp
-        self.delta = dm.delta
-        self.transaction = dm.transaction
-
-    def rollback(self):
-        if self.transaction is not self.dm.transaction:
-            raise TypeError("Attempt to rollback stale rollback")
-        if self.dm.sp < self.sp:
-            raise TypeError("Attempt to roll back to invalid save point",
-                            self.sp, self.dm.sp)
-        self.dm.sp = self.sp
-        self.dm.delta = self.delta
-
-
-class ResourceManager(object):
-    """ Sample resource manager.
-
-    Used by the 'resourcemanager' chapter in the Sphinx docs.
-    """
-    def __init__(self):
-        self.state = 0
-        self.sp = 0
-        self.transaction = None
-        self.delta = 0
         self.txn_state = None
+        self.begun = False
 
     def _check_state(self, *ok_states):
         if self.txn_state not in ok_states:
@@ -110,7 +35,7 @@ class ResourceManager(object):
 
     def _checkTransaction(self, transaction):
         if (transaction is not self.transaction
-            and self.transaction is not None):
+                and self.transaction is not None):
             raise TypeError("Transaction missmatch",
                             transaction, self.transaction)
 
@@ -122,6 +47,7 @@ class ResourceManager(object):
         self._check_state(None)
         self.transaction = transaction
         self.txn_state = 'tpc_begin'
+        self.begun = True
 
     def tpc_vote(self, transaction):
         self._checkTransaction(transaction)
@@ -134,7 +60,6 @@ class ResourceManager(object):
         self._check_state('tpc_vote')
         self.delta = 0
         self.transaction = None
-        self.prepared = False
         self.txn_state = None
 
     def tpc_abort(self, transaction):
@@ -156,8 +81,22 @@ class ResourceManager(object):
         self.sp += 1
         return SavePoint(self)
 
-    def discard(self, transaction):
-        "Does nothing"
+    def abort(self, transaction):
+        self._checkTransaction(transaction)
+        if self.transaction is not None:
+            self.transaction = None
+
+        if self.begun:
+            self.state -= self.delta
+            self.begun = False
+
+        self.delta = 0
+
+    def commit(self, transaction):
+        if not self.begun:
+            raise TypeError('Not prepared to commit')
+        self._checkTransaction(transaction)
+        self.transaction = None
 
 
 class SavePoint(object):

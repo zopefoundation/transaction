@@ -1,154 +1,297 @@
-Writing a Data Manager
-======================
+========================
+ Writing a Data Manager
+========================
+
+.. currentmodule:: transaction.interfaces
 
 Simple Data Manager
--------------------
+===================
 
 .. doctest::
 
    >>> from transaction.tests.examples import DataManager
 
-This :class:`transaction.tests.examples.DataManager` class
-provides a trivial data-manager implementation and docstrings to illustrate
-the the protocol and to provide a tool for writing tests.
+This class provides a trivial `IDataManager` implementation and doc
+strings to illustrate the protocol and to provide a tool for writing
+tests.
 
 Our sample data manager has state that is updated through an inc
 method and through transaction operations.
-
 
 When we create a sample data manager:
 
 .. doctest::
 
-   >>> dm = DataManager()
+   >>> rm = DataManager()
 
-It has two bits of state, state:
+It has two pieces state, state and delta, both initialized to 0:
 
 .. doctest::
 
-   >>> dm.state
+   >>> rm.state
+   0
+   >>> rm.delta
    0
 
-and delta:
+state is meant to model committed state, while delta represents
+tentative changes within a transaction.  We change the state by
+calling inc:
 
 .. doctest::
 
-   >>> dm.delta
-   0
-
-Both of which are initialized to 0.  state is meant to model
-committed state, while delta represents tentative changes within a
-transaction.  We change the state by calling inc:
-
-.. doctest::
-
-   >>> dm.inc()
+   >>> rm.inc()
 
 which updates delta:
 
 .. doctest::
 
-   >>> dm.delta
+   >>> rm.delta
    1
 
 but state isn't changed until we commit the transaction:
 
 .. doctest::
 
-   >>> dm.state
+   >>> rm.state
    0
 
-To commit the changes, we use 2-phase commit. We execute the first
-stage by calling prepare.  We need to pass a transation. Our
+To commit the changes, we use 2-phase commit.  We execute the first
+stage by calling ``tpc_begin``.  We need to pass a transation. Our
 sample data managers don't really use the transactions for much,
-so we'll be lazy and use strings for transactions:
+so we'll be lazy and use strings for transactions.  The sample
+data manager updates the state when we call ``tpc_vote``, after
+calling ``commit``:
+
 
 .. doctest::
 
    >>> t1 = '1'
-   >>> dm.prepare(t1)
+   >>> rm.tpc_begin(t1)
+   >>> rm.state, rm.delta
+   (0, 1)
+   >>> rm.commit(t1)
+   >>> rm.tpc_vote(t1)
+   >>> rm.state, rm.delta
+   (1, 1)
 
-The sample data manager updates the state when we call prepare:
 
-.. doctest::
-
-   >>> dm.state
-   1
-   >>> dm.delta
-   1
-
-This is mainly so we can detect some affect of calling the methods.
-
-Now if we call commit:
+Now if we call tpc_finish:
 
 .. doctest::
 
-   >>> dm.commit(t1)
+   >>> rm.tpc_finish(t1)
 
-Our changes are"permanent".  The state reflects the changes and the
+Our changes are "permanent".  The state reflects the changes and the
 delta has been reset to 0.
 
 .. doctest::
 
-   >>> dm.state
-   1
-   >>> dm.delta
-   0
+   >>> rm.state, rm.delta
+   (1, 0)
 
-The :meth:`prepare` Method
-----------------------------
 
-Prepare to commit data
+The ``tpc_begin`` Method
+========================
+
+Called by the transaction manager to ask the RM to prepare to commit data.
 
 .. doctest::
 
-   >>> dm = DataManager()
-   >>> dm.inc()
+   >>> rm = DataManager()
+   >>> rm.inc()
    >>> t1 = '1'
-   >>> dm.prepare(t1)
-   >>> dm.commit(t1)
-   >>> dm.state
+   >>> rm.tpc_begin(t1)
+   >>> rm.tpc_vote(t1)
+   >>> rm.tpc_finish(t1)
+   >>> rm.state
    1
-   >>> dm.inc()
+   >>> rm.inc()
    >>> t2 = '2'
-   >>> dm.prepare(t2)
-   >>> dm.abort(t2)
-   >>> dm.state
+   >>> rm.tpc_begin(t2)
+   >>> rm.tpc_vote(t2)
+   >>> rm.tpc_abort(t2)
+   >>> rm.state
    1
 
-It is en error to call prepare more than once without an intervening
-commit or abort:
+It is an error to call tpc_begin more than once without completing
+two-phase commit:
 
 .. doctest::
 
-   >>> dm.prepare(t1)
+   >>> rm.tpc_begin(t1)
 
-   >>> dm.prepare(t1)
+   >>> rm.tpc_begin(t1)
    Traceback (most recent call last):
    ...
-   TypeError: Already prepared
-
-   >>> dm.prepare(t2)
-   Traceback (most recent call last):
-   ...
-   TypeError: Already prepared
-
-   >>> dm.abort(t1)
+   ValueError: txn in state 'tpc_begin' but expected one of (None,)
+   >>> rm.tpc_abort(t1)
 
 If there was a preceeding savepoint, the transaction must match:
 
 .. doctest::
 
-   >>> rollback = dm.savepoint(t1)
-   >>> dm.prepare(t2)
+   >>> rollback = rm.savepoint(t1)
+   >>> rm.tpc_begin(t2)
    Traceback (most recent call last):
    ...
    TypeError: ('Transaction missmatch', '2', '1')
 
-   >>> dm.prepare(t1)
+   >>> rm.tpc_begin(t1)
 
-The :meth:`abort` method
---------------------------
+
+The ``tpc_vote`` Method
+=======================
+
+Verify that a data manager can commit the transaction.
+
+This is the last chance for a data manager to vote 'no'.  A
+data manager votes 'no' by raising an exception.
+
+Passed *transaction*, which is the `ITransaction` instance associated
+with the transaction being committed.
+
+
+The ``tpc_finish`` Method
+=========================
+
+Complete two-phase commit
+
+.. doctest::
+
+   >>> rm = DataManager()
+   >>> rm.state
+   0
+   >>> rm.inc()
+
+   We start two-phase commit by calling ``tpc_begin``, ``commit``, and ``tpc_vote``:
+
+   >>> t1 = '1'
+   >>> rm.tpc_begin(t1)
+   >>> rm.commit(t1)
+   >>> rm.tpc_vote(t1)
+
+   We complete it by calling tpc_finish:
+
+   >>> rm.tpc_finish(t1)
+   >>> rm.state
+   1
+
+It is an error ro call tpc_finish without calling tpc_vote:
+
+.. doctest::
+
+   >>> rm.inc()
+   >>> t2 = '2'
+   >>> rm.tpc_begin(t2)
+   >>> rm.tpc_finish(t2)
+   Traceback (most recent call last):
+   ...
+   ValueError: txn in state 'tpc_begin' but expected one of ('tpc_vote',)
+
+   >>> rm.tpc_abort(t2)  # clean slate
+
+   >>> rm.tpc_begin(t2)
+   >>> rm.tpc_vote(t2)
+   >>> rm.tpc_finish(t2)
+
+Of course, the transactions given to tpc_begin and tpc_finish must
+be the same:
+
+.. doctest::
+
+   >>> rm.inc()
+   >>> t3 = '3'
+   >>> rm.tpc_begin(t3)
+   >>> rm.tpc_vote(t3)
+   >>> rm.tpc_finish(t2)
+   Traceback (most recent call last):
+   ...
+   TypeError: ('Transaction missmatch', '2', '3')
+
+
+The ``tpc_abort`` Method
+========================
+
+Abort a transaction during two-phase commit *after* ``tpc_vote`` has
+been called.
+
+Here, we will ignore the fact that this is only called after
+``tpc_vote`` and simulate that using ``inc``.
+
+.. doctest::
+
+   >>> rm = DataManager()
+   >>> rm.inc()
+   >>> rm.state, rm.delta
+   (0, 1)
+   >>> t1 = '1'
+   >>> rm.tpc_abort(t1)
+   >>> rm.state, rm.delta
+   (0, 0)
+
+The abort method also throws away work done in savepoints:
+
+.. doctest::
+
+   >>> rm.inc()
+   >>> r = rm.savepoint(t1)
+   >>> rm.inc()
+   >>> r = rm.savepoint(t1)
+   >>> rm.state, rm.delta
+   (0, 2)
+   >>> rm.tpc_abort(t1)
+   >>> rm.state, rm.delta
+   (0, 0)
+
+If savepoints are used, abort must be passed the same
+transaction:
+
+.. doctest::
+
+   >>> rm.inc()
+   >>> r = rm.savepoint(t1)
+   >>> t2 = '2'
+   >>> rm.tpc_abort(t2)
+   Traceback (most recent call last):
+   ...
+   TypeError: ('Transaction missmatch', '2', '1')
+
+   >>> rm.tpc_abort(t1)
+
+The abort method is also used to abort a two-phase commit:
+
+.. doctest::
+
+   >>> rm.inc()
+   >>> rm.state, rm.delta
+   (0, 1)
+   >>> rm.tpc_begin(t1)
+   >>> rm.state, rm.delta
+   (0, 1)
+   >>> rm.tpc_vote(t1)
+   >>> rm.state, rm.delta
+   (1, 1)
+   >>> rm.tpc_abort(t1)
+   >>> rm.state, rm.delta
+   (0, 0)
+
+Of course, the transactions passed to prepare and abort must
+match:
+
+.. doctest::
+
+   >>> rm.tpc_begin(t1)
+   >>> rm.tpc_abort(t2)
+   Traceback (most recent call last):
+   ...
+   TypeError: ('Transaction missmatch', '2', '1')
+
+   >>> rm.tpc_abort(t1)
+
+This should never fail.
+
+The ``abort`` method
+====================
 
 The abort method can be called before two-phase commit to
 throw away work done in the transaction:
@@ -193,26 +336,13 @@ transaction:
 
    >>> dm.abort(t1)
 
-The abort method is also used to abort a two-phase commit:
+Of course, the transactions passed to abort must
+match. (Since it's called before ``tpc_vote`` is called,
+there might be no current transaction.)
 
 .. doctest::
 
-   >>> dm.inc()
-   >>> dm.state, dm.delta
-   (0, 1)
-   >>> dm.prepare(t1)
-   >>> dm.state, dm.delta
-   (1, 1)
-   >>> dm.abort(t1)
-   >>> dm.state, dm.delta
-   (0, 0)
-
-Of course, the transactions passed to prepare and abort must
-match:
-
-.. doctest::
-
-   >>> dm.prepare(t1)
+   >>> dm.tpc_begin(t1)
    >>> dm.abort(t2)
    Traceback (most recent call last):
    ...
@@ -221,11 +351,11 @@ match:
    >>> dm.abort(t1)
 
 
+The ``commit`` method
+=====================
 
-The :meth:`commit` method
----------------------------
-
-Called to omplete two-phase commit
+Called after ``tpc_begin`` to make changes persistent and prepare for
+voting.
 
 .. doctest::
 
@@ -234,51 +364,50 @@ Called to omplete two-phase commit
    0
    >>> dm.inc()
 
-We start two-phase commit by calling prepare:
+We start two-phase commit by calling ``tpc_begin``
 
 .. doctest::
 
    >>> t1 = '1'
-   >>> dm.prepare(t1)
+   >>> dm.tpc_begin(t1)
 
-   We complete it by calling commit:
+   We complete it by calling ``commit``, ``tpc_vote``, and ``tpc_finish``:
 
 .. doctest::
 
    >>> dm.commit(t1)
+   >>> dm.tpc_vote(t1)
+   >>> dm.tpc_finish(t1)
    >>> dm.state
    1
 
-It is an error ro call commit without calling prepare first:
+It is an error to call commit without calling ``tpc_begin`` first:
 
 .. doctest::
 
-   >>> dm.inc()
+   >>> dm = DataManager()
    >>> t2 = '2'
    >>> dm.commit(t2)
    Traceback (most recent call last):
    ...
    TypeError: Not prepared to commit
 
-   >>> dm.prepare(t2)
-   >>> dm.commit(t2)
-
-If course, the transactions given to prepare and commit must
+If course, the transactions given to ``tpc_begin`` and commit must
 be the same:
 
 .. doctest::
 
-   >>> dm.inc()
+   >>> dm = DataManager()
    >>> t3 = '3'
-   >>> dm.prepare(t3)
+   >>> dm.tpc_begin(t3)
    >>> dm.commit(t2)
    Traceback (most recent call last):
    ...
    TypeError: ('Transaction missmatch', '2', '3')
 
 
-The :meth:`savepoint` method
-------------------------------
+The ``savepoint`` Method
+========================
 
 Provide the ability to rollback transaction state
 
@@ -302,42 +431,43 @@ transaction is committed using two-phase commit.
 
 .. doctest::
 
-   >>> dm = DataManager()
-   >>> dm.inc()
+   >>> rm = DataManager()
+   >>> rm.inc()
    >>> t1 = '1'
-   >>> r = dm.savepoint(t1)
-   >>> dm.state, dm.delta
+   >>> r = rm.savepoint(t1)
+   >>> rm.state, rm.delta
    (0, 1)
-   >>> dm.inc()
-   >>> dm.state, dm.delta
+   >>> rm.inc()
+   >>> rm.state, rm.delta
    (0, 2)
    >>> r.rollback()
-   >>> dm.state, dm.delta
+   >>> rm.state, rm.delta
    (0, 1)
-   >>> dm.prepare(t1)
-   >>> dm.commit(t1)
-   >>> dm.state, dm.delta
+   >>> rm.tpc_begin(t1)
+   >>> rm.tpc_vote(t1)
+   >>> rm.tpc_finish(t1)
+   >>> rm.state, rm.delta
    (1, 0)
 
 Savepoints must have the same transaction:
 
 .. doctest::
 
-   >>> r1 = dm.savepoint(t1)
-   >>> dm.state, dm.delta
+   >>> r1 = rm.savepoint(t1)
+   >>> rm.state, rm.delta
    (1, 0)
-   >>> dm.inc()
-   >>> dm.state, dm.delta
+   >>> rm.inc()
+   >>> rm.state, rm.delta
    (1, 1)
    >>> t2 = '2'
-   >>> r2 = dm.savepoint(t2)
+   >>> r2 = rm.savepoint(t2)
    Traceback (most recent call last):
    ...
    TypeError: ('Transaction missmatch', '2', '1')
 
-   >>> r2 = dm.savepoint(t1)
-   >>> dm.inc()
-   >>> dm.state, dm.delta
+   >>> r2 = rm.savepoint(t1)
+   >>> rm.inc()
+   >>> rm.state, rm.delta
    (1, 2)
 
 If we rollback to an earlier savepoint, we discard all work
@@ -346,7 +476,7 @@ done later:
 .. doctest::
 
    >>> r1.rollback()
-   >>> dm.state, dm.delta
+   >>> rm.state, rm.delta
    (1, 0)
 
 and we can no longer rollback to the later savepoint:
@@ -365,16 +495,16 @@ We can roll back to a savepoint as often as we like:
    >>> r1.rollback()
    >>> r1.rollback()
    >>> r1.rollback()
-   >>> dm.state, dm.delta
+   >>> rm.state, rm.delta
    (1, 0)
 
-   >>> dm.inc()
-   >>> dm.inc()
-   >>> dm.inc()
-   >>> dm.state, dm.delta
+   >>> rm.inc()
+   >>> rm.inc()
+   >>> rm.inc()
+   >>> rm.state, rm.delta
    (1, 3)
    >>> r1.rollback()
-   >>> dm.state, dm.delta
+   >>> rm.state, rm.delta
    (1, 0)
 
 But we can't rollback to a savepoint after it has been
@@ -382,8 +512,9 @@ committed:
 
 .. doctest::
 
-   >>> dm.prepare(t1)
-   >>> dm.commit(t1)
+   >>> rm.tpc_begin(t1)
+   >>> rm.tpc_vote(t1)
+   >>> rm.tpc_finish(t1)
 
    >>> r1.rollback()
    Traceback (most recent call last):
