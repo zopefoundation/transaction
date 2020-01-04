@@ -93,7 +93,7 @@ delta has been reset to 0.
 The ``tpc_begin`` Method
 ========================
 
-Called by the transaction manager to ask the RM to prepare to commit data.
+Called by the transaction manager to ask the data manager to prepare to commit data.
 
 .. doctest::
 
