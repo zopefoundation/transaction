@@ -36,7 +36,7 @@ Now register the hook with a transaction.
     >>> from transaction import begin
     >>> import transaction
     >>> t = begin()
-    >>> t.addBeforeCommitHook(hook, '1')
+    >>> t.addBeforeCommitHook(hook, ('1',))
 
 We can see that the hook is indeed registered.
 
@@ -75,7 +75,7 @@ The hook is only called for a full commit, not for a savepoint.
 .. doctest::
 
     >>> t = begin()
-    >>> t.addBeforeCommitHook(hook, 'A', dict(kw1='B'))
+    >>> t.addBeforeCommitHook(hook, ('A',), dict(kw1='B'))
     >>> dummy = t.savepoint()
     >>> log
     []
@@ -115,7 +115,7 @@ commit, we'll add failing resource manager to the transaction.
     >>> t = begin()
     >>> t.join(FailingDataManager())
 
-    >>> t.addBeforeCommitHook(hook, '2')
+    >>> t.addBeforeCommitHook(hook, ('2',))
 
     >>> from transaction.tests.common import DummyFile
     >>> from transaction.tests.common import Monkey
@@ -133,8 +133,8 @@ Let's register several hooks.
 .. doctest::
 
     >>> t = begin()
-    >>> t.addBeforeCommitHook(hook, '4', dict(kw1='4.1'))
-    >>> t.addBeforeCommitHook(hook, '5', dict(kw2='5.2'))
+    >>> t.addBeforeCommitHook(hook, ('4',), dict(kw1='4.1'))
+    >>> t.addBeforeCommitHook(hook, ('5',), dict(kw2='5.2'))
 
 They are returned in the same order by getBeforeCommitHooks.
 
@@ -165,7 +165,7 @@ be called before the real commit starts.
     >>> def recurse(txn, arg):
     ...     log.append('rec' + str(arg))
     ...     if arg:
-    ...         txn.addBeforeCommitHook(hook, '-')
+    ...         txn.addBeforeCommitHook(hook, ('-',))
     ...         txn.addBeforeCommitHook(recurse, (txn, arg-1))
 
     >>> t = begin()
@@ -201,7 +201,7 @@ Now register the hook with a transaction.
 
     >>> from transaction import begin
     >>> t = begin()
-    >>> t.addAfterCommitHook(hook, '1')
+    >>> t.addAfterCommitHook(hook, ('1',))
 
 We can see that the hook is indeed registered.
 
@@ -241,7 +241,7 @@ The hook is only called after a full commit, not for a savepoint.
 .. doctest::
 
     >>> t = begin()
-    >>> t.addAfterCommitHook(hook, 'A', dict(kw1='B'))
+    >>> t.addAfterCommitHook(hook, ('A',), dict(kw1='B'))
     >>> dummy = t.savepoint()
     >>> log
     []
@@ -281,7 +281,7 @@ commit, we'll add failing resource manager to the transaction.
     >>> t = begin()
     >>> t.join(FailingDataManager())
 
-    >>> t.addAfterCommitHook(hook, '2')
+    >>> t.addAfterCommitHook(hook, ('2',))
     >>> from transaction.tests.common import DummyFile
     >>> from transaction.tests.common import Monkey
     >>> from transaction.tests.common import assertRaisesEx
@@ -298,8 +298,8 @@ Let's register several hooks.
 .. doctest::
 
     >>> t = begin()
-    >>> t.addAfterCommitHook(hook, '4', dict(kw1='4.1'))
-    >>> t.addAfterCommitHook(hook, '5', dict(kw2='5.2'))
+    >>> t.addAfterCommitHook(hook, ('4',), dict(kw1='4.1'))
+    >>> t.addAfterCommitHook(hook, ('5',), dict(kw2='5.2'))
 
 They are returned in the same order by getAfterCommitHooks.
 
@@ -330,7 +330,7 @@ be called before the real commit starts.
     >>> def recurse(status, txn, arg):
     ...     log.append('rec' + str(arg))
     ...     if arg:
-    ...         txn.addAfterCommitHook(hook, '-')
+    ...         txn.addAfterCommitHook(hook, ('-',))
     ...         txn.addAfterCommitHook(recurse, (txn, arg-1))
 
     >>> t = begin()
