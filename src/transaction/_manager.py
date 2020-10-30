@@ -81,7 +81,7 @@ class TransactionManager(object):
         return txn
 
     def __enter__(self):
-        self.begin()
+        return self.begin()
 
     def get(self):
         """See `~transaction.interfaces.ITransactionManager`."""
