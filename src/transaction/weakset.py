@@ -17,6 +17,7 @@ import weakref
 # A simple implementation of weak sets, supplying just enough of Python's
 # sets.Set interface for our needs.
 
+
 class WeakSet(object):
     """A set of objects that doesn't keep its elements alive.
 

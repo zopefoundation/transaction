@@ -63,6 +63,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_begin_w_existing_txn(self):
         class Existing(object):
             _aborted = False
+
             def abort(self):
                 self._aborted = True
         tm = self._makeOne()
@@ -80,6 +81,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_get_w_existing_txn(self):
         class Existing(object):
             _aborted = False
+
             def abort(self):
                 raise AssertionError("This is not actually called")
         tm = self._makeOne()
@@ -96,6 +98,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_free_w_existing_txn(self):
         class Existing(object):
             _aborted = False
+
             def abort(self):
                 raise AssertionError("This is not actually called")
         tm = self._makeOne()
@@ -145,6 +148,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_isDoomed_w_existing_txn(self):
         class Existing(object):
             _doomed = False
+
             def isDoomed(self):
                 return self._doomed
         tm = self._makeOne()
@@ -164,6 +168,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_commit_w_existing_txn(self):
         class Existing(object):
             _committed = False
+
             def commit(self):
                 self._committed = True
         tm = self._makeOne()
@@ -174,6 +179,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_abort_w_existing_txn(self):
         class Existing(object):
             _aborted = False
+
             def abort(self):
                 self._aborted = True
         tm = self._makeOne()
@@ -185,8 +191,10 @@ class TransactionManagerTests(unittest.TestCase):
         class _Test(object):
             _committed = False
             _aborted = False
+
             def commit(self):
                 self._committed = True
+
             def abort(self):
                 raise AssertionError("This should not be called")
         tm = self._makeOne()
@@ -199,8 +207,10 @@ class TransactionManagerTests(unittest.TestCase):
         class _Test(object):
             _committed = False
             _aborted = False
+
             def commit(self):
                 raise AssertionError("This should not be called")
+
             def abort(self):
                 self._aborted = True
         tm = self._makeOne()
@@ -216,6 +226,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_savepoint_default(self):
         class _Test(object):
             _sp = None
+
             def savepoint(self, optimistic):
                 self._sp = optimistic
         tm = self._makeOne()
@@ -226,6 +237,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_savepoint_explicit(self):
         class _Test(object):
             _sp = None
+
             def savepoint(self, optimistic):
                 self._sp = optimistic
         tm = self._makeOne()
@@ -257,6 +269,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_attempts_retries(self):
         import transaction.interfaces
+
         class Retry(transaction.interfaces.TransientError):
             pass
 
@@ -272,6 +285,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_attempts_retries_but_gives_up(self):
         import transaction.interfaces
+
         class Retry(transaction.interfaces.TransientError):
             pass
 
@@ -317,7 +331,6 @@ class TransactionManagerTests(unittest.TestCase):
 
         self.assertEqual(ntry, 3)
 
-
     def test_attempts_w_default_count(self):
         from transaction._manager import Attempt
         tm = self._makeOne()
@@ -330,6 +343,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_run(self):
         import transaction.interfaces
+
         class Retry(transaction.interfaces.TransientError):
             pass
 
@@ -338,7 +352,7 @@ class TransactionManagerTests(unittest.TestCase):
 
         @tm.run()
         def meaning():
-            "Nice doc"
+            """Nice doc"""
             i[0] += 1
             i[1] = tm.get()
             if i[0] < 3:
@@ -351,6 +365,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_run_no_name_explicit_tries(self):
         import transaction.interfaces
+
         class Retry(transaction.interfaces.TransientError):
             pass
 
@@ -359,7 +374,7 @@ class TransactionManagerTests(unittest.TestCase):
 
         @tm.run(4)
         def _():
-            "Nice doc"
+            """Nice doc"""
             i[0] += 1
             i[1] = tm.get()
             if i[0] < 4:
@@ -372,15 +387,13 @@ class TransactionManagerTests(unittest.TestCase):
         tm = self._makeOne()
 
         with self.assertRaises(ValueError):
-            tm.run(0)(lambda : None)
+            tm.run(0)(lambda: None)
         with self.assertRaises(ValueError):
             @tm.run(-1)
             def _():
                 raise AssertionError("Never called")
 
     def test_run_stop_on_success(self):
-        import transaction.interfaces
-
         tm = self._makeOne()
         i = [0, None]
 
@@ -396,6 +409,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_run_retries_but_gives_up(self):
         import transaction.interfaces
+
         class Retry(transaction.interfaces.TransientError):
             pass
 
@@ -443,6 +457,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_run_callable_with_bytes_doc(self):
         import transaction
+
         class Callable(object):
 
             def __init__(self):
@@ -462,6 +477,7 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test__retryable_w_transient_subclass(self):
         from transaction.interfaces import TransientError
+
         class _Derived(TransientError):
             pass
         tm = self._makeOne()
@@ -482,6 +498,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test__retryable_w_multiple(self):
         class _Resource(object):
             _should = True
+
             def should_retry(self, err):
                 return self._should
         tm = self._makeOne()
@@ -516,7 +533,6 @@ class TransactionManagerTests(unittest.TestCase):
 
         assert sub2._p_jar.cabort == 1
 
-
     # repeat adding in a nonsub trans jars
 
     def test_commit_w_nonsub_jar(self):
@@ -538,8 +554,7 @@ class TransactionManagerTests(unittest.TestCase):
         assert nosub1._p_jar.ctpc_finish == 0
         assert nosub1._p_jar.cabort == 1
 
-
-    ### Failure Mode Tests
+    # ## Failure Mode Tests
     #
     # ok now we do some more interesting
     # tests that check the implementations
@@ -673,11 +688,12 @@ class TransactionManagerTests(unittest.TestCase):
             s.beforeCompletion.assert_called_with(t)
             s.afterCompletion.assert_called_with(t)
 
-    def test_unregisterSynch_on_transaction_manager_from_serparate_thread(self):
+    def test_unregisterSynch_on_transaction_manager_from_serparate_thread(
+            self):
         # We should be able to get the underlying manager of the thread manager
-        # cand call methods from other threads.
-
-        import threading, transaction
+        # and call methods from other threads.
+        import threading
+        import transaction
 
         started = threading.Event()
         stopped = threading.Event()
@@ -709,12 +725,12 @@ class TransactionManagerTests(unittest.TestCase):
     #   However, defining the methods below reduced the "test coverage"
     #   once the initial test failure has been fixed.
     #   We therefore comment them out.
-    ##    # the preceeding test (maybe others as well) registers `self` as
-    ##    #   synchronizer; satisfy the `ISynchronizer` requirements
-    ##    def newTransaction(self, transaction):
-    ##        pass
-    ##
-    ##    beforeCompletion = afterCompletion = newTransaction
+    # #    # the preceeding test (maybe others as well) registers `self` as
+    # #    #   synchronizer; satisfy the `ISynchronizer` requirements
+    # #    def newTransaction(self, transaction):
+    # #        pass
+    # #
+    # #    beforeCompletion = afterCompletion = newTransaction
 
 
 class TestThreadTransactionManager(unittest.TestCase):
@@ -807,7 +823,8 @@ class AttemptTests(unittest.TestCase):
         self.assertTrue(manager.committed)
         self.assertTrue(manager.aborted)
 
-    def test___exit__no_exc_abort_exception_after_nonretryable_commit_exc(self):
+    def test___exit__no_exc_abort_exception_after_nonretryable_commit_exc(
+            self):
         manager = DummyManager(raise_on_abort=ValueError,
                                raise_on_commit=KeyError)
         inst = self._makeOne(manager)
@@ -874,7 +891,6 @@ class AttemptTests(unittest.TestCase):
             tm.begin()
         tm.savepoint()
         tm.commit()
-
 
 
 class DummyManager(object):
@@ -951,13 +967,13 @@ class BasicJar(object):
         return self.__class__.__name__
 
     def check(self, method):
-        if self.tracing: # pragma: no cover
-            print('%s calling method %s'%(str(self.tracing),method))
+        if self.tracing:  # pragma: no cover
+            print('%s calling method %s' % (str(self.tracing), method))
 
         if method in self.errors:
             raise TestTxnException("error %s" % method)
 
-    ## basic jar txn interface
+    # basic jar txn interface
 
     def abort(self, *args):
         self.check('abort')
@@ -987,6 +1003,7 @@ class BasicJar(object):
 class DummySynch(object):
     def __init__(self):
         self._txns = set()
+
     def newTransaction(self, txn):
         self._txns.add(txn)
 
@@ -997,7 +1014,7 @@ def positive_id(obj):
     _ADDRESS_MASK = 256 ** struct.calcsize('P')
 
     result = id(obj)
-    if result < 0: # pragma: no cover
+    if result < 0:  # pragma: no cover
         # Happens...on old 32-bit systems?
         result += _ADDRESS_MASK
         assert result > 0

@@ -80,7 +80,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._adapters, {})
         self.assertEqual(txn._voted, {})
         self.assertEqual(txn.extension, {})
-        self.assertTrue(txn._extension is txn.extension) # legacy
+        self.assertTrue(txn._extension is txn.extension)  # legacy
         self.assertTrue(txn.log is logger)
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'debug')
@@ -126,6 +126,7 @@ class TransactionTests(unittest.TestCase):
 
     def test__prior_operation_failed(self):
         from transaction.interfaces import TransactionFailedError
+
         class _Traceback(object):
             def getvalue(self):
                 return 'TRACEBACK'
@@ -135,11 +136,12 @@ class TransactionTests(unittest.TestCase):
             txn._prior_operation_failed()
         err = exc.exception
         self.assertTrue(str(err).startswith('An operation previously failed'))
-        self.assertTrue(str(err).endswith( "with traceback:\n\nTRACEBACK"))
+        self.assertTrue(str(err).endswith("with traceback:\n\nTRACEBACK"))
 
     def test_join_COMMITFAILED(self):
         from transaction.interfaces import TransactionFailedError
         from transaction._transaction import Status
+
         class _Traceback(object):
             def getvalue(self):
                 return 'TRACEBACK'
@@ -170,7 +172,7 @@ class TransactionTests(unittest.TestCase):
 
     def test__unjoin_miss(self):
         txn = self._makeOne()
-        txn._unjoin(object()) #no raise
+        txn._unjoin(object())  # no raise
 
     def test__unjoin_hit(self):
         txn = self._makeOne()
@@ -182,6 +184,7 @@ class TransactionTests(unittest.TestCase):
     def test_savepoint_COMMITFAILED(self):
         from transaction.interfaces import TransactionFailedError
         from transaction._transaction import Status
+
         class _Traceback(object):
             def getvalue(self):
                 return 'TRACEBACK'
@@ -220,7 +223,7 @@ class TransactionTests(unittest.TestCase):
         resource = object()
         txn._resources.append(resource)
         self.assertRaises(TypeError, txn.savepoint)
-        self.assertEqual(txn.status,  Status.COMMITFAILED)
+        self.assertEqual(txn.status, Status.COMMITFAILED)
         self.assertTrue(isinstance(txn._failure_traceback, StringIO))
         self.assertTrue('TypeError' in txn._failure_traceback.getvalue())
         self.assertEqual(len(logger._log), 2)
@@ -233,13 +236,14 @@ class TransactionTests(unittest.TestCase):
         from weakref import WeakKeyDictionary
         txn = self._makeOne()
         txn._savepoint2index = WeakKeyDictionary()
+
         class _SP(object):
             def __init__(self, txn):
                 self.transaction = txn
         holdme = []
         for i in range(10):
             sp = _SP(txn)
-            holdme.append(sp) #prevent gc
+            holdme.append(sp)  # prevent gc
             txn._savepoint2index[sp] = i
         self.assertEqual(len(txn._savepoint2index), 10)
         self.assertRaises(KeyError, txn._remove_and_invalidate_after, _SP(txn))
@@ -249,18 +253,21 @@ class TransactionTests(unittest.TestCase):
         from weakref import WeakKeyDictionary
         txn = self._makeOne()
         txn._savepoint2index = WeakKeyDictionary()
+
         class _SP(object):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
+
             def __lt__(self, other):
                 return self._index < other._index
-            def __repr__(self): # pragma: no cover
+
+            def __repr__(self):  # pragma: no cover
                 return '_SP: %d' % self._index
         holdme = []
         for i in range(10):
             sp = _SP(txn, i)
-            holdme.append(sp) #prevent gc
+            holdme.append(sp)  # prevent gc
             txn._savepoint2index[sp] = i
         self.assertEqual(len(txn._savepoint2index), 10)
         txn._remove_and_invalidate_after(holdme[1])
@@ -270,16 +277,18 @@ class TransactionTests(unittest.TestCase):
         from weakref import WeakKeyDictionary
         txn = self._makeOne()
         txn._savepoint2index = WeakKeyDictionary()
+
         class _SP(object):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
-            def __repr__(self): # pragma: no cover
+
+            def __repr__(self):  # pragma: no cover
                 return '_SP: %d' % self._index
         holdme = []
         for i in range(10):
             sp = _SP(txn, i)
-            holdme.append(sp) #prevent gc
+            holdme.append(sp)  # prevent gc
             txn._savepoint2index[sp] = i
         self.assertEqual(len(txn._savepoint2index), 10)
         txn._invalidate_all_savepoints()
@@ -295,6 +304,7 @@ class TransactionTests(unittest.TestCase):
     def test_commit_COMMITFAILED(self):
         from transaction._transaction import Status
         from transaction.interfaces import TransactionFailedError
+
         class _Traceback(object):
             def getvalue(self):
                 return 'TRACEBACK'
@@ -308,9 +318,11 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Mgr(object):
             def __init__(self, txn):
                 self._txn = txn
+
             def free(self, txn):
                 assert txn is self._txn
                 self._txn = None
@@ -330,11 +342,13 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _SP(object):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
-            def __repr__(self): # pragma: no cover
+
+            def __repr__(self):  # pragma: no cover
                 return '_SP: %d' % self._index
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -343,7 +357,7 @@ class TransactionTests(unittest.TestCase):
             holdme = []
             for i in range(10):
                 sp = _SP(txn, i)
-                holdme.append(sp) #prevent gc
+                holdme.append(sp)  # prevent gc
                 txn._savepoint2index[sp] = i
             logger._clear()
             txn.commit()
@@ -354,8 +368,10 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked1, _hooked2 = [], []
+
         def _hook1(*args, **kw):
             _hooked1.append((args, kw))
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -374,10 +390,13 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Synch(object):
             _before = _after = False
+
             def beforeCompletion(self, txn):
                 self._before = txn
+
             def afterCompletion(self, txn):
                 self._after = txn
         synchs = [_Synch(), _Synch(), _Synch()]
@@ -398,8 +417,10 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked1, _hooked2 = [], []
+
         def _hook1(*args, **kw):
             _hooked1.append((args, kw))
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -418,16 +439,20 @@ class TransactionTests(unittest.TestCase):
         from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
+
         class BrokenResource(object):
             def sortKey(self):
                 return 'zzz'
+
             def tpc_begin(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
         resource = Resource('aaa')
         _hooked1, _hooked2 = [], []
+
         def _hook1(*args, **kw):
             _hooked1.append((args, kw))
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -454,19 +479,24 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Synch(object):
             _before = _after = False
+
             def beforeCompletion(self, txn):
                 self._before = txn
+
             def afterCompletion(self, txn):
                 self._after = txn
         synchs = [_Synch(), _Synch(), _Synch()]
         ws = WeakSet()
         for synch in synchs:
             ws.add(synch)
+
         class BrokenResource(object):
             def sortKey(self):
                 return 'zzz'
+
             def tpc_begin(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
@@ -478,7 +508,7 @@ class TransactionTests(unittest.TestCase):
             self.assertRaises(ValueError, txn.commit)
         for synch in synchs:
             self.assertTrue(synch._before is txn)
-            self.assertTrue(synch._after is txn) #called in _cleanup
+            self.assertTrue(synch._after is txn)  # called in _cleanup
 
     def test_commit_clears_resources(self):
         class DM(object):
@@ -536,8 +566,10 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked2 = []
+
         def _hook1(*args, **kw):
             raise ValueError()
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -551,16 +583,17 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked2, [((True, 'two',), {'dos': 2})])
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'error')
-        self.assertTrue(logger._log[0][1].startswith(
-                            "Error in hook"))
+        self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test_callAfterCommitHook_w_abort(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked2 = []
+
         def _hook1(*args, **kw):
             raise ValueError()
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -571,8 +604,7 @@ class TransactionTests(unittest.TestCase):
         txn.addAfterCommitHook(_hook2, ('two',), dict(dos=2))
         txn._callAfterCommitHooks()
         self.assertEqual(logger._log[0][0], 'error')
-        self.assertTrue(logger._log[0][1].startswith(
-                            "Error in hook"))
+        self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test__commitResources_normal(self):
         from transaction.tests.common import DummyLogger
@@ -620,9 +652,11 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Synchronizers(object):
             def __init__(self, res):
                 self._res = res
+
             def map(self, func):
                 for res in self._res:
                     func(res)
@@ -718,7 +752,7 @@ class TransactionTests(unittest.TestCase):
                 self.assertTrue(r._f)
             else:
                 self.assertFalse(r._f)
-            self.assertFalse(r._a and r._x) #no cleanup if tpc_finish raises
+            self.assertFalse(r._a and r._x)  # no cleanup if tpc_finish raises
         self.assertEqual(len(logger._log), 3)
         self.assertEqual(logger._log[0][0], 'debug')
         self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
@@ -733,9 +767,11 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Mgr(object):
             def __init__(self, txn):
                 self._txn = txn
+
             def free(self, txn):
                 assert txn is self._txn
                 self._txn = None
@@ -755,11 +791,13 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _SP(object):
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
-            def __repr__(self): # pragma: no cover
+
+            def __repr__(self):  # pragma: no cover
                 return '_SP: %d' % self._index
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -768,7 +806,7 @@ class TransactionTests(unittest.TestCase):
             holdme = []
             for i in range(10):
                 sp = _SP(txn, i)
-                holdme.append(sp) #prevent gc
+                holdme.append(sp)  # prevent gc
                 txn._savepoint2index[sp] = i
             logger._clear()
             txn.abort()
@@ -779,8 +817,10 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked1, _hooked2 = [], []
+
         def _hook1(*args, **kw):
             raise AssertionError("Not called")
+
         def _hook2(*args, **kw):
             raise AssertionError("Not called")
         logger = DummyLogger()
@@ -801,18 +841,22 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         test = self
+
         class _Synch(object):
             _before = _after = None
+
             def beforeCompletion(self, txn):
                 self._before = txn
                 txn.set_data(self, 42)
                 test.assertIsNotNone(txn._manager)
+
             def afterCompletion(self, txn):
                 self._after = txn
                 # data is accessible afterCompletion,
                 # but the transaction is not current anymore.
                 test.assertEqual(42, txn.data(self))
                 test.assertIsNone(txn._manager)
+
         class _BadSynch(_Synch):
             def afterCompletion(self, txn):
                 _Synch.afterCompletion(self, txn)
@@ -821,13 +865,16 @@ class TransactionTests(unittest.TestCase):
         # Ensure iteration order
         class Synchs(object):
             synchs = [_Synch(), _Synch(), _Synch(), _BadSynch()]
+
             def map(self, func):
                 for s in self.synchs:
                     func(s)
 
         logger = DummyLogger()
+
         class Manager(object):
             txn = None
+
             def free(self, txn):
                 test.assertIs(txn, self.txn)
                 self.txn = None
@@ -857,8 +904,10 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked1, _hooked2 = [], []
+
         def _hook1(*args, **kw):
             raise AssertionError("Not called")
+
         def _hook2(*args, **kw):
             raise AssertionError("Not called")
         logger = DummyLogger()
@@ -879,17 +928,21 @@ class TransactionTests(unittest.TestCase):
         from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
+
         class BrokenResource(object):
             def sortKey(self):
                 raise AssertionError("Not called")
+
             def abort(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
         aaa = Resource('aaa')
         broken2 = BrokenResource()
         _hooked1, _hooked2 = [], []
+
         def _hook1(*args, **kw):
             raise AssertionError("Not called")
+
         def _hook2(*args, **kw):
             raise AssertionError("Not called")
         logger = DummyLogger()
@@ -915,19 +968,24 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Synch(object):
             _before = _after = False
+
             def beforeCompletion(self, txn):
                 self._before = txn
+
             def afterCompletion(self, txn):
                 self._after = txn
         synchs = [_Synch(), _Synch(), _Synch()]
         ws = WeakSet()
         for synch in synchs:
             ws.add(synch)
+
         class BrokenResource(object):
             def sortKey(self):
                 raise AssertionError("Should not be called")
+
             def abort(self, txn):
                 raise ValueError('test')
         broken = BrokenResource()
@@ -939,17 +997,20 @@ class TransactionTests(unittest.TestCase):
             self.assertRaises(ValueError, t.abort)
         for synch in synchs:
             self.assertTrue(synch._before is t)
-            self.assertTrue(synch._after is t) #called in _cleanup
+            self.assertTrue(synch._after is t)  # called in _cleanup
         self.assertIsNot(t._synchronizers, ws)
 
     def test_abort_synchronizer_error_w_resources(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
+
         class _Synch(object):
             _before = _after = False
+
             def beforeCompletion(self, txn):
                 self._before = txn
+
             def afterCompletion(self, txn):
                 self._after = txn
 
@@ -961,6 +1022,7 @@ class TransactionTests(unittest.TestCase):
         # Ensure iteration order
         class Synchs(object):
             synchs = [_Synch(), _Synch(), _Synch(), _BadSynch()]
+
             def map(self, func):
                 for s in self.synchs:
                     func(s)
@@ -977,13 +1039,14 @@ class TransactionTests(unittest.TestCase):
 
         for synch in synchs.synchs:
             self.assertTrue(synch._before is t)
-            self.assertTrue(synch._after is t) # called in _cleanup
+            self.assertTrue(synch._after is t)  # called in _cleanup
         self.assertIsNot(t._synchronizers, synchs)
         self.assertTrue(resource._a)
 
     def test_abort_clears_resources(self):
         class DM(object):
-            abort = lambda s, txn: True
+            def abort(self, txn):
+                return True
 
         dm = DM()
         txn = self._makeOne()
@@ -1037,8 +1100,10 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked2 = []
+
         def _hook1(*args, **kw):
             raise ValueError()
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -1052,16 +1117,17 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(_hooked2, [(('two',), {'dos': 2})])
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'error')
-        self.assertTrue(logger._log[0][1].startswith(
-                            "Error in hook"))
+        self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test_callBeforeAbortHook_w_abort(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked2 = []
+
         def _hook1(*args, **kw):
             raise ValueError()
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -1072,14 +1138,14 @@ class TransactionTests(unittest.TestCase):
         txn.addBeforeAbortHook(_hook2, ('two',), dict(dos=2))
         txn._callBeforeAbortHooks()
         self.assertEqual(logger._log[0][0], 'error')
-        self.assertTrue(logger._log[0][1].startswith(
-                            "Error in hook"))
+        self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test_callAfterAbortHook_w_abort_error(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked2 = []
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))
         logger = DummyLogger()
@@ -1091,16 +1157,18 @@ class TransactionTests(unittest.TestCase):
         txn.addAfterAbortHook(_hook2, ('two',), dict(dos=2))
         txn._callAfterAbortHooks()
         self.assertEqual(logger._log[0][0], 'error')
-        self.assertTrue(logger._log[0][1].startswith(
-                            "Error in abort() on manager"))
+        self.assertTrue(
+            logger._log[0][1].startswith("Error in abort() on manager"))
 
     def test_callAfterAbortHook_w_error_w_abort_error(self):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         from transaction import _transaction
         _hooked2 = []
+
         def _hook1(*args, **kw):
             raise ValueError()
+
         def _hook2(*args, **kw):
             _hooked2.append((args, kw))  # pragma: no cover
         logger = DummyLogger()
@@ -1114,14 +1182,16 @@ class TransactionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             txn._callAfterAbortHooks()
         self.assertEqual(logger._log[0][0], 'error')
-        self.assertTrue(logger._log[0][1].startswith(
-                            "Error in abort() on manager"))
+        self.assertTrue(
+            logger._log[0][1].startswith("Error in abort() on manager"))
 
     def test_abort_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
+
         def bah():
             comm.append("before")
+
         def aah():
             comm.append("after")
         txn.addAfterAbortHook(aah)
@@ -1134,8 +1204,10 @@ class TransactionTests(unittest.TestCase):
     def test_commit_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
+
         def bah():
             comm.append("before")  # pragma: no cover
+
         def aah():
             comm.append("after")  # pragma: no cover
         txn.addAfterAbortHook(aah)
@@ -1149,8 +1221,10 @@ class TransactionTests(unittest.TestCase):
     def test_commit_w_error_w_abortHooks(self):
         comm = []
         txn = self._makeOne()
+
         def bah():
             comm.append("before")  # pragma: no cover
+
         def aah():
             comm.append("after")  # pragma: no cover
         txn.addAfterAbortHook(aah)
@@ -1205,7 +1279,7 @@ class TransactionTests(unittest.TestCase):
             (DeprecationWarning, "Expected text",
              os.path.splitext(__file__)[0]),
             (w.category, str(w.message), os.path.splitext(w.filename)[0]),
-            )
+        )
 
     def test_description_bytes(self):
         txn = self._makeOne()
@@ -1270,7 +1344,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(expect, txn.user)
 
     def test_user_non_text(self, user=b'phreddy', path=b'/bedrock',
-                        expect=u"/bedrock phreddy", both=True):
+                           expect=u"/bedrock phreddy", both=True):
         self._test_user_non_text(b'phreddy', b'/bedrock',
                                  u"/bedrock phreddy", True)
         self._test_user_non_text(b'phreddy', None, u'/ phreddy')
@@ -1285,7 +1359,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn.setExtendedInfo('frob', 'qux')
         self.assertEqual(txn.extension, {u'frob': 'qux'})
-        self.assertTrue(txn._extension is txn._extension) # legacy
+        self.assertTrue(txn._extension is txn._extension)  # legacy
 
     def test_setExtendedInfo_multiple(self):
         txn = self._makeOne()
@@ -1293,10 +1367,11 @@ class TransactionTests(unittest.TestCase):
         txn.setExtendedInfo('baz', 'spam')
         txn.setExtendedInfo('frob', 'quxxxx')
         self.assertEqual(txn._extension, {u'frob': 'quxxxx', u'baz': 'spam'})
-        self.assertTrue(txn._extension is txn._extension) # legacy
+        self.assertTrue(txn._extension is txn._extension)  # legacy
 
     def test__extension_settable(self):
-        # Because ZEO sets it. I'll fix ZEO, but maybe something else will break
+        # Because ZEO sets it. I'll fix ZEO, but maybe something else will
+        # break
         txn = self._makeOne()
         txn._extension = dict(baz='spam')
         txn.setExtendedInfo('frob', 'qux')
@@ -1335,6 +1410,7 @@ class TransactionTests(unittest.TestCase):
     def test_isRetryableError_w_transient_subclass(self):
         from transaction.interfaces import TransientError
         from transaction._manager import TransactionManager
+
         class _Derived(TransientError):
             pass
         txn = self._makeOne(manager=TransactionManager())
@@ -1349,6 +1425,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_isRetryableError_w_normal_exception_w_resource_voting_yes(self):
         from transaction._manager import TransactionManager
+
         class _Resource(object):
             def should_retry(self, err):
                 return True
@@ -1359,8 +1436,10 @@ class TransactionTests(unittest.TestCase):
 
     def test_isRetryableError_w_multiple(self):
         from transaction._manager import TransactionManager
+
         class _Resource(object):
             _should = True
+
             def should_retry(self, err):
                 return self._should
         txn = self._makeOne(manager=TransactionManager())
@@ -1434,6 +1513,7 @@ class SavepointTests(unittest.TestCase):
     def test_rollback_w_txn_None(self):
         from transaction.interfaces import InvalidSavepointRollbackError
         txn = None
+
         class _Aware(object):
             def savepoint(self):
                 return self
@@ -1445,17 +1525,21 @@ class SavepointTests(unittest.TestCase):
         class _TXN(object):
             _sarce = False
             _raia = None
+
             def _saveAndRaiseCommitishError(self):
                 import sys
                 from transaction._compat import reraise
                 self._sarce = True
                 reraise(*sys.exc_info())
+
             def _remove_and_invalidate_after(self, sp):
                 self._raia = sp
+
         class _Broken(object):
             def rollback(self):
                 raise ValueError()
         _broken = _Broken()
+
         class _GonnaRaise(object):
             def savepoint(self):
                 return _broken
@@ -1486,10 +1570,13 @@ class AbortSavepointTests(unittest.TestCase):
     def test_rollback(self):
         class _DM(object):
             _aborted = None
+
             def abort(self, txn):
                 self._aborted = txn
+
         class _TXN(object):
             _unjoined = None
+
             def _unjoin(self, datamanager):
                 self._unjoin = datamanager
         dm = _DM()
@@ -1535,10 +1622,13 @@ class MiscellaneousTests(unittest.TestCase):
             def __init__(self, label):
                 self.label = label
                 self.log = []
+
             def beforeCompletion(self, txn):
                 raise AssertionError("Not called")
+
             def afterCompletion(self, txn):
                 raise AssertionError("Not called")
+
             def newTransaction(self, txn):
                 self.log.append('%s %s' % (self.label, 'new'))
 
@@ -1548,6 +1638,7 @@ class MiscellaneousTests(unittest.TestCase):
             txn.join()
 
         sync = Sync(1)
+
         @run_in_thread
         def _():
             transaction.manager.registerSynch(sync)
@@ -1556,8 +1647,8 @@ class MiscellaneousTests(unittest.TestCase):
         self.assertEqual(sync.log, ['1 new'])
 
         @run_in_thread
-        def _():
-            transaction.abort() # should do nothing.
+        def _2():
+            transaction.abort()  # should do nothing.
         self.assertEqual(sync.log, ['1 new'])
         self.assertEqual(list(dm.keys()), ['a'])
 
@@ -1565,11 +1656,11 @@ class MiscellaneousTests(unittest.TestCase):
         self.assertEqual(list(dm.keys()), [])
 
         @run_in_thread
-        def _():
+        def _3():
             dm['a'] = 1
         self.assertEqual(sync.log, ['1 new'])
 
-        transaction.abort() # should do nothing
+        transaction.abort()  # should do nothing
         self.assertEqual(list(dm.keys()), ['a'])
 
     def test_gh5(self):
@@ -1584,39 +1675,50 @@ class MiscellaneousTests(unittest.TestCase):
         buffer.seek(0)
         self.assertEqual(buffer.read(), native_(s, 'utf-8'))
 
+
 class Resource(object):
     _b = _c = _v = _f = _a = _x = _after = False
+
     def __init__(self, key, error=None):
         self._key = key
         self._error = error
+
     def __repr__(self):
         return 'Resource: %s' % self._key
+
     def sortKey(self):
         return self._key
+
     def tpc_begin(self, txn):
         if self._error == 'tpc_begin':
             raise ValueError()
         self._b = True
+
     def commit(self, txn):
         if self._error == 'commit':
             raise ValueError()
         self._c = True
+
     def tpc_vote(self, txn):
         if self._error == 'tpc_vote':
             raise ValueError()
         self._v = True
+
     def tpc_finish(self, txn):
         if self._error == 'tpc_finish':
             raise ValueError()
         self._f = True
+
     def abort(self, txn):
         if self._error == 'abort':
             raise AssertionError("Not called in that state")
         self._a = True
+
     def tpc_abort(self, txn):
         if self._error == 'tpc_abort':
             raise AssertionError("Not called in that state")
         self._x = True
+
     def afterCompletion(self, txn):
         if self._error == 'afterCompletion':
             raise ValueError()

@@ -14,6 +14,7 @@
 import unittest
 from transaction._compat import JYTHON
 
+
 class WeakSetTests(unittest.TestCase):
     def test_contains(self):
         from transaction.weakset import WeakSet
@@ -89,6 +90,7 @@ class WeakSetTests(unittest.TestCase):
         w.add(dummy)
         w.add(dummy2)
         w.add(dummy3)
+
         def poker(x):
             x.poked = 1
         w.map(poker)
@@ -107,6 +109,7 @@ class WeakSetTests(unittest.TestCase):
         w.add(dummy3[0])
 
         _orig = w.as_weakref_list
+
         def _as_weakref_list():
             # simulate race condition during iteration of list
             # object is collected after being iterated.

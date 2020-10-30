@@ -61,8 +61,8 @@ def _new_transaction(txn, synchs):
 
 @implementer(ITransactionManager)
 class TransactionManager(object):
-    """
-    Single-thread implementation of `~transaction.interfaces.ITransactionManager`.
+    """Single-thread implementation of
+    `~transaction.interfaces.ITransactionManager`.
     """
 
     def __init__(self, explicit=False):
@@ -71,8 +71,7 @@ class TransactionManager(object):
         self._synchs = WeakSet()
 
     def begin(self):
-        """ See `~transaction.interfaces.ITransactionManager`.
-        """
+        """See `~transaction.interfaces.ITransactionManager`."""
         if self._txn is not None:
             if self.explicit:
                 raise AlreadyInTransaction()
@@ -81,11 +80,11 @@ class TransactionManager(object):
         _new_transaction(txn, self._synchs)
         return txn
 
-    __enter__ = lambda self: self.begin()
+    def __enter__(self):
+        self.begin()
 
     def get(self):
-        """ See `~transaction.interfaces.ITransactionManager`.
-        """
+        """See `~transaction.interfaces.ITransactionManager`."""
         if self._txn is None:
             if self.explicit:
                 raise NoTransaction()
@@ -174,6 +173,7 @@ class TransactionManager(object):
         return False
 
     run_no_func_types = int, type(None)
+
     def run(self, func=None, tries=3):
         if isinstance(func, self.run_no_func_types):
             if func is not None:
@@ -222,8 +222,8 @@ class TransactionManager(object):
 
 @implementer(ITransactionManager)
 class ThreadTransactionManager(threading.local):
-    """
-    Thread-local `transaction manager <transaction.interfaces.ITransactionManager>`.
+    """Thread-local
+    `transaction manager <transaction.interfaces.ITransactionManager>`.
 
     A thread-local transaction manager can be used as a global
     variable, but has a separate copy for each thread.
@@ -289,6 +289,7 @@ class ThreadTransactionManager(threading.local):
     def run(self, func=None, tries=3):
         return self.manager.run(func, tries)
 
+
 class Attempt(object):
 
     success = False
@@ -300,8 +301,8 @@ class Attempt(object):
         retry = self.manager._retryable(t, v)
         self.manager.abort()
         if retry:
-            return retry # suppress the exception if necessary
-        reraise(t, v, tb) # otherwise reraise the exception
+            return retry  # suppress the exception if necessary
+        reraise(t, v, tb)  # otherwise reraise the exception
 
     def __enter__(self):
         return self.manager.__enter__()
@@ -310,7 +311,7 @@ class Attempt(object):
         if v is None:
             try:
                 self.manager.commit()
-            except:
+            except:  # noqa: E722 do not use bare 'except'
                 return self._retry_or_raise(*sys.exc_info())
             else:
                 self.success = True

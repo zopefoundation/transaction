@@ -15,6 +15,7 @@
 from zope.interface import Attribute
 from zope.interface import Interface
 
+
 class ITransactionManager(Interface):
     """An object that manages a sequence of transactions.
 
@@ -37,7 +38,6 @@ class ITransactionManager(Interface):
         .. versionadded:: 2.1.0
         """)
 
-
     def begin():
         """Explicitly begin and return a new transaction.
 
@@ -47,8 +47,8 @@ class ITransactionManager(Interface):
         transaction manager is in explicit mode, an
         `AlreadyInTransaction` exception will be raised..
 
-        The `~ISynchronizer.newTransaction` method of registered synchronizers is called,
-        passing the new transaction object.
+        The `~ISynchronizer.newTransaction` method of registered synchronizers
+        is called, passing the new transaction object.
 
         Note that when not in explicit mode, transactions may be
         started implicitly without calling `begin`. In that case,
@@ -88,7 +88,7 @@ class ITransactionManager(Interface):
         """
 
     def isDoomed():
-        """Returns True if the current transaction is doomed, otherwise False.
+        """Return True if the current transaction is doomed, otherwise False.
 
         In explicit mode, if a transaction hasn't begun, a
         `NoTransaction` exception will be raised.
@@ -161,7 +161,8 @@ class ITransactionManager(Interface):
 
     def run(func=None, tries=3):
         """Call *func()*  in its own transaction; retry
-        in case of some kind of `retriable error <ITransaction.isRetryableError>`.
+        in case of some kind of
+        `retriable error <ITransaction.isRetryableError>`.
 
         The call is tried up to *tries* times.
 
@@ -177,8 +178,7 @@ class ITransactionManager(Interface):
 
 
 class ITransaction(Interface):
-    """Object representing a running transaction.
-    """
+    """Object representing a running transaction."""
 
     user = Attribute(
         """A user name associated with the transaction.
@@ -279,8 +279,7 @@ class ITransaction(Interface):
         """
 
     def addBeforeCommitHook(hook, args=(), kws=None):
-        """Register a hook to call before the transaction is
-        committed.
+        """Register a hook to call before the transaction is committed.
 
         The specified hook function will be called after the
         transaction's commit method has been called, but before the
@@ -321,26 +320,22 @@ class ITransaction(Interface):
         """
 
     def addAfterCommitHook(hook, args=(), kws=None):
-         """Register a hook to call after a transaction commit
-         attempt.
+        """Register a hook to call after a transaction commit attempt.
 
-         The specified hook function will be called after the
-         transaction commit succeeds or aborts. The first argument
-         passed to the hook is a Boolean value, `True` if the commit
-         succeeded, or `False` if the commit aborted.
-
-         *args* and *kws* are interpreted as for `addBeforeCommitHook`
-         (with the exception that there is always one positional
-         argument, the commit status).
-
-         As with `addBeforeCommitHook`, multiple hooks can be
-         registered, savepoint creation doesn't call any hooks, and
-         calling a hook consumes its registration.
-         """
+        The specified hook function will be called after the
+        transaction commit succeeds or aborts. The first argument
+        passed to the hook is a Boolean value, `True` if the commit
+        succeeded, or `False` if the commit aborted.
+        *args* and *kws* are interpreted as for `addBeforeCommitHook`
+        (with the exception that there is always one positional
+        argument, the commit status).
+        As with `addBeforeCommitHook`, multiple hooks can be
+        registered, savepoint creation doesn't call any hooks, and
+        calling a hook consumes its registration.
+        """
 
     def getAfterCommitHooks():
-        """Return iterable producing the registered `addAfterCommitHook`
-        hooks.
+        """Return iterable producing the registered `addAfterCommitHook` hooks.
 
         As with `getBeforeCommitHooks`, a triple ``(hook, args, kws)``
         is produced for each registered hook. The hooks are produced
@@ -368,8 +363,7 @@ class ITransaction(Interface):
         """
 
     def getBeforeAbortHooks():
-        """Return iterable producing the registered `addBeforeAbortHook`
-        hooks.
+        """Return iterable producing the registered `addBeforeAbortHook` hooks.
 
         As with `getBeforeCommitHooks`, a triple ``(hook, args, kws)``
         is produced for each registered hook. The hooks are produced
@@ -393,8 +387,7 @@ class ITransaction(Interface):
         """
 
     def getAfterAbortHooks():
-        """Return iterable producing the registered `addAfterAbortHook`
-        hooks.
+        """Return iterable producing the registered `addAfterAbortHook` hooks.
 
         As with `getBeforeCommitHooks`, a triple ``(hook, args, kws)``
         is produced for each registered hook. The hooks are produced
@@ -529,8 +522,7 @@ class IDataManager(Interface):
         """
 
     def sortKey():
-        """Return a key to use for ordering registered
-        `IDataManagers`.
+        """Return a key to use for ordering registered `IDataManagers`.
 
         In order to guarantee a total ordering, keys **must** be
         `strings <str>`.
@@ -541,18 +533,19 @@ class IDataManager(Interface):
         provides a global ordering across all registered data managers.
         """
         # Alternate version:
-        #"""Return a consistent sort key for this connection.
+        # """Return a consistent sort key for this connection.
         #
-        #This allows ordering multiple connections that use the same storage in
-        #a consistent manner. This is unique for the lifetime of a connection,
-        #which is good enough to avoid ZEO deadlocks.
-        #"""
+        # This allows ordering multiple connections that use the same storage
+        # in a consistent manner. This is unique for the lifetime of a
+        # connection, which is good enough to avoid ZEO deadlocks.
+        # """
+
 
 class ISavepointDataManager(IDataManager):
 
     def savepoint():
-        """Return a data-manager savepoint (`IDataManagerSavepoint`).
-        """
+        """Return a data-manager savepoint (`IDataManagerSavepoint`)."""
+
 
 class IRetryDataManager(IDataManager):
 
@@ -565,9 +558,9 @@ class IRetryDataManager(IDataManager):
         considering whether to retry a failed transaction.
         """
 
+
 class IDataManagerSavepoint(Interface):
-    """Savepoint for data-manager changes for use in transaction
-    savepoints.
+    """Savepoint for data-manager changes for use in transaction savepoints.
 
     Datamanager savepoints are used by, and only by, transaction
     savepoints.
@@ -581,8 +574,8 @@ class IDataManagerSavepoint(Interface):
     """
 
     def rollback():
-        """Rollback any work done since the savepoint.
-        """
+        """Rollback any work done since the savepoint. """
+
 
 class ISavepoint(Interface):
     """A transaction savepoint.
@@ -597,6 +590,7 @@ class ISavepoint(Interface):
     valid = Attribute(
         "Boolean indicating whether the savepoint is valid")
 
+
 class InvalidSavepointRollbackError(Exception):
     """Attempt to rollback an invalid savepoint.
 
@@ -607,17 +601,16 @@ class InvalidSavepointRollbackError(Exception):
     - An earlier savepoint in the same transaction has been rolled back.
     """
 
+
 class ISynchronizer(Interface):
     """Objects that participate in the transaction-boundary notification API.
     """
 
     def beforeCompletion(transaction):
-        """Hook that is called by the transaction at the start of a commit.
-        """
+        """Hook that is called by the transaction at the start of a commit."""
 
     def afterCompletion(transaction):
-        """Hook that is called by the transaction after completing a commit.
-        """
+        """Hook that is called by the transaction after completing a commit."""
 
     def newTransaction(transaction):
         """Hook that is called at the start of a transaction.
@@ -626,8 +619,10 @@ class ISynchronizer(Interface):
         `~ITransactionManager.begin` method is called explicitly.
         """
 
+
 class TransactionError(Exception):
     """An error occurred due to normal transaction processing."""
+
 
 class TransactionFailedError(TransactionError):
     """Cannot perform an operation on a transaction that previously
@@ -641,14 +636,17 @@ class TransactionFailedError(TransactionError):
     can also be used to perform an implicit abort.)
     """
 
+
 class DoomedTransaction(TransactionError):
     """A commit was attempted on a transaction that was doomed."""
+
 
 class TransientError(TransactionError):
     """An error has occured when performing a transaction.
 
     It's possible that retrying the transaction will succeed.
     """
+
 
 class NoTransaction(TransactionError):
     """No transaction has been defined
@@ -661,11 +659,12 @@ class NoTransaction(TransactionError):
     .. versionadded:: 2.1.0
     """
 
+
 class AlreadyInTransaction(TransactionError):
     """Attempt to create a new transaction without ending a preceding one
 
-    An application called `~ITransactionManager.begin` on a transaction manager in
-    explicit mode, without committing or aborting the previous
+    An application called `~ITransactionManager.begin` on a transaction manager
+    in explicit mode, without committing or aborting the previous
     transaction.
 
     .. versionadded:: 2.1.0

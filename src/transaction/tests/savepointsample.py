@@ -22,6 +22,7 @@ Used by savepoint.rst in the Sphinx docs.
 from zope.interface import implementer
 import transaction.interfaces
 
+
 @implementer(transaction.interfaces.IDataManager)
 class SampleDataManager(object):
     """Sample implementation of data manager that doesn't support savepoints
@@ -50,8 +51,7 @@ class SampleDataManager(object):
         #   What phase, if any, of two-phase commit we are in:
         self.tpc_phase = None
 
-
-    #######################################################################
+    # ######################################################################
     # Provide a mapping interface to uncommitted data.  We provide
     # a basic subset of the interface. DictMixin does the rest.
 
@@ -59,7 +59,7 @@ class SampleDataManager(object):
         return self.uncommitted[name]
 
     def __setitem__(self, name, value):
-        self._join() # join the current transaction, if we haven't already
+        self._join()  # join the current transaction, if we haven't already
         self.uncommitted[name] = value
 
     def keys(self):
@@ -91,8 +91,7 @@ class SampleDataManager(object):
         self.tpc_phase = None
 
     def abort(self, transaction):
-        """Throw away changes made before the commit process has started
-        """
+        """Throw away changes made before the commit process has started."""
         assert ((transaction is self.transaction) or (self.transaction is None)
                 ), "Must not change transactions"
         assert self.tpc_phase is None, "Must be called outside of tpc"
@@ -100,15 +99,13 @@ class SampleDataManager(object):
         self._resetTransaction()
 
     def tpc_begin(self, transaction):
-        """Enter two-phase commit
-        """
+        """Enter two-phase commit."""
         assert transaction is self.transaction, "Must not change transactions"
         assert self.tpc_phase is None, "Must be called outside of tpc"
         self.tpc_phase = 1
 
     def commit(self, transaction):
-        """Record data modified during the transaction
-        """
+        """Record data modified during the transaction."""
         assert transaction is self.transaction, "Must not change transactions"
         assert self.tpc_phase == 1, "Must be called in first phase of tpc"
 
@@ -131,7 +128,7 @@ class SampleDataManager(object):
         self._resetTransaction()
 
     def tpc_abort(self, transaction):
-        if self.transaction is not None: # pragma: no cover
+        if self.transaction is not None:  # pragma: no cover
             # otherwise we're not actually joined.
             assert self.tpc_phase is not None, "Must be called inside of tpc"
             self.uncommitted = self.committed.copy()
@@ -154,6 +151,7 @@ class SampleDataManager(object):
     #
     #######################################################################
 
+
 @implementer(transaction.interfaces.ISavepointDataManager)
 class SampleSavepointDataManager(SampleDataManager):
     """Sample implementation of a savepoint-supporting data manager
@@ -173,6 +171,7 @@ class SampleSavepointDataManager(SampleDataManager):
         # couldn't restore the original state if a rollback to this
         # savepoint was done again.  IOW, copy() is necessary.
         self.uncommitted = savepoint.data.copy()
+
 
 @implementer(transaction.interfaces.IDataManagerSavepoint)
 class SampleSavepoint:

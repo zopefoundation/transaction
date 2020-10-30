@@ -26,7 +26,7 @@ class SavepointTests(unittest.TestCase):
         dm['name'] = 'bob'
         sp1 = transaction.savepoint()
         dm['job'] = 'geek'
-        sp2 = transaction.savepoint()
+        transaction.savepoint()
         dm['salary'] = 'fun'
         dm2 = savepointsample.SampleSavepointDataManager()
         dm2['name'] = 'sally'
@@ -57,10 +57,3 @@ class SavepointTests(unittest.TestCase):
         dm['name'] = 'Bob'
         transaction.commit()
         self.assertEqual(dm['name'], 'Bob')
-
-
-
-def test_suite():
-    return unittest.TestSuite((
-            unittest.makeSuite(SavepointTests),
-        ))
