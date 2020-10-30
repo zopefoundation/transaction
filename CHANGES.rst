@@ -5,7 +5,10 @@
 3.0.1 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Exception raised by a before commit hook is no longer hidden.  No
+  further commit hooks are called and exception is propagated to
+  the caller of ``commit()``. See
+  `#95 <https://github.com/zopefoundation/transaction/pull/95>`_.
 
 
 3.0.0 (2019-12-11)

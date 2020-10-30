@@ -378,18 +378,17 @@ class Transaction(object):
                                    hook, exc_info=sys.exc_info())
         finally:
             del hooks[:]  # clear hooks
-            if not clean:
-                return
-            # The primary operation has already been performed.
-            # But the hooks execution might have left the resources
-            # in an unclean state. Clean up
-            for rm in self._resources:
-                try:
-                    rm.abort(self)
-                except:  # noqa: E722 do not use bare 'except'
-                    # XXX should we take further actions here ?
-                    self.log.error("Error in abort() on manager %s",
-                                   rm, exc_info=sys.exc_info())
+            if clean:
+                # The primary operation has already been performed.
+                # But the hooks execution might have left the resources
+                # in an unclean state. Clean up
+                for rm in self._resources:
+                    try:
+                        rm.abort(self)
+                    except:  # noqa: E722 do not use bare 'except'
+                        # XXX should we take further actions here ?
+                        self.log.error("Error in abort() on manager %s",
+                                       rm, exc_info=sys.exc_info())
 
     def getBeforeAbortHooks(self):
         """See `~transaction.interfaces.ITransaction`."""

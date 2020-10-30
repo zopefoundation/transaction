@@ -533,6 +533,31 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(list(txn.getBeforeCommitHooks()),
                          [(_hook, ('one',), {'uno': 1})])
 
+    def test_callBeforeCommitHook_w_error(self):
+        from transaction.tests.common import DummyLogger
+        from transaction.tests.common import Monkey
+        from transaction import _transaction
+        _calls = []
+
+        def _hook(*args, **kw):
+            _calls.append((args, kw))
+
+        def _hook_err(*args, **kw):
+            raise ValueError()
+
+        logger = DummyLogger()
+        with Monkey(_transaction, _LOGGER=logger):
+            txn = self._makeOne()
+        logger._clear()
+        txn.addBeforeCommitHook(_hook, ('one',), dict(uno=1))
+        txn.addBeforeCommitHook(_hook_err, ('two',), dict(dos=2))
+        txn.addBeforeCommitHook(_hook, ('three',), dict(tres=3))
+        # only first hook gets called, and instead of logging the error,
+        # the exception is raised
+        self.assertRaises(ValueError, txn._callBeforeCommitHooks)
+        self.assertEqual(_calls, [(('one',), {'uno': 1})])
+        self.assertEqual(len(logger._log), 0)
+
     def test_addBeforeCommitHook_w_kws(self):
         def _hook(*args, **kw):
             raise AssertionError("Not called")
