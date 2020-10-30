@@ -21,7 +21,7 @@ install:
     - pip install -U -e .[test,docs]
 
 script:
-    - coverage run -m zope.testrunner --test-path=. -v
+    - coverage run -m zope.testrunner --test-path=src -v
     - coverage run -a -m sphinx.cmd.build -b doctest -d docs/_build/doctrees docs docs/_build/doctest
 
 notifications:
