@@ -6,14 +6,16 @@ JYTHON = sys.platform.startswith('java')
 
 if PY3:  # pragma: no cover
     text_type = str
-else: # pragma: no cover
+else:  # pragma: no cover
     # py2
-    text_type = unicode
+    text_type = unicode  # noqa: F821 undefined name 'unicode'
+
 
 def text_(s):
     if not isinstance(s, text_type):  # pragma: no cover
         s = s.decode('utf-8')
     return s
+
 
 if PY3:  # pragma: no cover
     def native_(s, encoding='latin-1', errors='strict'):
@@ -28,10 +30,12 @@ else:  # pragma: no cover
 
 if PY3:  # pragma: no cover
     from io import StringIO
-else: # pragma: no cover
+else:  # pragma: no cover
     from io import BytesIO
     # Prevent crashes in IPython when writing tracebacks if a commit fails
-    # ref: https://github.com/ipython/ipython/issues/9126#issuecomment-174966638
+    # ref:
+    # https://github.com/ipython/ipython/issues/9126#issuecomment-174966638
+
     class StringIO(BytesIO):
         def write(self, s):
             s = native_(s, encoding='utf-8')
@@ -40,11 +44,11 @@ else: # pragma: no cover
 
 if PY3:  # pragma: no cover
     def reraise(tp, value, tb=None):
-        if value.__traceback__ is not tb: # pragma: no cover
+        if value.__traceback__ is not tb:  # pragma: no cover
             raise value.with_traceback(tb)
         raise value
 
-else: # pragma: no cover
+else:  # pragma: no cover
     def exec_(code, globs=None, locs=None):
         """Execute code in a namespace."""
         if globs is None:
@@ -64,6 +68,6 @@ else: # pragma: no cover
 
 try:  # pragma: no cover
     from threading import get_ident as get_thread_ident
-except ImportError: # pragma: no cover
-    # py2
-    from thread import get_ident as get_thread_ident
+except ImportError:  # pragma: no cover
+    # PY2
+    from thread import get_ident as get_thread_ident  # noqa: F401 unused

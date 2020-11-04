@@ -15,6 +15,7 @@
 
 """
 
+
 class DataManager(object):
     """ Sample data manager.
 

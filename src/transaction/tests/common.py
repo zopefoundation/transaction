@@ -16,8 +16,10 @@
 class DummyFile(object):
     def __init__(self):
         self._lines = []
+
     def write(self, text):
         self._lines.append(text)
+
     def writelines(self, lines):
         self._lines.extend(lines)
 
@@ -25,17 +27,22 @@ class DummyFile(object):
 class DummyLogger(object):
     def __init__(self):
         self._clear()
+
     def _clear(self):
         self._log = []
+
     def log(self, level, msg, *args, **kwargs):
         if args:
             self._log.append((level, msg % args))
         else:
             self._log.append((level, msg))
+
     def debug(self, msg, *args, **kw):
         self.log('debug', msg, *args, **kw)
+
     def error(self, msg, *args, **kw):
         self.log('error', msg, *args, **kw)
+
     def critical(self, msg, *args, **kw):
         self.log('critical', msg, *args, **kw)
 
@@ -54,6 +61,7 @@ class Monkey(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for key, value in self.to_restore.items():
             setattr(self.module, key, value)
+
 
 def assertRaisesEx(e_type, checked, *args, **kw):
     # Only used in doctests

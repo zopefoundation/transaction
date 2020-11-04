@@ -29,14 +29,19 @@ from transaction._compat import text_type
 
 _marker = object()
 
-_TB_BUFFER = None #unittests may hook
-def _makeTracebackBuffer(): #pragma NO COVER
+_TB_BUFFER = None  # unittests may hook
+
+
+def _makeTracebackBuffer():  # pragma NO COVER
     if _TB_BUFFER is not None:
         return _TB_BUFFER
     return StringIO()
 
-_LOGGER = None #unittests may hook
-def _makeLogger(): #pragma NO COVER
+
+_LOGGER = None  # unittests may hook
+
+
+def _makeLogger():  # pragma NO COVER
     if _LOGGER is not None:
         return _LOGGER
     return logging.getLogger("txn.%d" % get_thread_ident())
@@ -44,10 +49,10 @@ def _makeLogger(): #pragma NO COVER
 
 class Status(object):
     # ACTIVE is the initial state.
-    ACTIVE       = "Active"
+    ACTIVE = "Active"
 
-    COMMITTING   = "Committing"
-    COMMITTED    = "Committed"
+    COMMITTING = "Committing"
+    COMMITTED = "Committed"
 
     DOOMED = "Doomed"
 
@@ -55,17 +60,17 @@ class Status(object):
     # to commit or join this transaction will raise TransactionFailedError.
     COMMITFAILED = "Commit failed"
 
+
 class _NoSynchronizers(object):
 
     @staticmethod
     def map(_f):
-        "Does nothing"
+        """Do nothing."""
+
 
 @implementer(interfaces.ITransaction)
 class Transaction(object):
-    """
-    Default implementation of `~transaction.interfaces.ITransaction`.
-    """
+    """Default implementation of `~transaction.interfaces.ITransaction`."""
 
     # Assign an index to each savepoint so we can invalidate later savepoints
     # on rollback.  The first index assigned is 1, and it goes up by 1 each
@@ -95,7 +100,7 @@ class Transaction(object):
 
         # _adapters: Connection/_p_jar -> MultiObjectResourceAdapter[Sub]
         self._adapters = {}
-        self._voted = {} # id(Connection) -> boolean, True if voted
+        self._voted = {}  # id(Connection) -> boolean, True if voted
         # _voted and other dictionaries use the id() of the resource
         # manager as a key, because we can't guess whether the actual
         # resource managers will be safe to use as dict keys.
@@ -154,13 +159,11 @@ class Transaction(object):
             self._description = text_or_warn(v)
 
     def isDoomed(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         return self.status is Status.DOOMED
 
     def doom(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if self.status is not Status.DOOMED:
             if self.status is not Status.ACTIVE:
                 # should not doom transactions in the middle,
@@ -173,15 +176,14 @@ class Transaction(object):
     # a commit/savepoint failure.
     def _prior_operation_failed(self):
         assert self._failure_traceback is not None
-        raise TransactionFailedError("An operation previously failed, "
-                "with traceback:\n\n%s" %
-                self._failure_traceback.getvalue())
+        raise TransactionFailedError(
+            "An operation previously failed, with traceback:\n\n%s" %
+            self._failure_traceback.getvalue())
 
     def join(self, resource):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if self.status is Status.COMMITFAILED:
-            self._prior_operation_failed() # doesn't return
+            self._prior_operation_failed()  # doesn't return
 
         if (self.status is not Status.ACTIVE and
                 self.status is not Status.DOOMED):
@@ -215,16 +217,15 @@ class Transaction(object):
         self._resources = [r for r in self._resources if r is not resource]
 
     def savepoint(self, optimistic=False):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if self.status is Status.COMMITFAILED:
-            self._prior_operation_failed() # doesn't return, it raises
+            self._prior_operation_failed()  # doesn't return, it raises
 
         try:
             savepoint = Savepoint(self, optimistic, *self._resources)
-        except:
+        except:  # noqa: E722 do not use bare 'except'
             self._cleanup(self._resources)
-            self._saveAndRaiseCommitishError() # reraises!
+            self._saveAndRaiseCommitishError()  # reraises!
 
         if self._savepoint2index is None:
             self._savepoint2index = weakref.WeakKeyDictionary()
@@ -242,18 +243,17 @@ class Transaction(object):
         # use list(items()) to make copy to avoid mutating while iterating
         for savepoint, i in list(savepoint2index.items()):
             if i > index:
-                savepoint.transaction = None # invalidate
+                savepoint.transaction = None  # invalidate
                 del savepoint2index[savepoint]
 
     # Invalidate and forget about all savepoints.
     def _invalidate_all_savepoints(self):
         for savepoint in self._savepoint2index.keys():
-            savepoint.transaction = None # invalidate
+            savepoint.transaction = None  # invalidate
         self._savepoint2index.clear()
 
     def commit(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if self.status is Status.DOOMED:
             raise interfaces.DoomedTransaction(
                 'transaction doomed, cannot commit')
@@ -262,7 +262,7 @@ class Transaction(object):
             self._invalidate_all_savepoints()
 
         if self.status is Status.COMMITFAILED:
-            self._prior_operation_failed() # doesn't return
+            self._prior_operation_failed()  # doesn't return
 
         self._callBeforeCommitHooks()
 
@@ -272,7 +272,7 @@ class Transaction(object):
         try:
             self._commitResources()
             self.status = Status.COMMITTED
-        except:
+        except:  # noqa: E722 do not use bare 'except'
             t = None
             v = None
             tb = None
@@ -318,13 +318,11 @@ class Transaction(object):
             del t, v, tb
 
     def getBeforeCommitHooks(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         return iter(self._before_commit)
 
     def addBeforeCommitHook(self, hook, args=(), kws=None):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if kws is None:
             kws = {}
         self._before_commit.append((hook, tuple(args), kws))
@@ -335,13 +333,11 @@ class Transaction(object):
         self._call_hooks(self._before_commit)
 
     def getAfterCommitHooks(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         return iter(self._after_commit)
 
     def addAfterCommitHook(self, hook, args=(), kws=None):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if kws is None:
             kws = {}
         self._after_commit.append((hook, tuple(args), kws))
@@ -351,7 +347,7 @@ class Transaction(object):
                          exc=False, clean=True, prefix_args=(status,))
 
     def _call_hooks(self, hooks, exc=True, clean=False, prefix_args=()):
-        """call *hooks*.
+        """Call *hooks*.
 
         If *exc* is true, fail on the first exception; otherwise
         log the exception and continue.
@@ -374,7 +370,7 @@ class Transaction(object):
             for hook, args, kws in hooks:
                 try:
                     hook(*(prefix_args + args), **kws)
-                except:
+                except:  # noqa: E722 do not use bare 'except'
                     if exc:
                         raise
                     # We should not fail
@@ -390,19 +386,17 @@ class Transaction(object):
             for rm in self._resources:
                 try:
                     rm.abort(self)
-                except:
+                except:  # noqa: E722 do not use bare 'except'
                     # XXX should we take further actions here ?
                     self.log.error("Error in abort() on manager %s",
                                    rm, exc_info=sys.exc_info())
 
     def getBeforeAbortHooks(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         return iter(self._before_abort)
 
     def addBeforeAbortHook(self, hook, args=(), kws=None):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if kws is None:
             kws = {}
         self._before_abort.append((hook, tuple(args), kws))
@@ -413,13 +407,11 @@ class Transaction(object):
         self._call_hooks(self._before_abort, exc=False)
 
     def getAfterAbortHooks(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         return iter(self._after_abort)
 
     def addAfterAbortHook(self, hook, args=(), kws=None):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if kws is None:
             kws = {}
         self._after_abort.append((hook, tuple(args), kws))
@@ -445,7 +437,7 @@ class Transaction(object):
             try:
                 for rm in L:
                     rm.tpc_finish(self)
-            except:
+            except:  # noqa: E722 do not use bare 'except'
                 # TODO: do we need to make this warning stronger?
                 # TODO: It would be nice if the system could be configured
                 # to stop committing transactions at this point.
@@ -453,7 +445,7 @@ class Transaction(object):
                                   "phase of the two-phase commit.  Resources "
                                   "may be in an inconsistent state.")
                 raise
-        except:
+        except:  # noqa: E722 do not use bare 'except'
             # If an error occurs committing a transaction, we try
             # to revert the changes in each of the resource managers.
             t, v, tb = sys.exc_info()
@@ -481,6 +473,7 @@ class Transaction(object):
             except Exception:
                 self.log.error("Error in tpc_abort() on manager %s",
                                rm, exc_info=sys.exc_info())
+
     def _free_manager(self):
         try:
             if self._manager:
@@ -537,8 +530,7 @@ class Transaction(object):
         data[id(ob)] = ob_data
 
     def abort(self):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         try:
             t = None
             v = None
@@ -550,25 +542,25 @@ class Transaction(object):
 
             try:
                 self._synchronizers.map(lambda s: s.beforeCompletion(self))
-            except:
+            except:  # noqa: E722 do not use bare 'except'
                 t, v, tb = sys.exc_info()
-                self.log.error("Failed to call synchronizers", exc_info=sys.exc_info())
-
+                self.log.error(
+                    "Failed to call synchronizers", exc_info=sys.exc_info())
 
             for rm in self._resources:
                 try:
                     rm.abort(self)
-                except:
+                except:  # noqa: E722 do not use bare 'except'
                     if tb is None:
                         t, v, tb = sys.exc_info()
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
 
-
             self._callAfterAbortHooks()
             # Unlike in commit(), we are no longer the current transaction
-            # when we call afterCompletion(). But we can't be completely _free():
-            # the synchronizer might want to access some data it set before.
+            # when we call afterCompletion(). But we can't be completely
+            # _free(): the synchronizer might want to access some data it set
+            # before.
             self._free_manager()
 
             self._synchronizers.map(lambda s: s.afterCompletion(self))
@@ -582,8 +574,7 @@ class Transaction(object):
             del t, v, tb
 
     def note(self, text):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         if text is not None:
             text = text_or_warn(text).strip()
             if self.description:
@@ -592,13 +583,11 @@ class Transaction(object):
                 self.description = text
 
     def setUser(self, user_name, path=u"/"):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         self.user = u"%s %s" % (text_or_warn(path), text_or_warn(user_name))
 
     def setExtendedInfo(self, name, value):
-        """ See `~transaction.interfaces.ITransaction`.
-        """
+        """See `~transaction.interfaces.ITransaction`."""
         self.extension[name] = value
 
     def isRetryableError(self, error):
@@ -616,7 +605,8 @@ def rm_key(rm):
 
 @implementer(interfaces.ISavepoint)
 class Savepoint(object):
-    """Implementation of `~transaction.interfaces.ISavepoint`, a transaction savepoint.
+    """Implementation of `~transaction.interfaces.ISavepoint`, a transaction
+    savepoint.
 
     Transaction savepoints coordinate savepoints for data managers
     participating in a transaction.
@@ -643,8 +633,7 @@ class Savepoint(object):
         return self.transaction is not None
 
     def rollback(self):
-        """ See `~transaction.interfaces.ISavepoint`.
-        """
+        """See `~transaction.interfaces.ISavepoint`."""
         transaction = self.transaction
         if transaction is None:
             raise interfaces.InvalidSavepointRollbackError(
@@ -654,9 +643,9 @@ class Savepoint(object):
         try:
             for savepoint in self._savepoints:
                 savepoint.rollback()
-        except:
+        except:  # noqa: E722 do not use bare 'except'
             # Mark the transaction as failed.
-            transaction._saveAndRaiseCommitishError() # reraises!
+            transaction._saveAndRaiseCommitishError()  # reraises!
 
 
 class AbortSavepoint(object):
@@ -677,6 +666,7 @@ class NoRollbackSavepoint(object):
 
     def rollback(self):
         raise TypeError("Savepoints unsupported", self.datamanager)
+
 
 def text_or_warn(s):
     if isinstance(s, text_type):

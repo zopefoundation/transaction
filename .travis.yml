@@ -10,13 +10,18 @@ python:
     - 3.8
     - pypy2
     - pypy3
+matrix:
+  include:
+    - name: "lint"
+      python: 3.7
+      env: TOXENV="lint"
 
 install:
     - pip install zope.testrunner coverage coveralls
     - pip install -U -e .[test,docs]
 
 script:
-    - coverage run -m zope.testrunner --test-path=. -v
+    - coverage run -m zope.testrunner --test-path=src -v
     - coverage run -a -m sphinx.cmd.build -b doctest -d docs/_build/doctrees docs docs/_build/doctest
 
 notifications:

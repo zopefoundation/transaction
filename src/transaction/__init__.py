@@ -16,11 +16,11 @@
 """
 
 #: Default implementation of `~ITransaction`
-from transaction._transaction import Transaction
+from transaction._transaction import Transaction  # noqa: F401 unused import
 #: Default implementation of `~ISavepoint`
-from transaction._transaction import Savepoint
+from transaction._transaction import Savepoint  # noqa: F401 unused import
 #: A single-threaded `~ITransactionManager`
-from transaction._manager import TransactionManager
+from transaction._manager import TransactionManager  # noqa: F401 unused import
 #: A thread-safe `~ITransactionManager`
 from transaction._manager import ThreadTransactionManager
 
@@ -29,8 +29,8 @@ from transaction._manager import ThreadTransactionManager
 # via getattr and getattribute; see http://bugs.python.org/issue12022.  On
 # Python 3, you must use ``with transaction.manager`` instead.
 
-#: The default transaction manager (a `~.ThreadTransactionManager`). All other functions in
-#: this module refer to this object.
+#: The default transaction manager (a `~.ThreadTransactionManager`). All other
+#: functions in this module refer to this object.
 manager = ThreadTransactionManager()
 #: See `.ITransactionManager.get`
 get = __enter__ = manager.get
