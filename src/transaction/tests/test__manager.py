@@ -554,7 +554,8 @@ class TransactionManagerTests(unittest.TestCase):
         assert nosub1._p_jar.ctpc_finish == 0
         assert nosub1._p_jar.cabort == 1
 
-    # ## Failure Mode Tests
+    ###
+    # Failure Mode Tests
     #
     # ok now we do some more interesting
     # tests that check the implementations
@@ -725,12 +726,14 @@ class TransactionManagerTests(unittest.TestCase):
     #   However, defining the methods below reduced the "test coverage"
     #   once the initial test failure has been fixed.
     #   We therefore comment them out.
-    # #    # the preceeding test (maybe others as well) registers `self` as
-    # #    #   synchronizer; satisfy the `ISynchronizer` requirements
-    # #    def newTransaction(self, transaction):
-    # #        pass
-    # #
-    # #    beforeCompletion = afterCompletion = newTransaction
+    #
+    # the preceeding test (maybe others as well) registers `self` as
+    # synchronizer; satisfy the `ISynchronizer` requirements
+    #
+    # def newTransaction(self, transaction):
+    #     pass
+    #
+    # beforeCompletion = afterCompletion = newTransaction
 
 
 class TestThreadTransactionManager(unittest.TestCase):
