@@ -2,7 +2,7 @@
  Changes
 =========
 
-3.0.1 (unreleased)
+3.0.1 (2020-12-11)
 ==================
 
 - Exception raised by a before commit hook is no longer hidden.  No
