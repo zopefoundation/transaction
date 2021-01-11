@@ -24,7 +24,7 @@ When we create a sample data manager:
 
    >>> rm = DataManager()
 
-It has two pieces state, state and delta, both initialized to 0:
+It has two pieces, state and delta, both initialized to 0:
 
 .. doctest::
 
