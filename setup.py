@@ -14,7 +14,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = '3.0.2.dev0'
+version = '3.1.0.dev0'
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -47,6 +47,7 @@ setup(name='transaction',
           "Programming Language :: Python :: 3.6",
           "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
+          "Programming Language :: Python :: 3.9",
           "Programming Language :: Python :: Implementation :: CPython",
           "Programming Language :: Python :: Implementation :: PyPy",
           "Framework :: ZODB",
@@ -54,6 +55,11 @@ setup(name='transaction',
       author="Zope Corporation",
       author_email="zodb-dev@zope.org",
       url="https://github.com/zopefoundation/transaction",
+      project_urls={
+          'Issue Tracker': ('https://github.com/zopefoundation/'
+                            'transaction/issues'),
+          'Sources': 'https://github.com/zopefoundation/transaction',
+      },
       license="ZPL 2.1",
       platforms=["any"],
       packages=find_packages('src'),
@@ -62,6 +68,7 @@ setup(name='transaction',
       zip_safe=False,
       test_suite="transaction.tests",
       tests_require=tests_require,
+      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
       install_requires=[
           'zope.interface',
       ],
