@@ -36,8 +36,10 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(len(w), 2)
         del d1
         gc.collect()
-        if not JYTHON:
+        if JYTHON:
             # The Jython GC is non deterministic
+            pass  # pragma: no cover
+        else:
             self.assertEqual(len(w), 1)
 
     def test_remove(self):

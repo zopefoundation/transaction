@@ -1,0 +1,28 @@
+# Generated from:
+# https://github.com/zopefoundation/meta/tree/master/config/pure-python
+[meta]
+template = "pure-python"
+commit-id = "5938e71a0184bc411a10bacc83f4f627ea6d4844"
+
+[python]
+with-appveyor = false
+with-pypy = true
+with-legacy-python = true
+with-docs = true
+with-sphinx-doctests = true
+
+[tox]
+use-flake8 = true
+
+[coverage]
+fail-under = 99
+
+[manifest]
+additional-rules = [
+    "recursive-include docs *.bat",
+    ]
+
+[check-manifest]
+additional-ignores = [
+    "docs/_build/html/_static/placeholder.txt",
+    ]
