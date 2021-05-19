@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     strategy:
+      # We want to see all failures:
+      fail-fast: false
       matrix:
         config:
         # [Python version, tox env]
