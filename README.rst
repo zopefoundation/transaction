@@ -2,8 +2,8 @@
 Transactions
 ============
 
-.. image:: https://travis-ci.com/zopefoundation/transaction.svg?branch=master
-        :target: https://travis-ci.com/zopefoundation/transaction
+.. image:: https://github.com/zopefoundation/transaction/actions/workflows/tests.yml/badge.svg
+        :target: https://github.com/zopefoundation/transaction/actions/workflows/tests.yml
 
 .. image:: https://readthedocs.org/projects/transaction/badge/?version=latest
         :target: http://transaction.readthedocs.org/en/latest/
