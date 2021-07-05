@@ -17,9 +17,7 @@ It coordinates application code and resource managers, so that they
 are associated with the right transaction.
 """
 import sys
-import threading
 import itertools
-from contextvars import ContextVar
 
 from zope.interface import implementer
 
@@ -31,6 +29,13 @@ from transaction.weakset import WeakSet
 from transaction._compat import reraise
 from transaction._compat import text_
 from transaction._transaction import Transaction
+
+USE_CONTEXTVAR = False
+try:  # Try to use ContextVar but fallback to threading.local
+    from contextvars import ContextVar
+    USE_CONTEXTVAR = True
+except ImportError:
+    import threading
 
 
 # We have to remember sets of synch objects, especially Connections.
@@ -58,9 +63,6 @@ def _new_transaction(txn, synchs):
 # consulting the TM, so we need to pass a mutable collection of synchronizers
 # so that Transactions "see" synchronizers that get registered after the
 # Transaction object is constructed.
-
-# Isolated transaction manager context state
-transaction_manager_state = ContextVar("transaction_manager_state")
 
 
 @implementer(ITransactionManager)
@@ -224,78 +226,153 @@ class TransactionManager(object):
                     raise
 
 
-@implementer(ITransactionManager)
-class ThreadTransactionManager:
-    """ContextVar
-    `transaction manager <transaction.interfaces.ITransactionManager>`.
+if USE_CONTEXTVAR:
+    # Isolated transaction manager context state
+    transaction_manager_state = ContextVar("transaction_manager_state")
 
-    A ContextVar transaction manager can be used as a global
-    variable, but has a separate copy for each context and thread.
+    @implementer(ITransactionManager)
+    class ThreadTransactionManager:
+        """ContextVar
+        `transaction manager <transaction.interfaces.ITransactionManager>`.
 
-    Advanced applications can use the `manager` attribute to get a
-    wrapped `TransactionManager` to allow cross-thread calls for
-    graceful shutdown of data managers.
-    """
-    @property
-    def manager(self):
-        try:
-            return transaction_manager_state.get()
-        except LookupError:
-            transaction_manager_state.set(TransactionManager())
-            return transaction_manager_state.get()
+        A ContextVar transaction manager can be used as a global
+        variable, but has a separate copy for each context and thread.
 
-    @property
-    def explicit(self):
-        return self.manager.explicit
+        Advanced applications can use the `manager` attribute to get a
+        wrapped `TransactionManager` to allow cross-thread calls for
+        graceful shutdown of data managers.
+        """
+        @property
+        def manager(self):
+            try:
+                return transaction_manager_state.get()
+            except LookupError:
+                transaction_manager_state.set(TransactionManager())
+                return transaction_manager_state.get()
 
-    @explicit.setter
-    def explicit(self, v):
-        self.manager.explicit = v
+        @property
+        def explicit(self):
+            return self.manager.explicit
 
-    def begin(self):
-        return self.manager.begin()
+        @explicit.setter
+        def explicit(self, v):
+            self.manager.explicit = v
 
-    def get(self):
-        return self.manager.get()
+        def begin(self):
+            return self.manager.begin()
 
-    def __enter__(self):
-        return self.manager.__enter__()
+        def get(self):
+            return self.manager.get()
 
-    def commit(self):
-        return self.manager.commit()
+        def __enter__(self):
+            return self.manager.__enter__()
 
-    def abort(self):
-        return self.manager.abort()
+        def commit(self):
+            return self.manager.commit()
 
-    def __exit__(self, t, v, tb):
-        return self.manager.__exit__(t, v, tb)
+        def abort(self):
+            return self.manager.abort()
 
-    def doom(self):
-        return self.manager.doom()
+        def __exit__(self, t, v, tb):
+            return self.manager.__exit__(t, v, tb)
 
-    def isDoomed(self):
-        return self.manager.isDoomed()
+        def doom(self):
+            return self.manager.doom()
 
-    def savepoint(self, optimistic=False):
-        return self.manager.savepoint(optimistic)
+        def isDoomed(self):
+            return self.manager.isDoomed()
 
-    def registerSynch(self, synch):
-        return self.manager.registerSynch(synch)
+        def savepoint(self, optimistic=False):
+            return self.manager.savepoint(optimistic)
 
-    def unregisterSynch(self, synch):
-        return self.manager.unregisterSynch(synch)
+        def registerSynch(self, synch):
+            return self.manager.registerSynch(synch)
 
-    def clearSynchs(self):
-        return self.manager.clearSynchs()
+        def unregisterSynch(self, synch):
+            return self.manager.unregisterSynch(synch)
 
-    def registeredSynchs(self):
-        return self.manager.registeredSynchs()
+        def clearSynchs(self):
+            return self.manager.clearSynchs()
 
-    def attempts(self, number=3):
-        return self.manager.attempts(number)
+        def registeredSynchs(self):
+            return self.manager.registeredSynchs()
 
-    def run(self, func=None, tries=3):
-        return self.manager.run(func, tries)
+        def attempts(self, number=3):
+            return self.manager.attempts(number)
+
+        def run(self, func=None, tries=3):
+            return self.manager.run(func, tries)
+
+else:
+
+    @implementer(ITransactionManager)
+    class ThreadTransactionManager(threading.local):
+        """Thread-local
+        `transaction manager <transaction.interfaces.ITransactionManager>`.
+
+        A thread-local transaction manager can be used as a global
+        variable, but has a separate copy for each thread.
+
+        Advanced applications can use the `manager` attribute to get a
+        wrapped `TransactionManager` to allow cross-thread calls for
+        graceful shutdown of data managers.
+        """
+
+        def __init__(self):
+            self.manager = TransactionManager()
+
+        @property
+        def explicit(self):
+            return self.manager.explicit
+
+        @explicit.setter
+        def explicit(self, v):
+            self.manager.explicit = v
+
+        def begin(self):
+            return self.manager.begin()
+
+        def get(self):
+            return self.manager.get()
+
+        def __enter__(self):
+            return self.manager.__enter__()
+
+        def commit(self):
+            return self.manager.commit()
+
+        def abort(self):
+            return self.manager.abort()
+
+        def __exit__(self, t, v, tb):
+            return self.manager.__exit__(t, v, tb)
+
+        def doom(self):
+            return self.manager.doom()
+
+        def isDoomed(self):
+            return self.manager.isDoomed()
+
+        def savepoint(self, optimistic=False):
+            return self.manager.savepoint(optimistic)
+
+        def registerSynch(self, synch):
+            return self.manager.registerSynch(synch)
+
+        def unregisterSynch(self, synch):
+            return self.manager.unregisterSynch(synch)
+
+        def clearSynchs(self):
+            return self.manager.clearSynchs()
+
+        def registeredSynchs(self):
+            return self.manager.registeredSynchs()
+
+        def attempts(self, number=3):
+            return self.manager.attempts(number)
+
+        def run(self, func=None, tries=3):
+            return self.manager.run(func, tries)
 
 
 class Attempt(object):
