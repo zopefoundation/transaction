@@ -19,6 +19,7 @@ are associated with the right transaction.
 import sys
 import threading
 import itertools
+from contextvars import ContextVar
 
 from zope.interface import implementer
 
@@ -57,6 +58,9 @@ def _new_transaction(txn, synchs):
 # consulting the TM, so we need to pass a mutable collection of synchronizers
 # so that Transactions "see" synchronizers that get registered after the
 # Transaction object is constructed.
+
+# Isolated transaction manager context state
+transaction_manager_state = ContextVar("transaction_manager_state")
 
 
 @implementer(ITransactionManager)
@@ -221,20 +225,24 @@ class TransactionManager(object):
 
 
 @implementer(ITransactionManager)
-class ThreadTransactionManager(threading.local):
-    """Thread-local
+class ThreadTransactionManager:
+    """ContextVar
     `transaction manager <transaction.interfaces.ITransactionManager>`.
 
-    A thread-local transaction manager can be used as a global
-    variable, but has a separate copy for each thread.
+    A ContextVar transaction manager can be used as a global
+    variable, but has a separate copy for each context and thread.
 
     Advanced applications can use the `manager` attribute to get a
     wrapped `TransactionManager` to allow cross-thread calls for
     graceful shutdown of data managers.
     """
-
-    def __init__(self):
-        self.manager = TransactionManager()
+    @property
+    def manager(self):
+        try:
+            return transaction_manager_state.get()
+        except LookupError:
+            transaction_manager_state.set(TransactionManager())
+            return transaction_manager_state.get()
 
     @property
     def explicit(self):
