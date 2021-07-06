@@ -226,7 +226,7 @@ class TransactionManager(object):
                     raise
 
 
-if USE_CONTEXTVAR:
+if USE_CONTEXTVAR:  # pragma: no cover
     # Isolated transaction manager context state
     transaction_manager_state = ContextVar("transaction_manager_state")
 
@@ -303,7 +303,7 @@ if USE_CONTEXTVAR:
         def run(self, func=None, tries=3):
             return self.manager.run(func, tries)
 
-else:
+else:  # pragma: no cover
 
     @implementer(ITransactionManager)
     class ThreadTransactionManager(threading.local):
