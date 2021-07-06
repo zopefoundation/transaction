@@ -226,7 +226,7 @@ class TransactionManager(object):
                     raise
 
 
-if USE_CONTEXTVAR:  # pragma: no cover
+if USE_CONTEXTVAR:  # pragma: PY3
     # Isolated transaction manager context state
     transaction_manager_state = ContextVar("transaction_manager_state")
 
