@@ -303,7 +303,7 @@ if USE_CONTEXTVAR:  # pragma: PY3
         def run(self, func=None, tries=3):
             return self.manager.run(func, tries)
 
-else:  # pragma: no cover
+else:  # pragma: PY2
 
     @implementer(ITransactionManager)
     class ThreadTransactionManager(threading.local):
