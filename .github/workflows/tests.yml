@@ -16,21 +16,24 @@ jobs:
       # We want to see all failures:
       fail-fast: false
       matrix:
+        os:
+        - ubuntu
         config:
         # [Python version, tox env]
-        - ["3.8",   "lint"]
+        - ["3.9",   "lint"]
         - ["2.7",   "py27"]
         - ["3.5",   "py35"]
         - ["3.6",   "py36"]
         - ["3.7",   "py37"]
         - ["3.8",   "py38"]
         - ["3.9",   "py39"]
-        - ["pypy2", "pypy"]
-        - ["pypy3", "pypy3"]
-        - ["3.8",   "docs"]
-        - ["3.8",   "coverage"]
+        - ["3.10",  "py310"]
+        - ["pypy-2.7", "pypy"]
+        - ["pypy-3.7", "pypy3"]
+        - ["3.9",   "docs"]
+        - ["3.9",   "coverage"]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
     name: ${{ matrix.config[1] }}
     steps:
     - uses: actions/checkout@v2

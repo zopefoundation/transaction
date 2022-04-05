@@ -25,7 +25,7 @@ We can use it with a manager:
     >>> dm['z']
     3
 
-    >>> dm.last_note == u'test 3'
+    >>> dm.last_note == 'test 3'
     True
 
     >>> with transaction.manager: #doctest ELLIPSIS
