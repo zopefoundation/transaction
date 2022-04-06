@@ -54,8 +54,8 @@ class Status(object):
     COMMITTING = "Committing"
     COMMITTED = "Committed"
 
-    ABORTING     = "Aborting"
-    ABORTED      = "Aborted"
+    ABORTING = "Aborting"
+    ABORTED = "Aborted"
 
     DOOMED = "Doomed"
 
@@ -545,6 +545,7 @@ class Transaction(object):
 
             try:
                 self._synchronizers.map(lambda s: s.beforeCompletion(self))
+                self.status = Status.ABORTING
             except:  # noqa: E722 do not use bare 'except'
                 t, v, tb = sys.exc_info()
                 self.log.error(
@@ -554,10 +555,13 @@ class Transaction(object):
                 try:
                     rm.abort(self)
                 except:  # noqa: E722 do not use bare 'except'
+                    self.status = Status.ABORTFAILED
                     if tb is None:
                         t, v, tb = sys.exc_info()
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
+            if self.status != Status.ABORTFAILED:
+                self.status = Status.ABORTED
 
             self._callAfterAbortHooks()
             # Unlike in commit(), we are no longer the current transaction
@@ -571,7 +575,6 @@ class Transaction(object):
             self.log.debug("abort")
 
             if tb is not None:
-                self.status = Status.ABORTFAILED
                 reraise(t, v, tb)
         finally:
             self._free()
