@@ -59,10 +59,11 @@ class Status(object):
 
     DOOMED = "Doomed"
 
-    # commit() or commit(True) or abort() raised an exception.  All further attempts
-    # to commit or join this transaction will raise TransactionFailedError.
+    # commit() or commit(True) or abort() raised an exception.  All further
+    # attempts to commit or join this transaction will raise
+    # TransactionFailedError.
     COMMITFAILED = "Commit failed"
-    ABORTFAILED  = "Abort failed"
+    ABORTFAILED = "Abort failed"
 
 
 class _NoSynchronizers(object):
