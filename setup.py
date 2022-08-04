@@ -12,7 +12,10 @@
 #
 ##############################################################################
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages
+from setuptools import setup
+
 
 version = '3.1.0.dev0'
 here = os.path.abspath(os.path.dirname(__file__))

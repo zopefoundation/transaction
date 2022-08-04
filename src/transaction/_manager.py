@@ -16,20 +16,20 @@
 It coordinates application code and resource managers, so that they
 are associated with the right transaction.
 """
+import itertools
 import sys
 import threading
-import itertools
 
 from zope.interface import implementer
 
+from transaction._compat import reraise
+from transaction._compat import text_
+from transaction._transaction import Transaction
 from transaction.interfaces import AlreadyInTransaction
 from transaction.interfaces import ITransactionManager
 from transaction.interfaces import NoTransaction
 from transaction.interfaces import TransientError
 from transaction.weakset import WeakSet
-from transaction._compat import reraise
-from transaction._compat import text_
-from transaction._transaction import Transaction
 
 
 # We have to remember sets of synch objects, especially Connections.

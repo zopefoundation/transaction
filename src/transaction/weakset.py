@@ -14,6 +14,7 @@
 
 import weakref
 
+
 # A simple implementation of weak sets, supplying just enough of Python's
 # sets.Set interface for our needs.
 
