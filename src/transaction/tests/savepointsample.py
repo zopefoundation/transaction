@@ -20,6 +20,7 @@ Used by savepoint.rst in the Sphinx docs.
 """
 
 from zope.interface import implementer
+
 import transaction.interfaces
 
 

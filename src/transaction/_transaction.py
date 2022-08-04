@@ -13,19 +13,20 @@
 ############################################################################
 import logging
 import sys
+import traceback
 import warnings
 import weakref
-import traceback
 
 from zope.interface import implementer
 
-from transaction.weakset import WeakSet
-from transaction.interfaces import TransactionFailedError
 from transaction import interfaces
-from transaction._compat import reraise
-from transaction._compat import get_thread_ident
 from transaction._compat import StringIO
+from transaction._compat import get_thread_ident
+from transaction._compat import reraise
 from transaction._compat import text_type
+from transaction.interfaces import TransactionFailedError
+from transaction.weakset import WeakSet
+
 
 _marker = object()
 

@@ -32,6 +32,7 @@ if PY3:  # pragma: no cover
     from io import StringIO
 else:  # pragma: no cover
     from io import BytesIO
+
     # Prevent crashes in IPython when writing tracebacks if a commit fails
     # ref:
     # https://github.com/ipython/ipython/issues/9126#issuecomment-174966638
@@ -65,6 +66,7 @@ else:  # pragma: no cover
     raise tp, value, tb
 """)
 
+# isort: off
 
 try:  # pragma: no cover
     from threading import get_ident as get_thread_ident

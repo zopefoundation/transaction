@@ -11,9 +11,9 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
-import mock
 import unittest
 
+import mock
 import zope.interface.verify
 
 from .. import interfaces
@@ -672,6 +672,7 @@ class TransactionManagerTests(unittest.TestCase):
         # transaction has started, we should call newTransaction so it
         # can do necessry setup.
         import mock
+
         from .. import TransactionManager
         manager = TransactionManager()
         sync1 = mock.MagicMock()
@@ -694,6 +695,7 @@ class TransactionManagerTests(unittest.TestCase):
         # We should be able to get the underlying manager of the thread manager
         # and call methods from other threads.
         import threading
+
         import transaction
 
         started = threading.Event()
@@ -862,7 +864,8 @@ class AttemptTests(unittest.TestCase):
 
     def test_explicit_mode(self):
         from .. import TransactionManager
-        from ..interfaces import AlreadyInTransaction, NoTransaction
+        from ..interfaces import AlreadyInTransaction
+        from ..interfaces import NoTransaction
 
         tm = TransactionManager()
         self.assertFalse(tm.explicit)
