@@ -5,6 +5,8 @@
 3.1.0 (unreleased)
 ==================
 
+- Add support for Python 3.11.
+
 - Add support for Python 3.9, 3.10.
 
 
