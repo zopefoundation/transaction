@@ -38,8 +38,8 @@ TODO
     for example an object that gets modified in multiple sub txns.
 """
 import os
-import warnings
 import unittest
+import warnings
 
 
 class TransactionTests(unittest.TestCase):
@@ -53,19 +53,21 @@ class TransactionTests(unittest.TestCase):
 
     def test_verifyImplements_ITransaction(self):
         from zope.interface.verify import verifyClass
+
         from transaction.interfaces import ITransaction
         verifyClass(ITransaction, self._getTargetClass())
 
     def test_verifyProvides_ITransaction(self):
         from zope.interface.verify import verifyObject
+
         from transaction.interfaces import ITransaction
         verifyObject(ITransaction, self._makeOne())
 
     def test_ctor_defaults(self):
-        from transaction.weakset import WeakSet
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
+        from transaction.weakset import WeakSet
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
@@ -139,8 +141,8 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(str(err).endswith("with traceback:\n\nTRACEBACK"))
 
     def test_join_COMMITFAILED(self):
-        from transaction.interfaces import TransactionFailedError
         from transaction._transaction import Status
+        from transaction.interfaces import TransactionFailedError
 
         class _Traceback(object):
             def getvalue(self):
@@ -182,8 +184,8 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._resources, [])
 
     def test_savepoint_COMMITFAILED(self):
-        from transaction.interfaces import TransactionFailedError
         from transaction._transaction import Status
+        from transaction.interfaces import TransactionFailedError
 
         class _Traceback(object):
             def getvalue(self):
@@ -195,6 +197,7 @@ class TransactionTests(unittest.TestCase):
 
     def test_savepoint_empty(self):
         from weakref import WeakKeyDictionary
+
         from transaction import _transaction
         from transaction._transaction import Savepoint
         from transaction.tests.common import DummyLogger
@@ -212,8 +215,8 @@ class TransactionTests(unittest.TestCase):
 
     def test_savepoint_non_optimistc_resource_wo_support(self):
         from transaction import _transaction
-        from transaction._transaction import Status
         from transaction._compat import StringIO
+        from transaction._transaction import Status
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
         logger = DummyLogger()
@@ -295,8 +298,8 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(list(txn._savepoint2index), [])
 
     def test_commit_DOOMED(self):
-        from transaction.interfaces import DoomedTransaction
         from transaction._transaction import Status
+        from transaction.interfaces import DoomedTransaction
         txn = self._makeOne()
         txn.status = Status.DOOMED
         self.assertRaises(DoomedTransaction, txn.commit)
@@ -314,10 +317,10 @@ class TransactionTests(unittest.TestCase):
         self.assertRaises(TransactionFailedError, txn.commit)
 
     def test_commit_wo_savepoints_wo_hooks_wo_synchronizers(self):
+        from transaction import _transaction
         from transaction._transaction import Status
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
 
         class _Mgr(object):
             def __init__(self, txn):
@@ -339,9 +342,10 @@ class TransactionTests(unittest.TestCase):
 
     def test_commit_w_savepoints(self):
         from weakref import WeakKeyDictionary
+
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
 
         class _SP(object):
             def __init__(self, txn, index):
@@ -364,9 +368,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(list(txn._savepoint2index), [])
 
     def test_commit_w_beforeCommitHooks(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked1, _hooked2 = [], []
 
         def _hook1(*args, **kw):
@@ -386,10 +390,10 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._before_commit, [])
 
     def test_commit_w_synchronizers(self):
-        from transaction.weakset import WeakSet
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
+        from transaction.weakset import WeakSet
 
         class _Synch(object):
             _before = _after = False
@@ -413,9 +417,9 @@ class TransactionTests(unittest.TestCase):
             self.assertTrue(synch._after is txn)
 
     def test_commit_w_afterCommitHooks(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked1, _hooked2 = [], []
 
         def _hook1(*args, **kw):
@@ -475,10 +479,10 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(resource._x)
 
     def test_commit_error_w_synchronizers(self):
-        from transaction.weakset import WeakSet
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
+        from transaction.weakset import WeakSet
 
         class _Synch(object):
             _before = _after = False
@@ -534,9 +538,9 @@ class TransactionTests(unittest.TestCase):
                          [(_hook, ('one',), {'uno': 1})])
 
     def test_callBeforeCommitHook_w_error(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _calls = []
 
         def _hook(*args, **kw):
@@ -587,9 +591,9 @@ class TransactionTests(unittest.TestCase):
                          [(_hook, ('one',), {})])
 
     def test_callAfterCommitHook_w_error(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked2 = []
 
         def _hook1(*args, **kw):
@@ -611,9 +615,9 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test_callAfterCommitHook_w_abort(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked2 = []
 
         def _hook1(*args, **kw):
@@ -632,9 +636,9 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test__commitResources_normal(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         resources = [Resource('bbb'), Resource('aaa')]
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -654,9 +658,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(logger._log[1][1], 'commit Resource: bbb')
 
     def test__commitResources_error_in_tpc_begin(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         resources = [Resource('bbb', 'tpc_begin'), Resource('aaa')]
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -674,9 +678,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(len(logger._log), 0)
 
     def test__commitResources_error_in_afterCompletion(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
 
         class _Synchronizers(object):
             def __init__(self, res):
@@ -706,9 +710,9 @@ class TransactionTests(unittest.TestCase):
         self.assertFalse(resources[1]._after)
 
     def test__commitResources_error_in_commit(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         resources = [Resource('bbb', 'commit'), Resource('aaa')]
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -729,9 +733,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
 
     def test__commitResources_error_in_tpc_vote(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         resources = [Resource('bbb', 'tpc_vote'), Resource('aaa')]
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -760,9 +764,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(logger._log[1][1], 'commit Resource: bbb')
 
     def test__commitResources_error_in_tpc_finish(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         resources = [Resource('bbb', 'tpc_finish'), Resource('aaa')]
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
@@ -788,10 +792,10 @@ class TransactionTests(unittest.TestCase):
                         'A storage error occurred'))
 
     def test_abort_wo_savepoints_wo_hooks_wo_synchronizers(self):
+        from transaction import _transaction
         from transaction._transaction import Status
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
 
         class _Mgr(object):
             def __init__(self, txn):
@@ -813,9 +817,10 @@ class TransactionTests(unittest.TestCase):
 
     def test_abort_w_savepoints(self):
         from weakref import WeakKeyDictionary
+
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
 
         class _SP(object):
             def __init__(self, txn, index):
@@ -838,9 +843,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(list(txn._savepoint2index), [])
 
     def test_abort_w_beforeCommitHooks(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked1, _hooked2 = [], []
 
         def _hook1(*args, **kw):
@@ -862,9 +867,9 @@ class TransactionTests(unittest.TestCase):
         self.assertIsNone(txn._manager)
 
     def test_abort_w_synchronizers(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         test = self
 
         class _Synch(object):
@@ -925,9 +930,9 @@ class TransactionTests(unittest.TestCase):
         self.assertIsNone(manager.txn)
 
     def test_abort_w_afterCommitHooks(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked1, _hooked2 = [], []
 
         def _hook1(*args, **kw):
@@ -989,10 +994,10 @@ class TransactionTests(unittest.TestCase):
         self.assertIsNone(txn._manager)
 
     def test_abort_error_w_synchronizers(self):
-        from transaction.weakset import WeakSet
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
+        from transaction.weakset import WeakSet
 
         class _Synch(object):
             _before = _after = False
@@ -1026,9 +1031,9 @@ class TransactionTests(unittest.TestCase):
         self.assertIsNot(t._synchronizers, ws)
 
     def test_abort_synchronizer_error_w_resources(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
 
         class _Synch(object):
             _before = _after = False
@@ -1121,9 +1126,9 @@ class TransactionTests(unittest.TestCase):
                          [(_hook, ('one',), {})])
 
     def test_callBeforeAbortHook_w_error(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked2 = []
 
         def _hook1(*args, **kw):
@@ -1145,9 +1150,9 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test_callBeforeAbortHook_w_abort(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked2 = []
 
         def _hook1(*args, **kw):
@@ -1166,9 +1171,9 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(logger._log[0][1].startswith("Error in hook"))
 
     def test_callAfterAbortHook_w_abort_error(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked2 = []
 
         def _hook2(*args, **kw):
@@ -1186,9 +1191,9 @@ class TransactionTests(unittest.TestCase):
             logger._log[0][1].startswith("Error in abort() on manager"))
 
     def test_callAfterAbortHook_w_error_w_abort_error(self):
+        from transaction import _transaction
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
-        from transaction import _transaction
         _hooked2 = []
 
         def _hook1(*args, **kw):
@@ -1426,15 +1431,15 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(c.exception.args, (self,))
 
     def test_isRetryableError_w_transient_error(self):
-        from transaction.interfaces import TransientError
         from transaction._manager import TransactionManager
+        from transaction.interfaces import TransientError
         txn = self._makeOne(manager=TransactionManager())
         txn._manager._txn = txn
         self.assertTrue(txn.isRetryableError(TransientError()))
 
     def test_isRetryableError_w_transient_subclass(self):
-        from transaction.interfaces import TransientError
         from transaction._manager import TransactionManager
+        from transaction.interfaces import TransientError
 
         class _Derived(TransientError):
             pass
@@ -1553,6 +1558,7 @@ class SavepointTests(unittest.TestCase):
 
             def _saveAndRaiseCommitishError(self):
                 import sys
+
                 from transaction._compat import reraise
                 self._sarce = True
                 reraise(*sys.exc_info())
@@ -1638,6 +1644,7 @@ class MiscellaneousTests(unittest.TestCase):
         # The original implementation of thread transaction manager made
         # invalid assumptions about thread ids.
         import threading
+
         import transaction
         import transaction.tests.savepointsample as SPS
         dm = SPS.SampleSavepointDataManager()

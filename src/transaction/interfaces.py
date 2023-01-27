@@ -312,7 +312,7 @@ class ITransaction(Interface):
         """
 
     def getBeforeCommitHooks():
-        """Return iterable producing the registered `addBeforeCommitHook` hooks.
+        """Return iterable producing registered `addBeforeCommitHook` hooks.
 
         A triple ``(hook, args, kws)`` is produced for each registered hook.
         The hooks are produced in the order in which they would be invoked

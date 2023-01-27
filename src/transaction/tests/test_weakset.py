@@ -12,6 +12,7 @@
 #
 ##############################################################################
 import unittest
+
 from transaction._compat import JYTHON
 
 
@@ -27,6 +28,7 @@ class WeakSetTests(unittest.TestCase):
 
     def test_len(self):
         import gc
+
         from transaction.weakset import WeakSet
         w = WeakSet()
         d1 = Dummy()
@@ -66,6 +68,7 @@ class WeakSetTests(unittest.TestCase):
 
     def test_as_weakref_list(self):
         import gc
+
         from transaction.weakset import WeakSet
         w = WeakSet()
         dummy = Dummy()
@@ -101,6 +104,7 @@ class WeakSetTests(unittest.TestCase):
 
     def test_map_w_gced_element(self):
         import gc
+
         from transaction.weakset import WeakSet
         w = WeakSet()
         dummy = Dummy()

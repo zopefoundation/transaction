@@ -15,6 +15,8 @@
 
 """
 
+# isort: off
+
 #: Default implementation of `~ITransaction`
 from transaction._transaction import Transaction  # noqa: F401 unused import
 #: Default implementation of `~ISavepoint`
