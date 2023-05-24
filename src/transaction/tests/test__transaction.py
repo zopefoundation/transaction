@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 # Copyright (c) 2001, 2002, 2005 Zope Foundation and Contributors.
@@ -74,8 +73,8 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(isinstance(txn._synchronizers, WeakSet))
         self.assertEqual(len(txn._synchronizers), 0)
         self.assertTrue(txn._manager is None)
-        self.assertEqual(txn.user, u"")
-        self.assertEqual(txn.description, u"")
+        self.assertEqual(txn.user, "")
+        self.assertEqual(txn.description, "")
         self.assertTrue(txn._savepoint2index is None)
         self.assertEqual(txn._savepoint_index, 0)
         self.assertEqual(txn._resources, [])
@@ -129,7 +128,7 @@ class TransactionTests(unittest.TestCase):
     def test__prior_operation_failed(self):
         from transaction.interfaces import TransactionFailedError
 
-        class _Traceback(object):
+        class _Traceback:
             def getvalue(self):
                 return 'TRACEBACK'
         txn = self._makeOne()
@@ -144,7 +143,7 @@ class TransactionTests(unittest.TestCase):
         from transaction._transaction import Status
         from transaction.interfaces import TransactionFailedError
 
-        class _Traceback(object):
+        class _Traceback:
             def getvalue(self):
                 return 'TRACEBACK'
         txn = self._makeOne()
@@ -187,7 +186,7 @@ class TransactionTests(unittest.TestCase):
         from transaction._transaction import Status
         from transaction.interfaces import TransactionFailedError
 
-        class _Traceback(object):
+        class _Traceback:
             def getvalue(self):
                 return 'TRACEBACK'
         txn = self._makeOne()
@@ -214,8 +213,9 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(txn._savepoint2index[sp], 1)
 
     def test_savepoint_non_optimistc_resource_wo_support(self):
+        from io import StringIO
+
         from transaction import _transaction
-        from transaction._compat import StringIO
         from transaction._transaction import Status
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
@@ -240,7 +240,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn._savepoint2index = WeakKeyDictionary()
 
-        class _SP(object):
+        class _SP:
             def __init__(self, txn):
                 self.transaction = txn
         holdme = []
@@ -257,7 +257,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn._savepoint2index = WeakKeyDictionary()
 
-        class _SP(object):
+        class _SP:
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
@@ -281,7 +281,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn._savepoint2index = WeakKeyDictionary()
 
-        class _SP(object):
+        class _SP:
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
@@ -308,7 +308,7 @@ class TransactionTests(unittest.TestCase):
         from transaction._transaction import Status
         from transaction.interfaces import TransactionFailedError
 
-        class _Traceback(object):
+        class _Traceback:
             def getvalue(self):
                 return 'TRACEBACK'
         txn = self._makeOne()
@@ -322,7 +322,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class _Mgr(object):
+        class _Mgr:
             def __init__(self, txn):
                 self._txn = txn
 
@@ -347,7 +347,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class _SP(object):
+        class _SP:
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
@@ -395,7 +395,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction.weakset import WeakSet
 
-        class _Synch(object):
+        class _Synch:
             _before = _after = False
 
             def beforeCompletion(self, txn):
@@ -444,7 +444,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class BrokenResource(object):
+        class BrokenResource:
             def sortKey(self):
                 return 'zzz'
 
@@ -484,7 +484,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction.weakset import WeakSet
 
-        class _Synch(object):
+        class _Synch:
             _before = _after = False
 
             def beforeCompletion(self, txn):
@@ -497,7 +497,7 @@ class TransactionTests(unittest.TestCase):
         for synch in synchs:
             ws.add(synch)
 
-        class BrokenResource(object):
+        class BrokenResource:
             def sortKey(self):
                 return 'zzz'
 
@@ -515,7 +515,7 @@ class TransactionTests(unittest.TestCase):
             self.assertTrue(synch._after is txn)  # called in _cleanup
 
     def test_commit_clears_resources(self):
-        class DM(object):
+        class DM:
             tpc_begin = commit = tpc_finish = tpc_vote = lambda s, txn: True
 
         dm = DM()
@@ -682,7 +682,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class _Synchronizers(object):
+        class _Synchronizers:
             def __init__(self, res):
                 self._res = res
 
@@ -797,7 +797,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class _Mgr(object):
+        class _Mgr:
             def __init__(self, txn):
                 self._txn = txn
 
@@ -822,7 +822,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class _SP(object):
+        class _SP:
             def __init__(self, txn, index):
                 self.transaction = txn
                 self._index = index
@@ -872,7 +872,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         test = self
 
-        class _Synch(object):
+        class _Synch:
             _before = _after = None
 
             def beforeCompletion(self, txn):
@@ -893,7 +893,7 @@ class TransactionTests(unittest.TestCase):
                 raise SystemExit
 
         # Ensure iteration order
-        class Synchs(object):
+        class Synchs:
             synchs = [_Synch(), _Synch(), _Synch(), _BadSynch()]
 
             def map(self, func):
@@ -902,7 +902,7 @@ class TransactionTests(unittest.TestCase):
 
         logger = DummyLogger()
 
-        class Manager(object):
+        class Manager:
             txn = None
 
             def free(self, txn):
@@ -959,7 +959,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class BrokenResource(object):
+        class BrokenResource:
             def sortKey(self):
                 raise AssertionError("Not called")
 
@@ -999,7 +999,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import Monkey
         from transaction.weakset import WeakSet
 
-        class _Synch(object):
+        class _Synch:
             _before = _after = False
 
             def beforeCompletion(self, txn):
@@ -1012,7 +1012,7 @@ class TransactionTests(unittest.TestCase):
         for synch in synchs:
             ws.add(synch)
 
-        class BrokenResource(object):
+        class BrokenResource:
             def sortKey(self):
                 raise AssertionError("Should not be called")
 
@@ -1035,7 +1035,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.tests.common import DummyLogger
         from transaction.tests.common import Monkey
 
-        class _Synch(object):
+        class _Synch:
             _before = _after = False
 
             def beforeCompletion(self, txn):
@@ -1050,7 +1050,7 @@ class TransactionTests(unittest.TestCase):
                 raise SystemExit
 
         # Ensure iteration order
-        class Synchs(object):
+        class Synchs:
             synchs = [_Synch(), _Synch(), _Synch(), _BadSynch()]
 
             def map(self, func):
@@ -1074,7 +1074,7 @@ class TransactionTests(unittest.TestCase):
         self.assertTrue(resource._a)
 
     def test_abort_clears_resources(self):
-        class DM(object):
+        class DM:
             def abort(self, txn):
                 return True
 
@@ -1271,10 +1271,10 @@ class TransactionTests(unittest.TestCase):
     def test_note(self):
         txn = self._makeOne()
         try:
-            txn.note(u'This is a note.')
-            self.assertEqual(txn.description, u'This is a note.')
-            txn.note(u'Another.')
-            self.assertEqual(txn.description, u'This is a note.\nAnother.')
+            txn.note('This is a note.')
+            self.assertEqual(txn.description, 'This is a note.')
+            txn.note('Another.')
+            self.assertEqual(txn.description, 'This is a note.\nAnother.')
         finally:
             txn.abort()
 
@@ -1284,16 +1284,16 @@ class TransactionTests(unittest.TestCase):
             warnings.simplefilter("always")
             txn.note(b'haha')
             self.assertNonTextDeprecationWarning(w)
-            self.assertEqual(txn.description, u'haha')
+            self.assertEqual(txn.description, 'haha')
 
     def test_note_None(self):
         txn = self._makeOne()
-        self.assertEqual(u'', txn.description)
+        self.assertEqual('', txn.description)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             txn.note(None)
             self.assertFalse(w)
-        self.assertEqual(txn.description, u'')
+        self.assertEqual(txn.description, '')
 
     def test_note_42(self):
         txn = self._makeOne()
@@ -1301,7 +1301,7 @@ class TransactionTests(unittest.TestCase):
             warnings.simplefilter("always")
             txn.note(42)
             self.assertNonTextDeprecationWarning(w)
-            self.assertEqual(txn.description, u'42')
+            self.assertEqual(txn.description, '42')
 
     def assertNonTextDeprecationWarning(self, w):
         [w] = w
@@ -1317,7 +1317,7 @@ class TransactionTests(unittest.TestCase):
             warnings.simplefilter("always")
             txn.description = b'haha'
             self.assertNonTextDeprecationWarning(w)
-            self.assertEqual(txn.description, u'haha')
+            self.assertEqual(txn.description, 'haha')
 
     def test_description_42(self):
         txn = self._makeOne()
@@ -1325,33 +1325,33 @@ class TransactionTests(unittest.TestCase):
             warnings.simplefilter("always")
             txn.description = 42
             self.assertNonTextDeprecationWarning(w)
-            self.assertEqual(txn.description, u'42')
+            self.assertEqual(txn.description, '42')
 
     def test_description_None(self):
         txn = self._makeOne()
-        self.assertEqual(u'', txn.description)
+        self.assertEqual('', txn.description)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             txn.description = None
             self.assertFalse(w)
-        self.assertEqual(txn.description, u'')
+        self.assertEqual(txn.description, '')
 
     def test_setUser_default_path(self):
         txn = self._makeOne()
-        txn.setUser(u'phreddy')
-        self.assertEqual(txn.user, u'/ phreddy')
+        txn.setUser('phreddy')
+        self.assertEqual(txn.user, '/ phreddy')
 
     def test_setUser_explicit_path(self):
         txn = self._makeOne()
-        txn.setUser(u'phreddy', u'/bedrock')
-        self.assertEqual(txn.user, u'/bedrock phreddy')
+        txn.setUser('phreddy', '/bedrock')
+        self.assertEqual(txn.user, '/bedrock phreddy')
 
     def test_user_w_none(self):
         txn = self._makeOne()
-        txn.user = u'phreddy'
+        txn.user = 'phreddy'
         with self.assertRaises(ValueError):
             txn.user = None  # raises
-        self.assertEqual(txn.user, u'phreddy')
+        self.assertEqual(txn.user, 'phreddy')
 
     def _test_user_non_text(self, user, path, expect, both=False):
         txn = self._makeOne()
@@ -1374,21 +1374,21 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(expect, txn.user)
 
     def test_user_non_text(self, user=b'phreddy', path=b'/bedrock',
-                           expect=u"/bedrock phreddy", both=True):
+                           expect="/bedrock phreddy", both=True):
         self._test_user_non_text(b'phreddy', b'/bedrock',
-                                 u"/bedrock phreddy", True)
-        self._test_user_non_text(b'phreddy', None, u'/ phreddy')
-        self._test_user_non_text(b'phreddy', False, u'phreddy')
-        self._test_user_non_text(b'phreddy', u'/bedrock', u'/bedrock phreddy')
-        self._test_user_non_text(u'phreddy', b'/bedrock', u'/bedrock phreddy')
-        self._test_user_non_text(u'phreddy', 2, u'2 phreddy')
-        self._test_user_non_text(1, u'/bedrock', u'/bedrock 1')
-        self._test_user_non_text(1, 2, u'2 1', True)
+                                 "/bedrock phreddy", True)
+        self._test_user_non_text(b'phreddy', None, '/ phreddy')
+        self._test_user_non_text(b'phreddy', False, 'phreddy')
+        self._test_user_non_text(b'phreddy', '/bedrock', '/bedrock phreddy')
+        self._test_user_non_text('phreddy', b'/bedrock', '/bedrock phreddy')
+        self._test_user_non_text('phreddy', 2, '2 phreddy')
+        self._test_user_non_text(1, '/bedrock', '/bedrock 1')
+        self._test_user_non_text(1, 2, '2 1', True)
 
     def test_setExtendedInfo_single(self):
         txn = self._makeOne()
         txn.setExtendedInfo('frob', 'qux')
-        self.assertEqual(txn.extension, {u'frob': 'qux'})
+        self.assertEqual(txn.extension, {'frob': 'qux'})
         self.assertTrue(txn._extension is txn._extension)  # legacy
 
     def test_setExtendedInfo_multiple(self):
@@ -1396,7 +1396,7 @@ class TransactionTests(unittest.TestCase):
         txn.setExtendedInfo('frob', 'qux')
         txn.setExtendedInfo('baz', 'spam')
         txn.setExtendedInfo('frob', 'quxxxx')
-        self.assertEqual(txn._extension, {u'frob': 'quxxxx', u'baz': 'spam'})
+        self.assertEqual(txn._extension, {'frob': 'quxxxx', 'baz': 'spam'})
         self.assertTrue(txn._extension is txn._extension)  # legacy
 
     def test__extension_settable(self):
@@ -1405,7 +1405,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn._extension = dict(baz='spam')
         txn.setExtendedInfo('frob', 'qux')
-        self.assertEqual(txn.extension, {u'frob': 'qux', 'baz': 'spam'})
+        self.assertEqual(txn.extension, {'frob': 'qux', 'baz': 'spam'})
 
     def test_data(self):
         txn = self._makeOne()
@@ -1456,7 +1456,7 @@ class TransactionTests(unittest.TestCase):
     def test_isRetryableError_w_normal_exception_w_resource_voting_yes(self):
         from transaction._manager import TransactionManager
 
-        class _Resource(object):
+        class _Resource:
             def should_retry(self, err):
                 return True
         txn = self._makeOne(manager=TransactionManager())
@@ -1467,7 +1467,7 @@ class TransactionTests(unittest.TestCase):
     def test_isRetryableError_w_multiple(self):
         from transaction._manager import TransactionManager
 
-        class _Resource(object):
+        class _Resource:
             _should = True
 
             def should_retry(self, err):
@@ -1519,7 +1519,7 @@ class SavepointTests(unittest.TestCase):
         self.assertTrue(sp._savepoints[0].datamanager is resource)
 
     def test_ctor_w_savepoint_aware_resources(self):
-        class _Aware(object):
+        class _Aware:
             def savepoint(self):
                 return self
         txn = object()
@@ -1544,7 +1544,7 @@ class SavepointTests(unittest.TestCase):
         from transaction.interfaces import InvalidSavepointRollbackError
         txn = None
 
-        class _Aware(object):
+        class _Aware:
             def savepoint(self):
                 return self
         resource = _Aware()
@@ -1552,26 +1552,26 @@ class SavepointTests(unittest.TestCase):
         self.assertRaises(InvalidSavepointRollbackError, sp.rollback)
 
     def test_rollback_w_sp_error(self):
-        class _TXN(object):
+        class _TXN:
             _sarce = False
             _raia = None
 
             def _saveAndRaiseCommitishError(self):
                 import sys
 
-                from transaction._compat import reraise
                 self._sarce = True
-                reraise(*sys.exc_info())
+                _, v, tb = sys.exc_info()
+                raise v.with_traceback(tb)
 
             def _remove_and_invalidate_after(self, sp):
                 self._raia = sp
 
-        class _Broken(object):
+        class _Broken:
             def rollback(self):
                 raise ValueError()
         _broken = _Broken()
 
-        class _GonnaRaise(object):
+        class _GonnaRaise:
             def savepoint(self):
                 return _broken
         txn = _TXN()
@@ -1599,13 +1599,13 @@ class AbortSavepointTests(unittest.TestCase):
         self.assertTrue(asp.transaction is txn)
 
     def test_rollback(self):
-        class _DM(object):
+        class _DM:
             _aborted = None
 
             def abort(self, txn):
                 self._aborted = txn
 
-        class _TXN(object):
+        class _TXN:
             _unjoined = None
 
             def _unjoin(self, datamanager):
@@ -1650,7 +1650,7 @@ class MiscellaneousTests(unittest.TestCase):
         dm = SPS.SampleSavepointDataManager()
         self.assertEqual(list(dm.keys()), [])
 
-        class Sync(object):
+        class Sync:
             def __init__(self, label):
                 self.label = label
                 self.log = []
@@ -1662,7 +1662,7 @@ class MiscellaneousTests(unittest.TestCase):
                 raise AssertionError("Not called")
 
             def newTransaction(self, txn):
-                self.log.append('%s %s' % (self.label, 'new'))
+                self.log.append('{} {}'.format(self.label, 'new'))
 
         def run_in_thread(f):
             txn = threading.Thread(target=f)
@@ -1701,14 +1701,14 @@ class MiscellaneousTests(unittest.TestCase):
 
         buffer = _transaction._makeTracebackBuffer()
 
-        s = u'ąčę'
+        s = 'ąčę'
         buffer.write(s)
 
         buffer.seek(0)
         self.assertEqual(buffer.read(), native_(s, 'utf-8'))
 
 
-class Resource(object):
+class Resource:
     _b = _c = _v = _f = _a = _x = _after = False
 
     def __init__(self, key, error=None):

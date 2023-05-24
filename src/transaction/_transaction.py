@@ -13,17 +13,15 @@
 ############################################################################
 import logging
 import sys
+import threading
 import traceback
 import warnings
 import weakref
+from io import StringIO
 
 from zope.interface import implementer
 
 from transaction import interfaces
-from transaction._compat import StringIO
-from transaction._compat import get_thread_ident
-from transaction._compat import reraise
-from transaction._compat import text_type
 from transaction.interfaces import TransactionFailedError
 from transaction.weakset import WeakSet
 
@@ -45,10 +43,10 @@ _LOGGER = None  # unittests may hook
 def _makeLogger():  # pragma NO COVER
     if _LOGGER is not None:
         return _LOGGER
-    return logging.getLogger("txn.%d" % get_thread_ident())
+    return logging.getLogger("txn.%d" % threading.get_ident())
 
 
-class Status(object):
+class Status:
     # ACTIVE is the initial state.
     ACTIVE = "Active"
 
@@ -62,7 +60,7 @@ class Status(object):
     COMMITFAILED = "Commit failed"
 
 
-class _NoSynchronizers(object):
+class _NoSynchronizers:
 
     @staticmethod
     def map(_f):
@@ -70,7 +68,7 @@ class _NoSynchronizers(object):
 
 
 @implementer(interfaces.ITransaction)
-class Transaction(object):
+class Transaction:
     """Default implementation of `~transaction.interfaces.ITransaction`."""
 
     # Assign an index to each savepoint so we can invalidate later savepoints
@@ -84,8 +82,8 @@ class Transaction(object):
 
     # Meta data. extended_info is also metadata, but is initialized to an
     # empty dict in __init__.
-    _user = u""
-    _description = u""
+    _user = ""
+    _description = ""
 
     def __init__(self, synchronizers=None, manager=None):
         self.status = Status.ACTIVE
@@ -190,8 +188,9 @@ class Transaction(object):
                 self.status is not Status.DOOMED):
             # TODO: Should it be possible to join a committing transaction?
             # I think some users want it.
-            raise ValueError("expected txn status %r or %r, but it's %r" % (
-                             Status.ACTIVE, Status.DOOMED, self.status))
+            raise ValueError(
+                f"expected txn status {Status.ACTIVE!r} or {Status.DOOMED!r},"
+                f" but it's {self.status!r}")
         self._resources.append(resource)
 
         if self._savepoint2index:
@@ -280,7 +279,7 @@ class Transaction(object):
             try:
                 t, v, tb = self._saveAndGetCommitishError()
                 self._callAfterCommitHooks(status=False)
-                reraise(t, v, tb)
+                raise v.with_traceback(tb)
             finally:
                 del t, v, tb
         else:
@@ -314,7 +313,7 @@ class Transaction(object):
         tb = None
         try:
             t, v, tb = self._saveAndGetCommitishError()
-            reraise(t, v, tb)
+            raise v.with_traceback(tb)
         finally:
             del t, v, tb
 
@@ -454,7 +453,7 @@ class Transaction(object):
                     self._cleanup(L)
                 finally:
                     self._synchronizers.map(lambda s: s.afterCompletion(self))
-                reraise(t, v, tb)
+                raise v.with_traceback(tb)
             finally:
                 del t, v, tb
 
@@ -568,7 +567,7 @@ class Transaction(object):
             self.log.debug("abort")
 
             if tb is not None:
-                reraise(t, v, tb)
+                raise v.with_traceback(tb)
         finally:
             self._free()
             del t, v, tb
@@ -578,13 +577,13 @@ class Transaction(object):
         if text is not None:
             text = text_or_warn(text).strip()
             if self.description:
-                self.description += u"\n" + text
+                self.description += "\n" + text
             else:
                 self.description = text
 
-    def setUser(self, user_name, path=u"/"):
+    def setUser(self, user_name, path="/"):
         """See `~transaction.interfaces.ITransaction`."""
-        self.user = u"%s %s" % (text_or_warn(path), text_or_warn(user_name))
+        self.user = "{} {}".format(text_or_warn(path), text_or_warn(user_name))
 
     def setExtendedInfo(self, name, value):
         """See `~transaction.interfaces.ITransaction`."""
@@ -604,7 +603,7 @@ def rm_key(rm):
 
 
 @implementer(interfaces.ISavepoint)
-class Savepoint(object):
+class Savepoint:
     """Implementation of `~transaction.interfaces.ISavepoint`, a transaction
     savepoint.
 
@@ -648,7 +647,7 @@ class Savepoint(object):
             transaction._saveAndRaiseCommitishError()  # reraises!
 
 
-class AbortSavepoint(object):
+class AbortSavepoint:
 
     def __init__(self, datamanager, transaction):
         self.datamanager = datamanager
@@ -659,7 +658,7 @@ class AbortSavepoint(object):
         self.transaction._unjoin(self.datamanager)
 
 
-class NoRollbackSavepoint(object):
+class NoRollbackSavepoint:
 
     def __init__(self, datamanager):
         self.datamanager = datamanager
@@ -669,11 +668,11 @@ class NoRollbackSavepoint(object):
 
 
 def text_or_warn(s):
-    if isinstance(s, text_type):
+    if isinstance(s, str):
         return s
 
     warnings.warn("Expected text", DeprecationWarning, stacklevel=3)
     if isinstance(s, bytes):
         return s.decode('utf-8', 'replace')
     else:
-        return text_type(s)
+        return str(s)

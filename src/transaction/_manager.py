@@ -22,7 +22,6 @@ import threading
 
 from zope.interface import implementer
 
-from transaction._compat import reraise
 from transaction._compat import text_
 from transaction._transaction import Transaction
 from transaction.interfaces import AlreadyInTransaction
@@ -60,7 +59,7 @@ def _new_transaction(txn, synchs):
 
 
 @implementer(ITransactionManager)
-class TransactionManager(object):
+class TransactionManager:
     """Single-thread implementation of
     `~transaction.interfaces.ITransactionManager`.
     """
@@ -183,20 +182,18 @@ class TransactionManager(object):
         if tries <= 0:
             raise ValueError("tries must be > 0")
 
-        # These are ordinarily native strings, but that's
+        # These are ordinarily strings, but that's
         # not required. A callable class could override them
-        # to anything, and a Python 2.7 file could have
-        # imported `from __future__ import unicode_literals`
-        # which gets unicode docstrings.
+        # to anything.
         name = func.__name__
         doc = func.__doc__
 
-        name = text_(name) if name else u''
-        doc = text_(doc) if doc else u''
+        name = text_(name) if name else ''
+        doc = text_(doc) if doc else ''
 
-        if name and name != u'_':
+        if name and name != '_':
             if doc:
-                doc = name + u'\n\n' + doc
+                doc = name + '\n\n' + doc
             else:
                 doc = name
 
@@ -290,7 +287,7 @@ class ThreadTransactionManager(threading.local):
         return self.manager.run(func, tries)
 
 
-class Attempt(object):
+class Attempt:
 
     success = False
 
@@ -302,7 +299,7 @@ class Attempt(object):
         self.manager.abort()
         if retry:
             return retry  # suppress the exception if necessary
-        reraise(t, v, tb)  # otherwise reraise the exception
+        raise v.with_traceback(tb)  # otherwise reraise the exception
 
     def __enter__(self):
         return self.manager.__enter__()

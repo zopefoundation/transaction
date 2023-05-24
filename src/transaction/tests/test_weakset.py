@@ -11,9 +11,8 @@
 # FOR A PARTICULAR PURPOSE
 #
 ##############################################################################
+import sys
 import unittest
-
-from transaction._compat import JYTHON
 
 
 class WeakSetTests(unittest.TestCase):
@@ -38,7 +37,7 @@ class WeakSetTests(unittest.TestCase):
         self.assertEqual(len(w), 2)
         del d1
         gc.collect()
-        if JYTHON:
+        if sys.platform.startswith('java'):
             # The Jython GC is non deterministic
             pass  # pragma: no cover
         else:
@@ -84,7 +83,7 @@ class WeakSetTests(unittest.TestCase):
         L = [x() for x in refs]
         # L is a list, but it does not have a guaranteed order.
         self.assertTrue(list, type(L))
-        self.assertEqual(set(L), set([dummy, dummy2]))
+        self.assertEqual(set(L), {dummy, dummy2})
 
     def test_map(self):
         from transaction.weakset import WeakSet
@@ -137,4 +136,4 @@ class Dummy:
 
 
 def test_suite():
-    return unittest.makeSuite(WeakSetTests)
+    return unittest.defaultTestLoader.loadTestsFromTestCase(WeakSetTests)

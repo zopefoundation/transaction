@@ -19,7 +19,7 @@ import weakref
 # sets.Set interface for our needs.
 
 
-class WeakSet(object):
+class WeakSet:
     """A set of objects that doesn't keep its elements alive.
 
     The objects in the set must be weakly referencable.

@@ -25,7 +25,7 @@ import transaction.interfaces
 
 
 @implementer(transaction.interfaces.IDataManager)
-class SampleDataManager(object):
+class SampleDataManager:
     """Sample implementation of data manager that doesn't support savepoints
 
     This data manager stores named simple values, like strings and numbers.

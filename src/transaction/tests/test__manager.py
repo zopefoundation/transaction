@@ -12,8 +12,8 @@
 #
 ##############################################################################
 import unittest
+from unittest import mock
 
-import mock
 import zope.interface.verify
 
 from .. import interfaces
@@ -61,7 +61,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(tm._txn in synch._txns)
 
     def test_begin_w_existing_txn(self):
-        class Existing(object):
+        class Existing:
             _aborted = False
 
             def abort(self):
@@ -79,7 +79,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(isinstance(txn, Transaction))
 
     def test_get_w_existing_txn(self):
-        class Existing(object):
+        class Existing:
             _aborted = False
 
             def abort(self):
@@ -96,7 +96,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertRaises(ValueError, tm.free, txn)
 
     def test_free_w_existing_txn(self):
-        class Existing(object):
+        class Existing:
             _aborted = False
 
             def abort(self):
@@ -146,7 +146,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(tm.isDoomed())
 
     def test_isDoomed_w_existing_txn(self):
-        class Existing(object):
+        class Existing:
             _doomed = False
 
             def isDoomed(self):
@@ -166,7 +166,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(tm.isDoomed())
 
     def test_commit_w_existing_txn(self):
-        class Existing(object):
+        class Existing:
             _committed = False
 
             def commit(self):
@@ -177,7 +177,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(txn._committed)
 
     def test_abort_w_existing_txn(self):
-        class Existing(object):
+        class Existing:
             _aborted = False
 
             def abort(self):
@@ -188,7 +188,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(txn._aborted)
 
     def test_as_context_manager_wo_error(self):
-        class _Test(object):
+        class _Test:
             _committed = False
             _aborted = False
 
@@ -204,7 +204,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertFalse(txn._aborted)
 
     def test_as_context_manager_w_error(self):
-        class _Test(object):
+        class _Test:
             _committed = False
             _aborted = False
 
@@ -224,7 +224,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(txn._aborted)
 
     def test_savepoint_default(self):
-        class _Test(object):
+        class _Test:
             _sp = None
 
             def savepoint(self, optimistic):
@@ -235,7 +235,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertFalse(txn._sp)
 
     def test_savepoint_explicit(self):
-        class _Test(object):
+        class _Test:
             _sp = None
 
             def savepoint(self, optimistic):
@@ -458,7 +458,7 @@ class TransactionManagerTests(unittest.TestCase):
     def test_run_callable_with_bytes_doc(self):
         import transaction
 
-        class Callable(object):
+        class Callable:
 
             def __init__(self):
                 self.__doc__ = b'some bytes'
@@ -488,7 +488,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertFalse(tm._retryable(Exception, object()))
 
     def test__retryable_w_normal_exception_w_resource_voting_yes(self):
-        class _Resource(object):
+        class _Resource:
             def should_retry(self, err):
                 return True
         tm = self._makeOne()
@@ -496,7 +496,7 @@ class TransactionManagerTests(unittest.TestCase):
         self.assertTrue(tm._retryable(Exception, object()))
 
     def test__retryable_w_multiple(self):
-        class _Resource(object):
+        class _Resource:
             _should = True
 
             def should_retry(self, err):
@@ -671,7 +671,7 @@ class TransactionManagerTests(unittest.TestCase):
         # If a datamanager registers for synchonization after a
         # transaction has started, we should call newTransaction so it
         # can do necessry setup.
-        import mock
+        from unittest import mock
 
         from .. import TransactionManager
         manager = TransactionManager()
@@ -899,7 +899,7 @@ class AttemptTests(unittest.TestCase):
         tm.commit()
 
 
-class DummyManager(object):
+class DummyManager:
     entered = False
     committed = False
     aborted = False
@@ -946,7 +946,7 @@ class TestTxnException(Exception):
     pass
 
 
-class BasicJar(object):
+class BasicJar:
 
     def __init__(self, errors=(), tracing=0):
         if not isinstance(errors, tuple):
@@ -963,9 +963,8 @@ class BasicJar(object):
         self.ccommit_sub = 0
 
     def __repr__(self):
-        return "<%s %X %s>" % (self.__class__.__name__,
-                               positive_id(self),
-                               self.errors)
+        return "<{} {:X} {}>".format(
+            self.__class__.__name__, positive_id(self), self.errors)
 
     def sortKey(self):
         # All these jars use the same sort key, and Python's list.sort()
@@ -974,7 +973,7 @@ class BasicJar(object):
 
     def check(self, method):
         if self.tracing:  # pragma: no cover
-            print('%s calling method %s' % (str(self.tracing), method))
+            print('{} calling method {}'.format(str(self.tracing), method))
 
         if method in self.errors:
             raise TestTxnException("error %s" % method)
@@ -1006,7 +1005,7 @@ class BasicJar(object):
         self.ctpc_finish += 1
 
 
-class DummySynch(object):
+class DummySynch:
     def __init__(self):
         self._txns = set()
 
