@@ -17,7 +17,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-version = '3.1.1.dev0'
+version = '4.0.dev0'
 here = os.path.abspath(os.path.dirname(__file__))
 
 
