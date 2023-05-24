@@ -708,7 +708,7 @@ class TransactionManagerTests(unittest.TestCase):
             def __init__(self):
                 threading.Thread.__init__(self)
                 self.manager = transaction.manager.manager
-                self.setDaemon(True)
+                self.daemon = True
                 self.start()
 
             def run(self):
