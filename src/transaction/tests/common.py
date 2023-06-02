@@ -13,7 +13,7 @@
 ##############################################################################
 
 
-class DummyFile(object):
+class DummyFile:
     def __init__(self):
         self._lines = []
 
@@ -24,7 +24,7 @@ class DummyFile(object):
         self._lines.extend(lines)
 
 
-class DummyLogger(object):
+class DummyLogger:
     def __init__(self):
         self._clear()
 
@@ -47,7 +47,7 @@ class DummyLogger(object):
         self.log('critical', msg, *args, **kw)
 
 
-class Monkey(object):
+class Monkey:
     # context-manager for replacing module names in the scope of a test.
     def __init__(self, module, **kw):
         self.module = module

@@ -16,7 +16,7 @@
 """
 
 
-class DataManager(object):
+class DataManager:
     """ Sample data manager.
 
     Used by the 'datamanager' chapter in the Sphinx docs.
@@ -100,7 +100,7 @@ class DataManager(object):
         self.transaction = None
 
 
-class SavePoint(object):
+class SavePoint:
 
     def __init__(self, rm):
         self.rm = rm

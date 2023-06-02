@@ -26,10 +26,10 @@ from transaction._manager import TransactionManager  # noqa: F401 unused import
 #: A thread-safe `~ITransactionManager`
 from transaction._manager import ThreadTransactionManager
 
-# NB: "with transaction:" does not work under Python 3 because they worked
+# NB: "with transaction:" does not work because they worked
 # really hard to break looking up special methods like __enter__ and __exit__
-# via getattr and getattribute; see http://bugs.python.org/issue12022.  On
-# Python 3, you must use ``with transaction.manager`` instead.
+# via getattr and getattribute; see http://bugs.python.org/issue12022.
+# You must use ``with transaction.manager`` instead.
 
 #: The default transaction manager (a `~.ThreadTransactionManager`). All other
 #: functions in this module refer to this object.
