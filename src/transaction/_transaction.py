@@ -53,11 +53,16 @@ class Status:
     COMMITTING = "Committing"
     COMMITTED = "Committed"
 
+    ABORTING = "Aborting"
+    ABORTED = "Aborted"
+
     DOOMED = "Doomed"
 
-    # commit() or commit(True) raised an exception.  All further attempts
-    # to commit or join this transaction will raise TransactionFailedError.
+    # commit() or commit(True) or abort() raised an exception.  All further
+    # attempts to commit or join this transaction will raise
+    # TransactionFailedError.
     COMMITFAILED = "Commit failed"
+    ABORTFAILED = "Abort failed"
 
 
 class _NoSynchronizers:
@@ -541,6 +546,7 @@ class Transaction:
 
             try:
                 self._synchronizers.map(lambda s: s.beforeCompletion(self))
+                self.status = Status.ABORTING
             except:  # noqa: E722 do not use bare 'except'
                 t, v, tb = sys.exc_info()
                 self.log.error(
@@ -550,10 +556,13 @@ class Transaction:
                 try:
                     rm.abort(self)
                 except:  # noqa: E722 do not use bare 'except'
+                    self.status = Status.ABORTFAILED
                     if tb is None:
                         t, v, tb = sys.exc_info()
                     self.log.error("Failed to abort resource manager: %s",
                                    rm, exc_info=sys.exc_info())
+            if self.status != Status.ABORTFAILED:
+                self.status = Status.ABORTED
 
             self._callAfterAbortHooks()
             # Unlike in commit(), we are no longer the current transaction
