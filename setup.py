@@ -28,8 +28,6 @@ def _read_file(filename):
 
 README = _read_file('README.rst') + '\n\n' + _read_file('CHANGES.rst')
 
-tests_require = ['mock']
-
 setup(name='transaction',
       version=version,
       description='Transaction management for Python',
@@ -74,7 +72,6 @@ setup(name='transaction',
       ],
       extras_require={
           'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
-          'test': tests_require,
-          'testing': ['coverage'] + tests_require,
+          'testing': ['coverage'],
       },
       )
