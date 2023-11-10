@@ -9,7 +9,9 @@
 
 - Drop support for deprecated ``python setup.py test.``.
 
-- Add preliminary support for Python 3.12b1.
+- Add support for Python 3.12.
+
+- Add preliminary support for Python 3.13a2.
 
 
 3.1.0 (2023-03-17)
