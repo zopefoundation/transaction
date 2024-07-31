@@ -266,6 +266,6 @@ autodoc_default_options = {
 autodoc_member_order = 'bysource'
 
 intersphinx_mapping = {
-    'https://docs.python.org/': None,
-    'http://www.zodb.org/en/latest/': None,
+    'python': ('https://docs.python.org/', None),
+    'zodb': ('http://www.zodb.org/en/latest/', None),
 }
