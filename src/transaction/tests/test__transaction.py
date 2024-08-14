@@ -810,7 +810,7 @@ class TransactionTests(unittest.TestCase):
             logger._clear()
             mgr = txn._manager = _Mgr(txn)
             txn.abort()
-        self.assertEqual(txn.status, Status.ACTIVE)
+        self.assertEqual(txn.status, Status.ABORTED)
         self.assertTrue(mgr._txn is None)
         self.assertEqual(logger._log[0][0], 'debug')
         self.assertEqual(logger._log[0][1], 'abort')
