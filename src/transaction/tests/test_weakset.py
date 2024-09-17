@@ -79,7 +79,7 @@ class WeakSetTests(unittest.TestCase):
         del dummy3
         gc.collect()
         refs = w.as_weakref_list()
-        self.assertTrue(isinstance(refs, list))
+        self.assertIsInstance(refs, list)
         L = [x() for x in refs]
         # L is a list, but it does not have a guaranteed order.
         self.assertTrue(list, type(L))

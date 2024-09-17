@@ -17,7 +17,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-version = '4.1.dev0'
+version = '5.0.dev0'
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -32,6 +32,7 @@ setup(name='transaction',
       version=version,
       description='Transaction management for Python',
       long_description=README,
+      long_description_content_type='text/x-rst',
       classifiers=[
           "Development Status :: 6 - Mature",
           "License :: OSI Approved :: Zope Public License",
@@ -42,12 +43,12 @@ setup(name='transaction',
           "Operating System :: Unix",
           "Programming Language :: Python",
           "Programming Language :: Python :: 3",
-          "Programming Language :: Python :: 3.7",
           "Programming Language :: Python :: 3.8",
           "Programming Language :: Python :: 3.9",
           "Programming Language :: Python :: 3.10",
           "Programming Language :: Python :: 3.11",
           "Programming Language :: Python :: 3.12",
+          "Programming Language :: Python :: 3.13",
           "Programming Language :: Python :: Implementation :: CPython",
           "Programming Language :: Python :: Implementation :: PyPy",
           "Framework :: ZODB",
@@ -66,7 +67,7 @@ setup(name='transaction',
       package_dir={'': 'src'},
       include_package_data=True,
       zip_safe=False,
-      python_requires='>=3.7',
+      python_requires='>=3.8',
       install_requires=[
           'zope.interface',
       ],

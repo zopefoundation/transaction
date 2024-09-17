@@ -583,7 +583,7 @@ class Transaction:
 
     def setUser(self, user_name, path="/"):
         """See `~transaction.interfaces.ITransaction`."""
-        self.user = "{} {}".format(text_or_warn(path), text_or_warn(user_name))
+        self.user = f"{text_or_warn(path)} {text_or_warn(user_name)}"
 
     def setExtendedInfo(self, name, value):
         """See `~transaction.interfaces.ITransaction`."""
