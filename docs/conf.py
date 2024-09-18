@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'transaction'
-copyright = '2012, Zope Foundation Contributors'
+copyright = '2012-2024, Zope Foundation Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
