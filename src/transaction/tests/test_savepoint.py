@@ -31,17 +31,17 @@ class SavepointTests(unittest.TestCase):
         dm2 = savepointsample.SampleSavepointDataManager()
         dm2['name'] = 'sally'
 
-        self.assertTrue('name' in dm)
-        self.assertTrue('job' in dm)
-        self.assertTrue('salary' in dm)
-        self.assertTrue('name' in dm2)
+        self.assertIn('name', dm)
+        self.assertIn('job', dm)
+        self.assertIn('salary', dm)
+        self.assertIn('name', dm2)
 
         sp1.rollback()
 
-        self.assertTrue('name' in dm)
-        self.assertFalse('job' in dm)
-        self.assertFalse('salary' in dm)
-        self.assertFalse('name' in dm2)
+        self.assertIn('name', dm)
+        self.assertNotIn('job', dm)
+        self.assertNotIn('salary', dm)
+        self.assertNotIn('name', dm2)
 
     def test_commit_after_rollback_for_dm_that_joins_after_savepoint(self):
         # There was a problem handling data managers that joined after a

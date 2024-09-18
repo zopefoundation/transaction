@@ -2,10 +2,12 @@
  Changes
 =========
 
-4.1 (unreleased)
+5.0 (unreleased)
 ================
 
-- Nothing changed yet.
+- Add final support for Python 3.13.
+
+- Drop support for Python 3.7.
 
 
 4.0 (2023-11-13)

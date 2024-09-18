@@ -70,23 +70,23 @@ class TransactionTests(unittest.TestCase):
         logger = DummyLogger()
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
-        self.assertTrue(isinstance(txn._synchronizers, WeakSet))
+        self.assertIsInstance(txn._synchronizers, WeakSet)
         self.assertEqual(len(txn._synchronizers), 0)
-        self.assertTrue(txn._manager is None)
+        self.assertIsNone(txn._manager)
         self.assertEqual(txn.user, "")
         self.assertEqual(txn.description, "")
-        self.assertTrue(txn._savepoint2index is None)
+        self.assertIsNone(txn._savepoint2index)
         self.assertEqual(txn._savepoint_index, 0)
         self.assertEqual(txn._resources, [])
         self.assertEqual(txn._adapters, {})
         self.assertEqual(txn._voted, {})
         self.assertEqual(txn.extension, {})
-        self.assertTrue(txn._extension is txn.extension)  # legacy
-        self.assertTrue(txn.log is logger)
+        self.assertIs(txn._extension, txn.extension)  # legacy
+        self.assertIs(txn.log, logger)
         self.assertEqual(len(logger._log), 1)
         self.assertEqual(logger._log[0][0], 'debug')
         self.assertEqual(logger._log[0][1], 'new transaction')
-        self.assertTrue(txn._failure_traceback is None)
+        self.assertIsNone(txn._failure_traceback)
         self.assertEqual(txn._before_commit, [])
         self.assertEqual(txn._after_commit, [])
 
@@ -94,7 +94,7 @@ class TransactionTests(unittest.TestCase):
         from transaction.weakset import WeakSet
         synchs = WeakSet()
         txn = self._makeOne(synchronizers=synchs)
-        self.assertTrue(txn._synchronizers is synchs)
+        self.assertIs(txn._synchronizers, synchs)
 
     def test_isDoomed(self):
         from transaction._transaction import Status
@@ -205,11 +205,11 @@ class TransactionTests(unittest.TestCase):
         with Monkey(_transaction, _LOGGER=logger):
             txn = self._makeOne()
         sp = txn.savepoint()
-        self.assertTrue(isinstance(sp, Savepoint))
-        self.assertTrue(sp.transaction is txn)
+        self.assertIsInstance(sp, Savepoint)
+        self.assertIs(sp.transaction, txn)
         self.assertEqual(sp._savepoints, [])
         self.assertEqual(txn._savepoint_index, 1)
-        self.assertTrue(isinstance(txn._savepoint2index, WeakKeyDictionary))
+        self.assertIsInstance(txn._savepoint2index, WeakKeyDictionary)
         self.assertEqual(txn._savepoint2index[sp], 1)
 
     def test_savepoint_non_optimistc_resource_wo_support(self):
@@ -227,8 +227,8 @@ class TransactionTests(unittest.TestCase):
         txn._resources.append(resource)
         self.assertRaises(TypeError, txn.savepoint)
         self.assertEqual(txn.status, Status.COMMITFAILED)
-        self.assertTrue(isinstance(txn._failure_traceback, StringIO))
-        self.assertTrue('TypeError' in txn._failure_traceback.getvalue())
+        self.assertIsInstance(txn._failure_traceback, StringIO)
+        self.assertIn('TypeError', txn._failure_traceback.getvalue())
         self.assertEqual(len(logger._log), 2)
         self.assertEqual(logger._log[0][0], 'error')
         self.assertTrue(logger._log[0][1].startswith('Error in abort'))
@@ -336,7 +336,7 @@ class TransactionTests(unittest.TestCase):
             mgr = txn._manager = _Mgr(txn)
             txn.commit()
         self.assertEqual(txn.status, Status.COMMITTED)
-        self.assertTrue(mgr._txn is None)
+        self.assertIsNone(mgr._txn)
         self.assertEqual(logger._log[0][0], 'debug')
         self.assertEqual(logger._log[0][1], 'commit')
 
@@ -413,8 +413,8 @@ class TransactionTests(unittest.TestCase):
             logger._clear()
             txn.commit()
         for synch in synchs:
-            self.assertTrue(synch._before is txn)
-            self.assertTrue(synch._after is txn)
+            self.assertIs(synch._before, txn)
+            self.assertIs(synch._after, txn)
 
     def test_commit_w_afterCommitHooks(self):
         from transaction import _transaction
@@ -511,8 +511,8 @@ class TransactionTests(unittest.TestCase):
             txn._resources.append(broken)
             self.assertRaises(ValueError, txn.commit)
         for synch in synchs:
-            self.assertTrue(synch._before is txn)
-            self.assertTrue(synch._after is txn)  # called in _cleanup
+            self.assertIs(synch._before, txn)
+            self.assertIs(synch._after, txn)  # called in _cleanup
 
     def test_commit_clears_resources(self):
         class DM:
@@ -650,7 +650,7 @@ class TransactionTests(unittest.TestCase):
         for r in resources:
             self.assertTrue(r._b and r._c and r._v and r._f)
             self.assertFalse(r._a and r._x)
-            self.assertTrue(id(r) in txn._voted)
+            self.assertIn(id(r), txn._voted)
         self.assertEqual(len(logger._log), 2)
         self.assertEqual(logger._log[0][0], 'debug')
         self.assertEqual(logger._log[0][1], 'commit Resource: aaa')
@@ -747,13 +747,13 @@ class TransactionTests(unittest.TestCase):
         for r in resources:
             self.assertTrue(r._b and r._c)
             if r._key == 'aaa':
-                self.assertTrue(id(r) in txn._voted)
+                self.assertIn(id(r), txn._voted)
                 self.assertTrue(r._v)
                 self.assertFalse(r._f)
                 self.assertFalse(r._a)
                 self.assertTrue(r._x)
             else:
-                self.assertFalse(id(r) in txn._voted)
+                self.assertNotIn(id(r), txn._voted)
                 self.assertFalse(r._v)
                 self.assertFalse(r._f)
                 self.assertTrue(r._a and r._x)
@@ -776,7 +776,7 @@ class TransactionTests(unittest.TestCase):
         self.assertRaises(ValueError, txn._commitResources)
         for r in resources:
             self.assertTrue(r._b and r._c and r._v)
-            self.assertTrue(id(r) in txn._voted)
+            self.assertIn(id(r), txn._voted)
             if r._key == 'aaa':
                 self.assertTrue(r._f)
             else:
@@ -811,7 +811,7 @@ class TransactionTests(unittest.TestCase):
             mgr = txn._manager = _Mgr(txn)
             txn.abort()
         self.assertEqual(txn.status, Status.ACTIVE)
-        self.assertTrue(mgr._txn is None)
+        self.assertIsNone(mgr._txn)
         self.assertEqual(logger._log[0][0], 'debug')
         self.assertEqual(logger._log[0][1], 'abort')
 
@@ -1026,8 +1026,8 @@ class TransactionTests(unittest.TestCase):
             t._resources.append(broken)
             self.assertRaises(ValueError, t.abort)
         for synch in synchs:
-            self.assertTrue(synch._before is t)
-            self.assertTrue(synch._after is t)  # called in _cleanup
+            self.assertIs(synch._before, t)
+            self.assertIs(synch._after, t)  # called in _cleanup
         self.assertIsNot(t._synchronizers, ws)
 
     def test_abort_synchronizer_error_w_resources(self):
@@ -1068,8 +1068,8 @@ class TransactionTests(unittest.TestCase):
                 t.abort()
 
         for synch in synchs.synchs:
-            self.assertTrue(synch._before is t)
-            self.assertTrue(synch._after is t)  # called in _cleanup
+            self.assertIs(synch._before, t)
+            self.assertIs(synch._after, t)  # called in _cleanup
         self.assertIsNot(t._synchronizers, synchs)
         self.assertTrue(resource._a)
 
@@ -1389,7 +1389,7 @@ class TransactionTests(unittest.TestCase):
         txn = self._makeOne()
         txn.setExtendedInfo('frob', 'qux')
         self.assertEqual(txn.extension, {'frob': 'qux'})
-        self.assertTrue(txn._extension is txn._extension)  # legacy
+        self.assertIs(txn._extension, txn._extension)  # legacy
 
     def test_setExtendedInfo_multiple(self):
         txn = self._makeOne()
@@ -1397,7 +1397,7 @@ class TransactionTests(unittest.TestCase):
         txn.setExtendedInfo('baz', 'spam')
         txn.setExtendedInfo('frob', 'quxxxx')
         self.assertEqual(txn._extension, {'frob': 'quxxxx', 'baz': 'spam'})
-        self.assertTrue(txn._extension is txn._extension)  # legacy
+        self.assertIs(txn._extension, txn._extension)  # legacy
 
     def test__extension_settable(self):
         # Because ZEO sets it. I'll fix ZEO, but maybe something else will
@@ -1489,7 +1489,7 @@ class Test_rm_key(unittest.TestCase):
         return rm_key(oid)
 
     def test_miss(self):
-        self.assertTrue(self._callFUT(object()) is None)
+        self.assertIsNone(self._callFUT(object()))
 
     def test_hit(self):
         self.assertEqual(self._callFUT(Resource('zzz')), 'zzz')
@@ -1515,8 +1515,8 @@ class SavepointTests(unittest.TestCase):
         resource = object()
         sp = self._makeOne(txn, True, resource)
         self.assertEqual(len(sp._savepoints), 1)
-        self.assertTrue(isinstance(sp._savepoints[0], NoRollbackSavepoint))
-        self.assertTrue(sp._savepoints[0].datamanager is resource)
+        self.assertIsInstance(sp._savepoints[0], NoRollbackSavepoint)
+        self.assertIs(sp._savepoints[0].datamanager, resource)
 
     def test_ctor_w_savepoint_aware_resources(self):
         class _Aware:
@@ -1527,10 +1527,10 @@ class SavepointTests(unittest.TestCase):
         another = _Aware()
         sp = self._makeOne(txn, True, one, another)
         self.assertEqual(len(sp._savepoints), 2)
-        self.assertTrue(isinstance(sp._savepoints[0], _Aware))
-        self.assertTrue(sp._savepoints[0] is one)
-        self.assertTrue(isinstance(sp._savepoints[1], _Aware))
-        self.assertTrue(sp._savepoints[1] is another)
+        self.assertIsInstance(sp._savepoints[0], _Aware)
+        self.assertIs(sp._savepoints[0], one)
+        self.assertIsInstance(sp._savepoints[1], _Aware)
+        self.assertIs(sp._savepoints[1], another)
 
     def test_valid_wo_transacction(self):
         sp = self._makeOne(None, True, object())
@@ -1578,7 +1578,7 @@ class SavepointTests(unittest.TestCase):
         resource = _GonnaRaise()
         sp = self._makeOne(txn, False, resource)
         self.assertRaises(ValueError, sp.rollback)
-        self.assertTrue(txn._raia is sp)
+        self.assertIs(txn._raia, sp)
         self.assertTrue(txn._sarce)
 
 
@@ -1595,8 +1595,8 @@ class AbortSavepointTests(unittest.TestCase):
         dm = object()
         txn = object()
         asp = self._makeOne(dm, txn)
-        self.assertTrue(asp.datamanager is dm)
-        self.assertTrue(asp.transaction is txn)
+        self.assertIs(asp.datamanager, dm)
+        self.assertIs(asp.transaction, txn)
 
     def test_rollback(self):
         class _DM:
@@ -1614,8 +1614,8 @@ class AbortSavepointTests(unittest.TestCase):
         txn = _TXN()
         asp = self._makeOne(dm, txn)
         asp.rollback()
-        self.assertTrue(dm._aborted is txn)
-        self.assertTrue(txn._unjoin is dm)
+        self.assertIs(dm._aborted, txn)
+        self.assertIs(txn._unjoin, dm)
 
 
 class NoRollbackSavepointTests(unittest.TestCase):
@@ -1630,7 +1630,7 @@ class NoRollbackSavepointTests(unittest.TestCase):
     def test_ctor(self):
         dm = object()
         nrsp = self._makeOne(dm)
-        self.assertTrue(nrsp.datamanager is dm)
+        self.assertIs(nrsp.datamanager, dm)
 
     def test_rollback(self):
         dm = object()
@@ -1697,7 +1697,6 @@ class MiscellaneousTests(unittest.TestCase):
 
     def test_gh5(self):
         from transaction import _transaction
-        from transaction._compat import native_
 
         buffer = _transaction._makeTracebackBuffer()
 
@@ -1705,7 +1704,7 @@ class MiscellaneousTests(unittest.TestCase):
         buffer.write(s)
 
         buffer.seek(0)
-        self.assertEqual(buffer.read(), native_(s, 'utf-8'))
+        self.assertEqual(buffer.read(), s)
 
 
 class Resource:

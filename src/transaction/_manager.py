@@ -22,7 +22,6 @@ import threading
 
 from zope.interface import implementer
 
-from transaction._compat import text_
 from transaction._transaction import Transaction
 from transaction.interfaces import AlreadyInTransaction
 from transaction.interfaces import ITransactionManager
@@ -185,11 +184,13 @@ class TransactionManager:
         # These are ordinarily strings, but that's
         # not required. A callable class could override them
         # to anything.
-        name = func.__name__
-        doc = func.__doc__
+        name = func.__name__ or ''
+        doc = func.__doc__ or ''
 
-        name = text_(name) if name else ''
-        doc = text_(doc) if doc else ''
+        if isinstance(name, bytes):
+            name = name.decode('UTF-8')
+        if isinstance(doc, bytes):
+            doc = doc.decode('UTF-8')
 
         if name and name != '_':
             if doc:

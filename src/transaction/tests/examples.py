@@ -21,6 +21,7 @@ class DataManager:
 
     Used by the 'datamanager' chapter in the Sphinx docs.
     """
+
     def __init__(self):
         self.state = 0
         self.sp = 0

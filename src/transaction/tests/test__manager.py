@@ -42,14 +42,14 @@ class TransactionManagerTests(unittest.TestCase):
 
     def test_ctor(self):
         tm = self._makeOne()
-        self.assertTrue(tm._txn is None)
+        self.assertIsNone(tm._txn)
         self.assertEqual(len(tm._synchs), 0)
 
     def test_begin_wo_existing_txn_wo_synchs(self):
         from transaction._transaction import Transaction
         tm = self._makeOne()
         tm.begin()
-        self.assertTrue(isinstance(tm._txn, Transaction))
+        self.assertIsInstance(tm._txn, Transaction)
 
     def test_begin_wo_existing_txn_w_synchs(self):
         from transaction._transaction import Transaction
@@ -57,8 +57,8 @@ class TransactionManagerTests(unittest.TestCase):
         synch = DummySynch()
         tm.registerSynch(synch)
         tm.begin()
-        self.assertTrue(isinstance(tm._txn, Transaction))
-        self.assertTrue(tm._txn in synch._txns)
+        self.assertIsInstance(tm._txn, Transaction)
+        self.assertIn(tm._txn, synch._txns)
 
     def test_begin_w_existing_txn(self):
         class Existing:
@@ -69,14 +69,14 @@ class TransactionManagerTests(unittest.TestCase):
         tm = self._makeOne()
         tm._txn = txn = Existing()
         tm.begin()
-        self.assertFalse(tm._txn is txn)
+        self.assertIsNot(tm._txn, txn)
         self.assertTrue(txn._aborted)
 
     def test_get_wo_existing_txn(self):
         from transaction._transaction import Transaction
         tm = self._makeOne()
         txn = tm.get()
-        self.assertTrue(isinstance(txn, Transaction))
+        self.assertIsInstance(txn, Transaction)
 
     def test_get_w_existing_txn(self):
         class Existing:
@@ -111,7 +111,7 @@ class TransactionManagerTests(unittest.TestCase):
         synch = DummySynch()
         tm.registerSynch(synch)
         self.assertEqual(len(tm._synchs), 1)
-        self.assertTrue(synch in tm._synchs)
+        self.assertIn(synch, tm._synchs)
 
     def test_unregisterSynch(self):
         tm = self._makeOne()
@@ -125,8 +125,8 @@ class TransactionManagerTests(unittest.TestCase):
         tm.unregisterSynch(synch1)
         self.assertTrue(tm.registeredSynchs())
         self.assertEqual(len(tm._synchs), 1)
-        self.assertFalse(synch1 in tm._synchs)
-        self.assertTrue(synch2 in tm._synchs)
+        self.assertNotIn(synch1, tm._synchs)
+        self.assertIn(synch2, tm._synchs)
         tm.unregisterSynch(synch2)
         self.assertFalse(tm.registeredSynchs())
 
@@ -255,7 +255,7 @@ class TransactionManagerTests(unittest.TestCase):
         tm = self._makeOne()
         found = list(tm.attempts(1))
         self.assertEqual(len(found), 1)
-        self.assertTrue(found[0] is tm)
+        self.assertIs(found[0], tm)
 
     def test_attempts_stop_on_success(self):
         tm = self._makeOne()
@@ -337,9 +337,9 @@ class TransactionManagerTests(unittest.TestCase):
         found = list(tm.attempts())
         self.assertEqual(len(found), 3)
         for attempt in found[:-1]:
-            self.assertTrue(isinstance(attempt, Attempt))
-            self.assertTrue(attempt.manager is tm)
-        self.assertTrue(found[-1] is tm)
+            self.assertIsInstance(attempt, Attempt)
+            self.assertIs(attempt.manager, tm)
+        self.assertIs(found[-1], tm)
 
     def test_run(self):
         import transaction.interfaces
@@ -880,7 +880,7 @@ class AttemptTests(unittest.TestCase):
         with self.assertRaises(AlreadyInTransaction):
             tm.begin()
 
-        self.assertTrue(t is tm.get())
+        self.assertIs(t, tm.get())
 
         self.assertFalse(tm.isDoomed())
         tm.doom()
@@ -973,7 +973,7 @@ class BasicJar:
 
     def check(self, method):
         if self.tracing:  # pragma: no cover
-            print('{} calling method {}'.format(str(self.tracing), method))
+            print(f'{str(self.tracing)} calling method {method}')
 
         if method in self.errors:
             raise TestTxnException("error %s" % method)
