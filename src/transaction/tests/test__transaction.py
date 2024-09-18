@@ -1697,7 +1697,6 @@ class MiscellaneousTests(unittest.TestCase):
 
     def test_gh5(self):
         from transaction import _transaction
-        from transaction._compat import native_
 
         buffer = _transaction._makeTracebackBuffer()
 
@@ -1705,7 +1704,7 @@ class MiscellaneousTests(unittest.TestCase):
         buffer.write(s)
 
         buffer.seek(0)
-        self.assertEqual(buffer.read(), native_(s, 'utf-8'))
+        self.assertEqual(buffer.read(), s)
 
 
 class Resource:
