@@ -17,7 +17,7 @@ with-free-threaded-python = false
 testenv-deps = [
     "zope.testrunner",
     ]
-testenv-skip-test-extras = true
+testenv-skip-test-extra = true
 
 [coverage]
 fail-under = 99
