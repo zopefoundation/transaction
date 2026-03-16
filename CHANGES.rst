@@ -6,6 +6,8 @@
 ================
 
 
+- Drop support for Python 3.9.
+
 - Drop support for Python 3.8.
 
 5.0 (2024-09-18)
