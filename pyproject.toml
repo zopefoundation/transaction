@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transaction"
-version = "5.1.dev0"
+version = "5.1"
 description = "Transaction management for Python"
 license = "ZPL-2.1"
 classifiers = [
