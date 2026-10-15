@@ -21,8 +21,8 @@ jobs:
     name: linting
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-python@v6
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
       with:
         python-version: '3.13'
     - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  #v3.0.1
@@ -30,7 +30,7 @@ jobs:
         extra_args: --all-files --show-diff-on-failure
       env:
         PRE_COMMIT_COLOR: always
-    - uses: pre-commit-ci/lite-action@5d6cc0eb514c891a40562a58a8e71576c5c7fb43  #v1.1.0
+    - uses: pre-commit-ci/lite-action@062bca0919bc9d6e66755cc05074b70c77e111fc  #v1.2.0
       if: always()
       with:
         msg: Apply pre-commit code formatting
