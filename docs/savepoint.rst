@@ -257,7 +257,7 @@ to roll back:
     >>> dm_no_sp['name'] = 'sam'
     >>> savepoint = transaction.savepoint(1)
     >>> savepoint.rollback() #doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last): 
+    Traceback (most recent call last):
     ...
     TypeError: ('Savepoints unsupported', {'name': 'sam'})
 
@@ -323,4 +323,3 @@ transactions:
     'sally'
     >>> dm['name']
     'sally'
-
