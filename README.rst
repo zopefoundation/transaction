@@ -22,4 +22,3 @@ mainly used by the ZODB.
 
 See http://transaction.readthedocs.org/en/latest for narrative documentation
 on its usage.
-
